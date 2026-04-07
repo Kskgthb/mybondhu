@@ -32,13 +32,21 @@ export default function AuthCallbackPage() {
             const username = session.user.email?.split('@')[0] || `user_${session.user.id.substring(0, 8)}`;
             const email = session.user.email || '';
             
+            const savedRole = localStorage.getItem('signup_role');
+            const roleToAssign = savedRole || 'need_bondhu';
+            
+            // Clean up localStorage
+            if (savedRole) {
+              localStorage.removeItem('signup_role');
+            }
+
             const { error: profileError } = await supabase
               .from('profiles')
               .insert({
                 id: session.user.id,
                 username: username,
                 email: email,
-                role: 'need_bondhu', // Default role for Google sign-in
+                role: roleToAssign, // Use saved role or default to 'need_bondhu'
                 created_at: new Date().toISOString(),
                 updated_at: new Date().toISOString(),
               });
