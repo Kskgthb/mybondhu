@@ -1,0 +1,162 @@
+/* stylelint-disable */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here.
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    --radius: 0.5rem;
+    --background: 210 40% 96%;
+    --foreground: 245 45% 15%;
+    --card: 210 40% 98%;
+    --card-foreground: 245 45% 15%;
+    --popover: 210 40% 98%;
+    --popover-foreground: 245 45% 15%;
+    --primary: 270 80% 46%;
+    --primary-foreground: 0 0% 100%;
+    --primary-light: 270 80% 56%;
+    --secondary: 145 60% 46%;
+    --secondary-foreground: 0 0% 100%;
+    --accent: 145 50% 90%;
+    --accent-foreground: 145 60% 25%;
+    --muted: 210 30% 90%;
+    --muted-foreground: 245 20% 40%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 210 30% 85%;
+    --input: 210 30% 85%;
+    --ring: 145 60% 46%;
+    --success: 145 60% 46%;
+    --warning: 28 100% 50%;
+    --info: 210 100% 50%;
+    --chart-1: 270 80% 46%;
+    --chart-2: 145 60% 46%;
+    --chart-3: 210 100% 50%;
+    --chart-4: 245 45% 15%;
+    --chart-5: 0 0% 60%;
+    --sidebar-background: 210 40% 97%;
+    --sidebar-foreground: 245 45% 15%;
+    --sidebar-primary: 145 60% 46%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 145 50% 92%;
+    --sidebar-accent-foreground: 145 60% 25%;
+    --sidebar-border: 210 30% 85%;
+    --sidebar-ring: 145 60% 46%;
+    --gradient-primary: linear-gradient(135deg, hsl(270 80% 46%), hsl(145 60% 46%));
+    --gradient-secondary: linear-gradient(135deg, hsl(145 60% 46%), hsl(145 60% 56%));
+    --gradient-card: linear-gradient(180deg, hsl(210 40% 98%), hsl(210 40% 96%));
+    --shadow-card: 0 2px 8px rgba(47, 190, 107, 0.08);
+    --shadow-hover: 0 4px 16px rgba(47, 190, 107, 0.15);
+  }
+
+  .dark {
+    --background: 245 60% 15%;
+    --foreground: 210 40% 96%;
+    --card: 245 60% 15%;
+    --card-foreground: 210 40% 96%;
+    --popover: 245 60% 15%;
+    --popover-foreground: 210 40% 96%;
+    --primary: 270 80% 56%;
+    --primary-foreground: 0 0% 100%;
+    --primary-light: 270 80% 66%;
+    --secondary: 145 60% 50%;
+    --secondary-foreground: 0 0% 100%;
+    --accent: 245 60% 18%;
+    --accent-foreground: 145 60% 85%;
+    --muted: 245 60% 18%;
+    --muted-foreground: 210 20% 65%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 96%;
+    --border: 245 60% 20%;
+    --input: 245 60% 20%;
+    --ring: 145 60% 50%;
+    --success: 145 60% 50%;
+    --warning: 28 100% 55%;
+    --info: 210 100% 60%;
+    --chart-1: 270 80% 56%;
+    --chart-2: 145 60% 50%;
+    --chart-3: 210 100% 60%;
+    --chart-4: 210 40% 96%;
+    --chart-5: 0 0% 60%;
+    --sidebar-background: 245 60% 15%;
+    --sidebar-foreground: 210 40% 96%;
+    --sidebar-primary: 145 60% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 245 60% 18%;
+    --sidebar-accent-foreground: 145 60% 85%;
+    --sidebar-border: 245 60% 20%;
+    --sidebar-ring: 145 60% 50%;
+    --gradient-primary: linear-gradient(135deg, hsl(270 80% 56%), hsl(145 60% 50%));
+    --gradient-secondary: linear-gradient(135deg, hsl(145 60% 50%), hsl(145 60% 60%));
+    --gradient-card: linear-gradient(180deg, hsl(245 60% 15%), hsl(245 60% 15%));
+    --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.5);
+    --shadow-hover: 0 4px 16px rgba(47, 190, 107, 0.3);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+
+  /* Performance optimizations */
+  * {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Hardware acceleration for transforms and opacity */
+  [class*="transition"],
+  [class*="animate"],
+  [class*="hover:"] {
+    will-change: transform, opacity;
+  }
+
+  /* Optimize image rendering */
+  img {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+  }
+
+  /* Smooth scrolling */
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Reduce motion for users who prefer it */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer utilities {
+  .gradient-text {
+    background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-light)));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
+
+  .gradient-text-secondary {
+    background: linear-gradient(135deg, hsl(var(--secondary)), hsl(var(--accent)));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
+}
