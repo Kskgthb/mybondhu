@@ -361,7 +361,7 @@ export const assignmentsApi = {
     });
 
     if (error) throw error;
-    return data;
+    return data || { success: true, message: 'Task accepted successfully' };
   },
 
   async declineTask(taskId: string, bondhuId: string): Promise<{ success: boolean; message: string }> {
@@ -371,7 +371,7 @@ export const assignmentsApi = {
     });
 
     if (error) throw error;
-    return data;
+    return data || { success: true, message: 'Task declined successfully' };
   },
 
   async startTask(taskId: string, bondhuId: string): Promise<{ success: boolean; message: string }> {
@@ -381,7 +381,7 @@ export const assignmentsApi = {
     });
 
     if (error) throw error;
-    return data;
+    return data || { success: true, message: 'Task started successfully' };
   },
 
   async completeTask(taskId: string, bondhuId: string, proofUrl?: string): Promise<{ success: boolean; message: string }> {
@@ -392,7 +392,7 @@ export const assignmentsApi = {
     });
 
     if (error) throw error;
-    return data;
+    return data || { success: true, message: 'Task completed successfully' };
   },
 
   async completeTaskWithCode(taskId: string, completionCode: string): Promise<{ success: boolean; message: string }> {
@@ -402,7 +402,7 @@ export const assignmentsApi = {
     });
 
     if (error) throw error;
-    return data;
+    return data || { success: true, message: 'Task completed with code successfully' };
   },
 
   async getCompletionCode(taskId: string): Promise<string | null> {
