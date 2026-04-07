@@ -163,7 +163,7 @@ export default function LoginPage() {
             </div>
             <div className="relative flex justify-center text-xs uppercase">
               <span className="bg-white px-2 text-muted-foreground backdrop-blur-sm">
-                Or continue with
+                Or
               </span>
             </div>
           </div>
@@ -171,7 +171,7 @@ export default function LoginPage() {
           <Button
             type="button"
             variant="outline"
-            className="w-full bg-white/50 hover:bg-white/80"
+            className="w-full bg-white/50 text-gray-600 hover:bg-white/80"
             onClick={handleGoogleSignIn}
             disabled={loading}
           >
@@ -193,7 +193,7 @@ export default function LoginPage() {
                 fill="#EA4335"
               />
             </svg>
-            Google
+            Continue with Google
           </Button>
 
           <div className="mt-4 text-center text-sm">
