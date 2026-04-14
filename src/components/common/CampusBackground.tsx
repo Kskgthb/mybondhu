@@ -5,7 +5,7 @@ export default function CampusBackground() {
       <div className="absolute inset-0 bg-[#f1f5f9] dark:bg-[#1e1b4b]" />
       
       {/* Illustrated elements scattered across the background */}
-      <svg className="absolute inset-0 w-full h-full" xmlns="http://www.w3.org/2000/svg">
+      <svg className="absolute inset-0 w-full h-full" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" viewBox="0 0 1000 1000">
         <defs>
           {/* Gradient definitions */}
           <linearGradient id="primaryGrad" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -38,7 +38,7 @@ export default function CampusBackground() {
         </g>
 
         {/* Student with Bicycle - Top Right */}
-        <g transform="translate(calc(100vw - 200), 60)" opacity="0.12" className="dark:opacity-[0.06]">
+        <g transform="translate(800, 60)" opacity="0.12" className="dark:opacity-[0.06]">
           {/* Bicycle */}
           <circle cx="20" cy="70" r="15" fill="none" stroke="url(#secondaryGrad)" strokeWidth="3" />
           <circle cx="70" cy="70" r="15" fill="none" stroke="url(#secondaryGrad)" strokeWidth="3" />
@@ -53,7 +53,7 @@ export default function CampusBackground() {
         </g>
 
         {/* Mobile Phone with Notification - Left Side */}
-        <g transform="translate(80, calc(50vh - 100))" opacity="0.13" className="dark:opacity-[0.07]">
+        <g transform="translate(80, 400)" opacity="0.13" className="dark:opacity-[0.07]">
           <rect x="0" y="0" width="60" height="100" fill="url(#primaryGrad)" rx="8" />
           <rect x="5" y="10" width="50" height="70" fill="#f1f5f9" opacity="0.9" rx="4" />
           {/* Notification badge */}
@@ -66,7 +66,7 @@ export default function CampusBackground() {
         </g>
 
         {/* Task Post Card - Bottom Left */}
-        <g transform="translate(60, calc(100vh - 200))" opacity="0.14" className="dark:opacity-[0.07]">
+        <g transform="translate(60, 800)" opacity="0.14" className="dark:opacity-[0.07]">
           <rect x="0" y="0" width="120" height="80" fill="url(#primaryGrad)" rx="8" />
           <rect x="5" y="5" width="110" height="70" fill="#f1f5f9" opacity="0.9" rx="6" />
           {/* Task icon */}
@@ -80,7 +80,7 @@ export default function CampusBackground() {
         </g>
 
         {/* Geolocation Pointer - Center Right */}
-        <g transform="translate(calc(100vw - 150), calc(50vh - 50))" opacity="0.15" className="dark:opacity-[0.08]">
+        <g transform="translate(850, 450)" opacity="0.15" className="dark:opacity-[0.08]">
           <path d="M 30 10 Q 30 0 40 0 Q 50 0 50 10 Q 50 25 40 50 Q 30 25 30 10 Z" fill="url(#secondaryGrad)" />
           <circle cx="40" cy="12" r="6" fill="#f1f5f9" opacity="0.9" />
           {/* Pulse rings */}
@@ -89,7 +89,7 @@ export default function CampusBackground() {
         </g>
 
         {/* Money Icon - Top Center */}
-        <g transform="translate(calc(50vw - 40), 80)" opacity="0.13" className="dark:opacity-[0.07]">
+        <g transform="translate(420, 80)" opacity="0.13" className="dark:opacity-[0.07]">
           <circle cx="40" cy="40" r="35" fill="url(#accentGrad)" />
           <text x="40" y="55" textAnchor="middle" fill="#3A8B24" fontSize="40" fontWeight="bold">₹</text>
           {/* Coins scattered */}
@@ -99,13 +99,13 @@ export default function CampusBackground() {
         </g>
 
         {/* Task Done Tick Mark - Bottom Right */}
-        <g transform="translate(calc(100vw - 180), calc(100vh - 180))" opacity="0.14" className="dark:opacity-[0.07]">
+        <g transform="translate(820, 820)" opacity="0.14" className="dark:opacity-[0.07]">
           <circle cx="50" cy="50" r="45" fill="url(#primaryGrad)" />
           <polyline points="25,50 42,67 75,34" fill="none" stroke="#f1f5f9" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" />
         </g>
 
         {/* Group of Students - Bottom Center */}
-        <g transform="translate(calc(50vw - 100), calc(100vh - 150))" opacity="0.12" className="dark:opacity-[0.06]">
+        <g transform="translate(400, 850)" opacity="0.12" className="dark:opacity-[0.06]">
           {/* Student 1 */}
           <circle cx="30" cy="30" r="15" fill="url(#primaryGrad)" />
           <rect x="20" y="45" width="20" height="35" fill="url(#primaryGrad)" rx="10" />
@@ -128,37 +128,37 @@ export default function CampusBackground() {
         </g>
 
         {/* "Bondhu Community" Text - Right Side */}
-        <g transform="translate(calc(100vw - 280), calc(50vh + 80))" opacity="0.1" className="dark:opacity-[0.05]">
+        <g transform="translate(720, 580)" opacity="0.1" className="dark:opacity-[0.05]">
           <text x="0" y="0" fill="url(#secondaryGrad)" fontSize="22" fontWeight="bold" fontFamily="Arial, sans-serif">
             Bondhu Community
           </text>
         </g>
 
         {/* "Need Bondhu" Button - Left Center */}
-        <g transform="translate(100, calc(50vh + 100))" opacity="0.12" className="dark:opacity-[0.06]">
+        <g transform="translate(100, 600)" opacity="0.12" className="dark:opacity-[0.06]">
           <rect x="0" y="0" width="140" height="45" fill="url(#primaryGrad)" rx="22" />
           <text x="70" y="30" textAnchor="middle" fill="#f1f5f9" fontSize="16" fontWeight="bold">Need Bondhu</text>
         </g>
 
         {/* "Become a Bondhu" Button - Right Center */}
-        <g transform="translate(calc(100vw - 280), calc(50vh - 150))" opacity="0.12" className="dark:opacity-[0.06]">
+        <g transform="translate(720, 350)" opacity="0.12" className="dark:opacity-[0.06]">
           <rect x="0" y="0" width="160" height="45" fill="url(#secondaryGrad)" rx="22" />
           <text x="80" y="30" textAnchor="middle" fill="#f1f5f9" fontSize="16" fontWeight="bold">Become a Bondhu</text>
         </g>
 
         {/* Additional decorative elements */}
         {/* Small task cards scattered */}
-        <g transform="translate(calc(50vw + 150), 200)" opacity="0.08" className="dark:opacity-[0.04]">
+        <g transform="translate(650, 200)" opacity="0.08" className="dark:opacity-[0.04]">
           <rect x="0" y="0" width="60" height="40" fill="url(#accentGrad)" rx="6" />
         </g>
         
-        <g transform="translate(200, calc(50vh - 50))" opacity="0.08" className="dark:opacity-[0.04]">
+        <g transform="translate(200, 450)" opacity="0.08" className="dark:opacity-[0.04]">
           <rect x="0" y="0" width="50" height="35" fill="url(#primaryGrad)" rx="5" />
         </g>
 
         {/* Connecting lines/paths suggesting network */}
         <path d="M 100 150 Q 200 200 300 180" stroke="url(#primaryGrad)" strokeWidth="2" fill="none" opacity="0.1" className="dark:opacity-[0.05]" strokeDasharray="5,5" />
-        <path d="M calc(100vw - 200) 150 Q calc(100vw - 300) 250 calc(100vw - 250) 300" stroke="url(#secondaryGrad)" strokeWidth="2" fill="none" opacity="0.1" className="dark:opacity-[0.05]" strokeDasharray="5,5" />
+        <path d="M 800 150 Q 700 250 750 300" stroke="url(#secondaryGrad)" strokeWidth="2" fill="none" opacity="0.1" className="dark:opacity-[0.05]" strokeDasharray="5,5" />
       </svg>
 
       {/* Subtle gradient overlay for depth */}
