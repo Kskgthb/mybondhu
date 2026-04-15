@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useState, useRef } from 'r
 import { User } from '@supabase/supabase-js';
 import { supabase } from '@/db/supabase';
 import { profilesApi } from '@/db/api';
-import { initializePushNotifications } from '@/services/notificationService';
+import { initializeNotificationSystem, subscribeToUserNotifications, unsubscribeNotifications } from '@/services/notificationService';
 import type { Profile } from '@/types/types';
 
 interface AuthContextType {
@@ -26,6 +26,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const notificationsInitializedRef = useRef(false);
+  const notifChannelRef = useRef<any>(null);
 
   const loadProfile = async (userId: string) => {
     try {
@@ -33,12 +34,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setProfile(profileData);
       
       // Initialize push notifications ONCE after profile is loaded
-      // Don't re-init on every auth state change/token refresh
       if (profileData && !notificationsInitializedRef.current) {
         notificationsInitializedRef.current = true;
-        initializePushNotifications(userId).catch((error) => {
-          console.error('Failed to initialize push notifications:', error);
+        initializeNotificationSystem(userId).catch((error) => {
+          console.error('Failed to initialize notification system:', error);
         });
+        // Subscribe to realtime notifications from Supabase
+        notifChannelRef.current = subscribeToUserNotifications(userId);
       }
     } catch (error) {
       console.error('Error loading profile:', error);
@@ -75,6 +77,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         loadProfile(session.user.id);
       } else {
         setProfile(null);
+        // Cleanup notification subscription on sign out
+        if (notifChannelRef.current) {
+          unsubscribeNotifications(notifChannelRef.current);
+          notifChannelRef.current = null;
+          notificationsInitializedRef.current = false;
+        }
       }
     });
 

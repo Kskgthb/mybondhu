@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Bell, BellOff, CheckCircle2, AlertCircle, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
-import { initializePushNotifications } from '@/services/notificationService';
+import { initializeNotificationSystem } from '@/services/notificationService';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function NotificationSettings() {
@@ -35,7 +35,7 @@ export default function NotificationSettings() {
 
     setIsInitializing(true);
     try {
-      await initializePushNotifications(user.id);
+      await initializeNotificationSystem(user.id);
       checkNotificationPermission();
       toast.success('Push notifications enabled successfully!');
     } catch (error) {
