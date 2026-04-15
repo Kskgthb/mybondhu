@@ -263,19 +263,35 @@ export const tasksApi = {
   async completeTaskWithCode(taskId: string, code: string, retries = 3): Promise<{ success: boolean; message: string; payment_method?: string; requires_payment?: boolean; auto_completed?: boolean }> {
     for (let attempt = 1; attempt <= retries; attempt++) {
       try {
+        console.log(`🔄 Attempt ${attempt}/${retries} - Calling complete_task_with_code RPC with:`, {
+          p_task_id: taskId,
+          p_completion_code: code,
+        });
+
         const { data, error } = await supabase.rpc('complete_task_with_code', {
           p_task_id: taskId,
           p_completion_code: code,
         });
 
+        console.log('📊 RPC response:', { data, error });
+
         if (error) {
+          console.error('❌ RPC error:', error);
           if (attempt === retries) {
             return { success: false, message: error.message };
           }
           throw error;
         }
 
-        return data || { success: false, message: 'Unknown error occurred' };
+        if (!data) {
+          console.warn('⚠️ RPC returned null data');
+          if (attempt === retries) {
+            return { success: false, message: 'No response from server. The RPC function may not exist or returned null.' };
+          }
+          throw new Error('RPC returned null');
+        }
+
+        return data;
       } catch (error: any) {
         console.error(`Attempt ${attempt}/${retries} failed to complete task with code:`, error);
         if (attempt === retries) {

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { GoogleMap, LoadScript, Marker, DirectionsRenderer } from '@react-google-maps/api';
+import { GoogleMap, Marker, DirectionsRenderer } from '@react-google-maps/api';
 import { Card } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { MapPin, Navigation } from 'lucide-react';
@@ -47,16 +47,16 @@ export default function GoogleMapTracker({
   React.useEffect(() => {
     if (!window.google || !window.google.maps) return;
 
-    const directionsService = new google.maps.DirectionsService();
+    const directionsService = new window.google.maps.DirectionsService();
 
     directionsService.route(
       {
         origin: bondhuLocation,
         destination: taskLocation,
-        travelMode: google.maps.TravelMode.DRIVING,
+        travelMode: window.google.maps.TravelMode.DRIVING,
       },
       (result, status) => {
-        if (status === google.maps.DirectionsStatus.OK && result) {
+        if (status === window.google.maps.DirectionsStatus.OK && result) {
           setDirections(result);
           const route = result.routes[0];
           if (route && route.legs[0]) {
@@ -88,6 +88,17 @@ export default function GoogleMapTracker({
     );
   }
 
+  // Guard: wait for Google Maps script to be loaded before rendering
+  if (!window.google?.maps) {
+    return (
+      <Card className="p-6">
+        <div className="flex items-center justify-center h-[500px] text-muted-foreground">
+          <p>Loading Google Maps...</p>
+        </div>
+      </Card>
+    );
+  }
+
   return (
     <div className="space-y-4">
       {mapError && (
@@ -114,7 +125,7 @@ export default function GoogleMapTracker({
         </Card>
       )}
 
-      <LoadScript googleMapsApiKey={apiKey}>
+      <>
         <GoogleMap
           mapContainerStyle={mapContainerStyle}
           center={center}
@@ -132,7 +143,7 @@ export default function GoogleMapTracker({
             title={bondhuName}
             icon={{
               url: 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png',
-              scaledSize: new google.maps.Size(40, 40),
+              scaledSize: new window.google.maps.Size(40, 40),
             }}
             label={{
               text: bondhuName,
@@ -148,7 +159,7 @@ export default function GoogleMapTracker({
             title={taskAddress}
             icon={{
               url: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png',
-              scaledSize: new google.maps.Size(40, 40),
+              scaledSize: new window.google.maps.Size(40, 40),
             }}
             label={{
               text: 'Task',
@@ -173,7 +184,7 @@ export default function GoogleMapTracker({
             />
           )}
         </GoogleMap>
-      </LoadScript>
+      </>
     </div>
   );
 }

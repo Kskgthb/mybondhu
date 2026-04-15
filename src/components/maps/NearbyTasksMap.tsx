@@ -47,22 +47,31 @@ export default function NearbyTasksMap({
 
   // Fit bounds to show all tasks
   useEffect(() => {
-    if (mapRef.current && tasks.length > 0) {
-      const bounds = new google.maps.LatLngBounds();
-      
-      if (currentLocation) {
-        bounds.extend(currentLocation);
-      }
-      
-      tasks.forEach(task => {
-        bounds.extend(task.location);
-      });
-      
-      mapRef.current.fitBounds(bounds);
+    if (!window.google?.maps || !mapRef.current || tasks.length === 0) return;
+    const bounds = new window.google.maps.LatLngBounds();
+    
+    if (currentLocation) {
+      bounds.extend(currentLocation);
     }
+    
+    tasks.forEach(task => {
+      bounds.extend(task.location);
+    });
+    
+    mapRef.current.fitBounds(bounds);
   }, [tasks, currentLocation]);
 
+  // Guard: don't render map if Google Maps script isn't loaded yet
+  if (!window.google?.maps) {
+    return (
+      <div className="flex items-center justify-center h-[600px] bg-muted rounded-lg text-muted-foreground">
+        <p>Loading Google Maps...</p>
+      </div>
+    );
+  }
+
   const getMarkerIcon = (urgency?: string) => {
+    if (!window.google?.maps) return undefined;
     let color = 'yellow'; // default
     
     if (urgency === 'urgent') {
@@ -75,7 +84,7 @@ export default function NearbyTasksMap({
     
     return {
       url: `http://maps.google.com/mapfiles/ms/icons/${color}-dot.png`,
-      scaledSize: new google.maps.Size(40, 40),
+      scaledSize: new window.google.maps.Size(40, 40),
     };
   };
 
@@ -93,6 +102,12 @@ export default function NearbyTasksMap({
   };
 
   const center = currentLocation || (tasks.length > 0 ? tasks[0].location : defaultCenter);
+
+  // Safely create location marker icon
+  const locationMarkerIcon = window.google?.maps ? {
+    url: 'http://maps.google.com/mapfiles/ms/icons/blue-dot.png',
+    scaledSize: new window.google.maps.Size(50, 50),
+  } : undefined;
 
   return (
     <div className="space-y-4">
@@ -138,10 +153,7 @@ export default function NearbyTasksMap({
             <>
               <Marker
                 position={currentLocation}
-                icon={{
-                  url: 'http://maps.google.com/mapfiles/ms/icons/blue-dot.png',
-                  scaledSize: new google.maps.Size(50, 50),
-                }}
+                icon={locationMarkerIcon}
                 title="Your Location"
               />
               

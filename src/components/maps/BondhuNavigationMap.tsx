@@ -4,8 +4,7 @@
  */
 
 import { useEffect, useState, useCallback } from 'react';
-import { GoogleMap, Marker, DirectionsRenderer, useLoadScript } from '@react-google-maps/api';
-import { GOOGLE_MAPS_CONFIG } from '@/lib/googleMapsConfig';
+import { GoogleMap, Marker, DirectionsRenderer } from '@react-google-maps/api';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Navigation, MapPin, Clock, TrendingUp } from 'lucide-react';
@@ -24,19 +23,12 @@ const mapContainerStyle = {
 
 const defaultCenter = { lat: 23.8103, lng: 90.4125 }; // Dhaka, Bangladesh
 
-const libraries: ("places" | "geometry")[] = ['places', 'geometry'];
-
 export function BondhuNavigationMap({
   taskLocation,
   currentLocation,
   taskAddress,
   onLocationUpdate,
 }: BondhuNavigationMapProps) {
-  const { isLoaded } = useLoadScript({
-    googleMapsApiKey: GOOGLE_MAPS_CONFIG.primaryKey,
-    libraries,
-  });
-  
   const [map, setMap] = useState<google.maps.Map | null>(null);
   const [directions, setDirections] = useState<google.maps.DirectionsResult | null>(null);
   const [distance, setDistance] = useState<string>('');
@@ -44,6 +36,10 @@ export function BondhuNavigationMap({
   const [currentStep, setCurrentStep] = useState<string>('');
   const [calculating, setCalculating] = useState(false);
   const [calculationError, setCalculationError] = useState<string>('');
+
+  // Google Maps is already loaded by GoogleMapsProvider (LoadScript) in App.tsx
+  // No need to call useLoadScript again — it causes a double-load conflict
+  const isLoaded = !!(window.google && window.google.maps);
 
   // Haversine formula for fallback distance calculation
   const calculateHaversineDistance = (lat1: number, lng1: number, lat2: number, lng2: number): string => {
@@ -55,12 +51,12 @@ export function BondhuNavigationMap({
       Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
       Math.sin(dLng / 2) * Math.sin(dLng / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    const distance = R * c;
+    const dist = R * c;
     
-    if (distance < 1) {
-      return `${Math.round(distance * 1000)} m`;
+    if (dist < 1) {
+      return `${Math.round(dist * 1000)} m`;
     }
-    return `${distance.toFixed(2)} km`;
+    return `${dist.toFixed(2)} km`;
   };
 
   // Calculate ETA based on distance (assuming average speed of 30 km/h)
@@ -100,20 +96,20 @@ export function BondhuNavigationMap({
     setCalculating(true);
     setCalculationError('');
 
-    const directionsService = new google.maps.DirectionsService();
+    const directionsService = new window.google.maps.DirectionsService();
 
     directionsService.route(
       {
-        origin: new google.maps.LatLng(currentLocation.lat, currentLocation.lng),
-        destination: new google.maps.LatLng(taskLocation.lat, taskLocation.lng),
-        travelMode: google.maps.TravelMode.DRIVING,
+        origin: new window.google.maps.LatLng(currentLocation.lat, currentLocation.lng),
+        destination: new window.google.maps.LatLng(taskLocation.lat, taskLocation.lng),
+        travelMode: window.google.maps.TravelMode.DRIVING,
         optimizeWaypoints: true,
         provideRouteAlternatives: false,
       },
       (result, status) => {
         setCalculating(false);
         
-        if (status === google.maps.DirectionsStatus.OK && result) {
+        if (window.google?.maps && status === window.google.maps.DirectionsStatus.OK && result) {
           setDirections(result);
 
           // Extract distance and duration
@@ -152,9 +148,9 @@ export function BondhuNavigationMap({
 
   // Auto-fit bounds to show both locations
   useEffect(() => {
-    if (!map || !currentLocation || !taskLocation) return;
+    if (!window.google?.maps || !map || !currentLocation || !taskLocation) return;
 
-    const bounds = new google.maps.LatLngBounds();
+    const bounds = new window.google.maps.LatLngBounds();
     bounds.extend(currentLocation);
     bounds.extend(taskLocation);
     map.fitBounds(bounds);
@@ -177,6 +173,25 @@ export function BondhuNavigationMap({
   }
 
   const center = currentLocation || taskLocation || defaultCenter;
+
+  // Safely create marker icons
+  const currentLocationIcon = window.google?.maps ? {
+    path: window.google.maps.SymbolPath.CIRCLE,
+    scale: 10,
+    fillColor: '#3B82F6',
+    fillOpacity: 1,
+    strokeColor: '#FFFFFF',
+    strokeWeight: 3,
+  } : undefined;
+
+  const taskLocationIcon = window.google?.maps ? {
+    path: window.google.maps.SymbolPath.CIRCLE,
+    scale: 12,
+    fillColor: '#EF4444',
+    fillOpacity: 1,
+    strokeColor: '#FFFFFF',
+    strokeWeight: 3,
+  } : undefined;
 
   return (
     <div className="space-y-4">
@@ -267,38 +282,26 @@ export function BondhuNavigationMap({
           }}
         >
           {/* Current Location Marker */}
-          {currentLocation && (
+          {currentLocation && currentLocationIcon && (
             <Marker
               position={currentLocation}
-              icon={{
-                path: google.maps.SymbolPath.CIRCLE,
-                scale: 10,
-                fillColor: '#3B82F6',
-                fillOpacity: 1,
-                strokeColor: '#FFFFFF',
-                strokeWeight: 3,
-              }}
+              icon={currentLocationIcon}
               title="Your Location"
             />
           )}
 
           {/* Task Location Marker */}
-          <Marker
-            position={taskLocation}
-            icon={{
-              path: google.maps.SymbolPath.CIRCLE,
-              scale: 12,
-              fillColor: '#EF4444',
-              fillOpacity: 1,
-              strokeColor: '#FFFFFF',
-              strokeWeight: 3,
-            }}
-            title={taskAddress}
-            label={{
-              text: '📍',
-              fontSize: '20px',
-            }}
-          />
+          {taskLocationIcon && (
+            <Marker
+              position={taskLocation}
+              icon={taskLocationIcon}
+              title={taskAddress}
+              label={{
+                text: '📍',
+                fontSize: '20px',
+              }}
+            />
+          )}
 
           {/* Directions Route */}
           {directions && (

@@ -11,12 +11,27 @@ export const initializePushNotifications = async (userId: string): Promise<void>
       console.warn('This browser does not support notifications');
       return;
     }
-    const permission = await Notification.requestPermission();
-    if (permission !== 'granted') {
-      console.warn('Notification permission denied');
+
+    // Don't request permission if already denied - the browser will block it
+    // and log repeated console errors
+    if (Notification.permission === 'denied') {
+      console.log('Notification permission was previously denied. Skipping request.');
       return;
     }
-    console.log('✅ Browser notifications enabled for user:', userId);
+
+    // Already granted - nothing to do
+    if (Notification.permission === 'granted') {
+      console.log('✅ Browser notifications already enabled for user:', userId);
+      return;
+    }
+
+    // Only request if permission is 'default' (not yet asked)
+    const permission = await Notification.requestPermission();
+    if (permission === 'granted') {
+      console.log('✅ Browser notifications enabled for user:', userId);
+    } else {
+      console.log('Notification permission not granted:', permission);
+    }
   } catch (error) {
     console.error('Error initializing push notifications:', error);
   }

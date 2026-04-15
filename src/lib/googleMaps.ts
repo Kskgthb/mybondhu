@@ -97,7 +97,7 @@ const toRad = (degrees: number): number => {
  * Uses Google Geocoding API to convert lat/lng to human-readable address
  */
 export const reverseGeocode = async (latitude: number, longitude: number): Promise<string> => {
-  const apiKey = import.meta.env.VITE_GOOGLE_GEOCODING_API_KEY;
+  const apiKey = import.meta.env.VITE_GOOGLE_GEOCODING_API_KEY || import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
   
   if (!apiKey) {
     throw new Error('Location service is temporarily unavailable. Please enter your address manually.');

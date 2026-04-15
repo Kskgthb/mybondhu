@@ -163,9 +163,9 @@ export async function getNearbyTasks(
 ): Promise<NearbyTask[]> {
   try {
     const { data, error } = await supabase.rpc('get_nearby_tasks', {
-      p_lat: lat,
-      p_lng: lng,
-      p_radius_km: radiusKm,
+      user_lat: lat,
+      user_lng: lng,
+      max_distance_km: radiusKm,
     });
 
     if (error) {

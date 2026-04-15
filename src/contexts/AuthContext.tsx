@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase } from '@/db/supabase';
 import { profilesApi } from '@/db/api';
@@ -25,14 +25,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const notificationsInitializedRef = useRef(false);
 
   const loadProfile = async (userId: string) => {
     try {
       const profileData = await profilesApi.getProfile(userId);
       setProfile(profileData);
       
-      // Initialize push notifications after profile is loaded
-      if (profileData) {
+      // Initialize push notifications ONCE after profile is loaded
+      // Don't re-init on every auth state change/token refresh
+      if (profileData && !notificationsInitializedRef.current) {
+        notificationsInitializedRef.current = true;
         initializePushNotifications(userId).catch((error) => {
           console.error('Failed to initialize push notifications:', error);
         });

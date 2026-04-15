@@ -41,20 +41,20 @@ export default function LiveTrackingMap({
 
   // Calculate route when bondhu location changes
   useEffect(() => {
-    if (!bondhuLocation || !showDirections) return;
+    if (!window.google?.maps || !bondhuLocation || !showDirections) return;
 
-    const directionsService = new google.maps.DirectionsService();
+    const directionsService = new window.google.maps.DirectionsService();
     
     directionsService.route(
       {
-        origin: new google.maps.LatLng(bondhuLocation.lat, bondhuLocation.lng),
-        destination: new google.maps.LatLng(taskLocation.lat, taskLocation.lng),
-        travelMode: google.maps.TravelMode.DRIVING,
+        origin: new window.google.maps.LatLng(bondhuLocation.lat, bondhuLocation.lng),
+        destination: new window.google.maps.LatLng(taskLocation.lat, taskLocation.lng),
+        travelMode: window.google.maps.TravelMode.DRIVING,
         optimizeWaypoints: true,
         provideRouteAlternatives: false,
       },
       (result, status) => {
-        if (status === google.maps.DirectionsStatus.OK && result) {
+        if (window.google?.maps && status === window.google.maps.DirectionsStatus.OK && result) {
           setDirections(result);
           
           // Extract distance and duration
@@ -67,10 +67,10 @@ export default function LiveTrackingMap({
           console.error('Directions request failed:', status);
           
           // Fallback: Calculate straight-line distance
-          if (window.google && window.google.maps && window.google.maps.geometry) {
+          if (window.google?.maps?.geometry) {
             const distance = window.google.maps.geometry.spherical.computeDistanceBetween(
-              new google.maps.LatLng(bondhuLocation.lat, bondhuLocation.lng),
-              new google.maps.LatLng(taskLocation.lat, taskLocation.lng)
+              new window.google.maps.LatLng(bondhuLocation.lat, bondhuLocation.lng),
+              new window.google.maps.LatLng(taskLocation.lat, taskLocation.lng)
             );
             
             const distanceKm = distance / 1000;
@@ -87,15 +87,29 @@ export default function LiveTrackingMap({
 
   // Fit bounds to show both markers
   useEffect(() => {
-    if (mapRef.current && bondhuLocation) {
-      const bounds = new google.maps.LatLngBounds();
-      bounds.extend(taskLocation);
-      bounds.extend(bondhuLocation);
-      mapRef.current.fitBounds(bounds);
-    }
+    if (!window.google?.maps || !mapRef.current || !bondhuLocation) return;
+    const bounds = new window.google.maps.LatLngBounds();
+    bounds.extend(taskLocation);
+    bounds.extend(bondhuLocation);
+    mapRef.current.fitBounds(bounds);
   }, [taskLocation, bondhuLocation]);
 
+  // Guard: don't render map if Google Maps script isn't loaded yet
+  if (!window.google?.maps) {
+    return (
+      <div className="flex items-center justify-center h-[500px] bg-muted rounded-lg text-muted-foreground">
+        <p>Loading Google Maps...</p>
+      </div>
+    );
+  }
+
   const center = bondhuLocation || taskLocation;
+
+  // Safely create marker icon
+  const taskMarkerIcon = window.google?.maps ? {
+    url: 'http://maps.google.com/mapfiles/ms/icons/red-dot.png',
+    scaledSize: new window.google.maps.Size(40, 40),
+  } : undefined;
 
   return (
     <div className="space-y-4">
@@ -142,10 +156,7 @@ export default function LiveTrackingMap({
           {/* Task Location Marker */}
           <Marker
             position={taskLocation}
-            icon={{
-              url: 'http://maps.google.com/mapfiles/ms/icons/red-dot.png',
-              scaledSize: new google.maps.Size(40, 40),
-            }}
+            icon={taskMarkerIcon}
             title="Task Location"
           />
 

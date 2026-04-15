@@ -74,12 +74,15 @@ export const requestNotificationPermission = async (): Promise<boolean> => {
     return true;
   }
 
-  if (Notification.permission !== 'denied') {
-    const permission = await Notification.requestPermission();
-    return permission === 'granted';
+  // Don't request if already denied - browser will block and log errors
+  if (Notification.permission === 'denied') {
+    console.log('Notification permission was previously denied. Skipping request.');
+    return false;
   }
 
-  return false;
+  // Only request if permission is 'default' (never asked)
+  const permission = await Notification.requestPermission();
+  return permission === 'granted';
 };
 
 // Initialize notifications on app load

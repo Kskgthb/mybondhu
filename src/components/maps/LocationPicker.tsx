@@ -37,7 +37,7 @@ export default function LocationPicker({
     autocompleteRef.current = autocomplete;
   }, []);
 
-  const onPlaceChanged = () => {
+  const onPlaceChanged = useCallback(() => {
     if (autocompleteRef.current) {
       const place = autocompleteRef.current.getPlace();
       if (place.geometry?.location) {
@@ -56,36 +56,36 @@ export default function LocationPicker({
         });
       }
     }
-  };
-
-  const onMapClick = useCallback((e: google.maps.MapMouseEvent) => {
-    if (e.latLng) {
-      const lat = e.latLng.lat();
-      const lng = e.latLng.lng();
-      const newPosition = { lat, lng };
-      
-      setMarkerPosition(newPosition);
-      
-      // Reverse geocode to get address
-      const geocoder = new google.maps.Geocoder();
-      geocoder.geocode({ location: newPosition }, (results, status) => {
-        if (status === 'OK' && results && results[0]) {
-          const formattedAddress = results[0].formatted_address;
-          setAddress(formattedAddress);
-          onLocationSelect({
-            lat,
-            lng,
-            address: formattedAddress
-          });
-        }
-      });
-    }
   }, [onLocationSelect]);
 
-  const getCurrentLocation = () => {
+  const onMapClick = useCallback((e: google.maps.MapMouseEvent) => {
+    if (!window.google?.maps || !e.latLng) return;
+    const lat = e.latLng.lat();
+    const lng = e.latLng.lng();
+    const newPosition = { lat, lng };
+    
+    setMarkerPosition(newPosition);
+    
+    // Reverse geocode to get address
+    const geocoder = new window.google.maps.Geocoder();
+    geocoder.geocode({ location: newPosition }, (results, status) => {
+      if (status === 'OK' && results && results[0]) {
+        const formattedAddress = results[0].formatted_address;
+        setAddress(formattedAddress);
+        onLocationSelect({
+          lat,
+          lng,
+          address: formattedAddress
+        });
+      }
+    });
+  }, [onLocationSelect]);
+
+  const getCurrentLocation = useCallback(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
+          if (!window.google?.maps) return;
           const lat = position.coords.latitude;
           const lng = position.coords.longitude;
           const newPosition = { lat, lng };
@@ -94,7 +94,7 @@ export default function LocationPicker({
           setMarkerPosition(newPosition);
           
           // Reverse geocode to get address
-          const geocoder = new google.maps.Geocoder();
+          const geocoder = new window.google.maps.Geocoder();
           geocoder.geocode({ location: newPosition }, (results, status) => {
             if (status === 'OK' && results && results[0]) {
               const formattedAddress = results[0].formatted_address;
@@ -116,7 +116,16 @@ export default function LocationPicker({
     } else {
       toast.error('Geolocation is not supported by your browser');
     }
-  };
+  }, [onLocationSelect]);
+
+  // Guard: don't render map if Google Maps script isn't loaded yet
+  if (!window.google?.maps) {
+    return (
+      <div className="flex items-center justify-center h-[400px] bg-muted rounded-lg text-muted-foreground">
+        <p>Loading Google Maps...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -162,27 +171,26 @@ export default function LocationPicker({
             position={markerPosition}
             draggable={true}
             onDragEnd={(e) => {
-              if (e.latLng) {
-                const lat = e.latLng.lat();
-                const lng = e.latLng.lng();
-                const newPosition = { lat, lng };
-                
-                setMarkerPosition(newPosition);
-                
-                // Reverse geocode to get address
-                const geocoder = new google.maps.Geocoder();
-                geocoder.geocode({ location: newPosition }, (results, status) => {
-                  if (status === 'OK' && results && results[0]) {
-                    const formattedAddress = results[0].formatted_address;
-                    setAddress(formattedAddress);
-                    onLocationSelect({
-                      lat,
-                      lng,
-                      address: formattedAddress
-                    });
-                  }
-                });
-              }
+              if (!window.google?.maps || !e.latLng) return;
+              const lat = e.latLng.lat();
+              const lng = e.latLng.lng();
+              const newPosition = { lat, lng };
+              
+              setMarkerPosition(newPosition);
+              
+              // Reverse geocode to get address
+              const geocoder = new window.google.maps.Geocoder();
+              geocoder.geocode({ location: newPosition }, (results, status) => {
+                if (status === 'OK' && results && results[0]) {
+                  const formattedAddress = results[0].formatted_address;
+                  setAddress(formattedAddress);
+                  onLocationSelect({
+                    lat,
+                    lng,
+                    address: formattedAddress
+                  });
+                }
+              });
             }}
           />
         </GoogleMap>
