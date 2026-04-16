@@ -1,5 +1,6 @@
-// Notification utilities with sound support
+// Notification utilities with sound support + Service Worker integration
 import { generateNotificationSound } from './soundGenerator';
+import { sendLocationToSW } from '@/services/notificationService';
 
 export type NotificationType = 'task_accepted' | 'bondhu_arrived' | 'task_completed';
 
@@ -88,4 +89,12 @@ export const requestNotificationPermission = async (): Promise<boolean> => {
 // Initialize notifications on app load
 export const initializeNotifications = async () => {
   await requestNotificationPermission();
+};
+
+/**
+ * Send the user's current location to the Service Worker
+ * so it can perform proximity-based notifications for new tasks.
+ */
+export const updateSWLocation = (lat: number, lng: number) => {
+  sendLocationToSW(lat, lng);
 };

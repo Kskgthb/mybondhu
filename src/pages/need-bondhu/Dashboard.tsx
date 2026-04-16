@@ -19,6 +19,7 @@ import RoleSwitchButton from '@/components/common/RoleSwitchButton';
 import type { Task } from '@/types/types';
 import { toast } from 'sonner';
 import { initializeNotifications } from '@/lib/notifications';
+import { showPushNotification } from '@/services/notificationService';
 
 export default function NeedBondhuDashboard() {
   const { user, profile } = useAuth();
@@ -122,6 +123,8 @@ export default function NeedBondhuDashboard() {
             setNotificationMessage('A Bondhu has accepted your task and is on the way!');
             setNotificationTaskId(newTask.id);
             setShowNotification(true);
+            // Also fire a SW push notification (works in background)
+            showPushNotification('task_accepted', { taskId: newTask.id, taskTitle: newTask.title });
           }
           
           // Bondhu arrived (task moved to in_progress)
@@ -131,6 +134,7 @@ export default function NeedBondhuDashboard() {
             setNotificationMessage('Your Bondhu has reached the location and started working!');
             setNotificationTaskId(newTask.id);
             setShowNotification(true);
+            showPushNotification('bondhu_arrived', { taskId: newTask.id, taskTitle: newTask.title });
           }
           
           // Task completed
@@ -140,6 +144,7 @@ export default function NeedBondhuDashboard() {
             setNotificationMessage('The task has been successfully completed! Please rate your Bondhu.');
             setNotificationTaskId(newTask.id);
             setShowNotification(true);
+            showPushNotification('task_completed', { taskId: newTask.id, taskTitle: newTask.title });
           }
         });
       }

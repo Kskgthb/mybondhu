@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useState, useRef } from 'r
 import { User } from '@supabase/supabase-js';
 import { supabase } from '@/db/supabase';
 import { profilesApi } from '@/db/api';
-import { initializeNotificationSystem, subscribeToUserNotifications, unsubscribeNotifications } from '@/services/notificationService';
+import { initializeNotificationSystem, subscribeToUserNotifications, unsubscribeNotifications, teardownSWRealtime } from '@/services/notificationService';
 import type { Profile } from '@/types/types';
 
 interface AuthContextType {
@@ -36,10 +36,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Initialize push notifications ONCE after profile is loaded
       if (profileData && !notificationsInitializedRef.current) {
         notificationsInitializedRef.current = true;
-        initializeNotificationSystem(userId).catch((error) => {
+        // Pass role so the SW knows whether to send proximity alerts (Bondhu only)
+        initializeNotificationSystem(userId, profileData.active_role || profileData.role).catch((error) => {
           console.error('Failed to initialize notification system:', error);
         });
-        // Subscribe to realtime notifications from Supabase
+        // Subscribe to realtime notifications from Supabase (main thread backup)
         notifChannelRef.current = subscribeToUserNotifications(userId);
       }
     } catch (error) {
@@ -89,6 +90,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           notifChannelRef.current = null;
           notificationsInitializedRef.current = false;
         }
+        // Tear down the SW's background Realtime connection
+        teardownSWRealtime().catch(() => {});
       }
     });
 

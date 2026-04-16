@@ -20,7 +20,7 @@ import RoleSwitchButton from '@/components/common/RoleSwitchButton';
 import type { TaskWithDistance, TaskWithAssignment } from '@/types/types';
 import { toast } from 'sonner';
 import { navigateToLocation } from '@/lib/googleMaps';
-import { initializeNotifications } from '@/lib/notifications';
+import { initializeNotifications, updateSWLocation } from '@/lib/notifications';
 
 export default function BondhuDashboard() {
   const { user, profile, refreshProfile } = useAuth();
@@ -149,6 +149,8 @@ export default function BondhuDashboard() {
             };
             setCurrentLocation(location);
             profilesApi.updateLocation(user.id, location.lat, location.lng);
+            // Keep SW location in sync for background proximity alerts
+            updateSWLocation(location.lat, location.lng);
           },
           (error) => {
             console.error('Location update error:', error);
@@ -180,6 +182,8 @@ export default function BondhuDashboard() {
         if (user) {
           profilesApi.updateLocation(user.id, location.lat, location.lng);
         }
+        // Send location to Service Worker for proximity-based notifications
+        updateSWLocation(location.lat, location.lng);
       },
       (error) => {
         console.error('Geolocation error:', error);

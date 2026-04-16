@@ -1,16 +1,25 @@
 /**
  * Push Notification Service
  * Uses Service Worker for notifications that work even when tab is closed.
- * 
+ *
+ * Architecture:
+ *   1. Registers the Service Worker
+ *   2. Requests notification permission
+ *   3. Sends Supabase credentials to the SW so it can maintain its own
+ *      Realtime connection for background notifications
+ *   4. Sends location updates to the SW for proximity-based task alerts
+ *   5. Falls back to in-page notifications if SW is unavailable
+ *
  * Notification types:
- * - task_accepted: "Your task has been accepted by a Bondhu!"
- * - bondhu_on_way: "Your Bondhu is on the way!"
- * - bondhu_arrived: "Your Bondhu has reached the location!"
- * - task_started: "Bondhu has started working on your task!"
- * - task_completed: "Your task has been completed!"
- * - payment_received: "Payment confirmed!"
- * - new_task_nearby: "New task available near you!"
- * - message_received: "You have a new message"
+ *   - new_task_nearby:   "New task available near you!" (Bondhu, ~3 km)
+ *   - task_accepted:     "Your task has been accepted by a Bondhu!"
+ *   - bondhu_on_way:     "Your Bondhu is on the way!"
+ *   - bondhu_arrived:    "Your Bondhu has reached the location!"
+ *   - task_started:      "Bondhu has started working on your task!"
+ *   - task_completed:    "Your task has been completed!"
+ *   - code_verified:     "Completion code verified!"
+ *   - payment_confirmed: "Payment confirmed — Trust Delivered!"
+ *   - message_received:  "You have a new message"
  */
 
 import { supabase } from '@/db/supabase';
@@ -160,10 +169,111 @@ export async function requestNotificationPermission(): Promise<boolean> {
   return permission === 'granted';
 }
 
+// ============================================================
+// Service Worker Messaging
+// ============================================================
+
 /**
- * Initialize the full notification system
+ * Send credentials and user info to Service Worker so it can establish
+ * its own Supabase Realtime connection for background notifications.
  */
-export async function initializeNotificationSystem(userId: string): Promise<void> {
+export async function sendCredentialsToSW(
+  userId: string,
+  userRole?: string,
+  location?: { lat: number; lng: number }
+): Promise<void> {
+  const sw = await getActiveServiceWorker();
+  if (!sw) {
+    console.warn('[Notifications] No active SW to send credentials to');
+    return;
+  }
+
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+  sw.postMessage({
+    type: 'INIT_REALTIME',
+    payload: {
+      supabaseUrl,
+      supabaseKey,
+      userId,
+      userRole: userRole || null,
+      location: location || null,
+    },
+  });
+
+  console.log('✅ Credentials sent to Service Worker for background notifications');
+}
+
+/**
+ * Send location update to SW for proximity-based notifications
+ */
+export function sendLocationToSW(lat: number, lng: number): void {
+  getActiveServiceWorker().then((sw) => {
+    if (sw) {
+      sw.postMessage({
+        type: 'UPDATE_LOCATION',
+        payload: { lat, lng },
+      });
+    }
+  });
+}
+
+/**
+ * Send role update to SW
+ */
+export function sendRoleToSW(role: string): void {
+  getActiveServiceWorker().then((sw) => {
+    if (sw) {
+      sw.postMessage({
+        type: 'UPDATE_ROLE',
+        payload: { role },
+      });
+    }
+  });
+}
+
+/**
+ * Tear down SW realtime connection (on logout)
+ */
+export async function teardownSWRealtime(): Promise<void> {
+  const sw = await getActiveServiceWorker();
+  if (sw) {
+    sw.postMessage({ type: 'TEARDOWN' });
+    console.log('🧹 SW realtime teardown requested');
+  }
+}
+
+/**
+ * Get the active service worker instance
+ */
+async function getActiveServiceWorker(): Promise<ServiceWorker | null> {
+  if (!('serviceWorker' in navigator)) return null;
+
+  try {
+    const registration = swRegistration || (await navigator.serviceWorker.ready);
+    swRegistration = registration;
+    return registration.active;
+  } catch {
+    return null;
+  }
+}
+
+// ============================================================
+// Initialize Notification System
+// ============================================================
+
+/**
+ * Initialize the full notification system:
+ * 1. Register Service Worker
+ * 2. Request Permission
+ * 3. Send credentials to SW for background Realtime
+ */
+export async function initializeNotificationSystem(
+  userId: string,
+  userRole?: string,
+  location?: { lat: number; lng: number }
+): Promise<void> {
   // Register service worker
   await registerServiceWorker();
 
@@ -172,6 +282,9 @@ export async function initializeNotificationSystem(userId: string): Promise<void
 
   if (granted) {
     console.log('✅ Notifications enabled for user:', userId);
+
+    // Send credentials to SW for background operation
+    await sendCredentialsToSW(userId, userRole, location);
   } else {
     console.log('ℹ️ Notifications not enabled (permission not granted)');
   }
@@ -214,30 +327,50 @@ export async function showPushNotification(
     : window.location.origin;
 
   // Try Service Worker notification (works when tab closed)
-  if (swRegistration || (await getServiceWorkerRegistration())) {
-    const reg = swRegistration || (await getServiceWorkerRegistration());
-    if (reg) {
-      try {
-        await reg.showNotification(title, {
-            body,
-            icon: config.icon,
-            badge: '/logo.png',
-            tag: config.tag,
-            data: { url },
-            requireInteraction: type !== 'message_received',
-            actions: [
-              { action: 'open', title: 'View' },
-              { action: 'close', title: 'Dismiss' },
-            ],
-          } as NotificationOptions);
-        return;
-      } catch (err) {
-        console.warn('[Notifications] SW notification failed, falling back:', err);
-      }
+  const sw = await getActiveServiceWorker();
+  if (sw) {
+    try {
+      // Send SHOW_NOTIFICATION message to SW
+      sw.postMessage({
+        type: 'SHOW_NOTIFICATION',
+        payload: {
+          title,
+          body,
+          icon: config.icon,
+          badge: '/logo.png',
+          tag: config.tag,
+          url,
+          vibrate: [200, 100, 200],
+        },
+      });
+      return;
+    } catch (err) {
+      console.warn('[Notifications] SW notification failed, falling back:', err);
     }
   }
 
-  // Fallback: standard Notification API (only works when tab is open)
+  // Fallback: use registration.showNotification directly
+  if (swRegistration) {
+    try {
+      await swRegistration.showNotification(title, {
+        body,
+        icon: config.icon,
+        badge: '/logo.png',
+        tag: config.tag,
+        data: { url },
+        requireInteraction: type !== 'message_received',
+        actions: [
+          { action: 'open', title: 'View' },
+          { action: 'close', title: 'Dismiss' },
+        ],
+      } as NotificationOptions);
+      return;
+    } catch (err) {
+      console.warn('[Notifications] SW registration notification failed:', err);
+    }
+  }
+
+  // Final fallback: standard Notification API (only works when tab is open)
   if ('Notification' in window && Notification.permission === 'granted') {
     new Notification(title, {
       body,
@@ -248,28 +381,13 @@ export async function showPushNotification(
   }
 }
 
-/**
- * Get the active service worker registration
- */
-async function getServiceWorkerRegistration(): Promise<ServiceWorkerRegistration | null> {
-  if (!('serviceWorker' in navigator)) return null;
-
-  try {
-    const registration = await navigator.serviceWorker.ready;
-    swRegistration = registration;
-    return registration;
-  } catch {
-    return null;
-  }
-}
-
 // ============================================================
-// Supabase Realtime Notification Listeners
+// Supabase Realtime Notification Listeners (Main Thread Backup)
 // ============================================================
 
 /**
  * Subscribe to real-time notifications for a user
- * This listens for new rows in the notifications table and shows push notifications
+ * This is a BACKUP to the SW realtime — it fires when the tab is open.
  */
 export function subscribeToUserNotifications(userId: string) {
   const channel = supabase
