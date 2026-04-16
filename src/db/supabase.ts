@@ -10,4 +10,17 @@ if (!supabaseUrl || !supabaseAnonKey) {
   );
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    // Persist session in localStorage so it survives tab/browser close
+    persistSession: true,
+    // Automatically refresh the JWT before it expires (keeps session alive)
+    autoRefreshToken: true,
+    // Detect OAuth callback tokens in the URL (for Google login redirect)
+    detectSessionInUrl: true,
+    // Use localStorage for maximum persistence (survives browser restarts)
+    storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+    // Use PKCE flow for OAuth (more secure, default for browser)
+    flowType: 'pkce',
+  },
+});

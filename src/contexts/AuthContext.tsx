@@ -71,10 +71,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     initAuth();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log(`🔐 Auth event: ${event}`, session?.user?.id ? `(user: ${session.user.id.slice(0, 8)}...)` : '');
+      
       setUser(session?.user ?? null);
+      
       if (session?.user) {
-        loadProfile(session.user.id);
+        // Load/reload profile on sign in, token refresh, or user update
+        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED' || event === 'INITIAL_SESSION') {
+          loadProfile(session.user.id);
+        }
       } else {
         setProfile(null);
         // Cleanup notification subscription on sign out
