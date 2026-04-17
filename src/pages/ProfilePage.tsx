@@ -6,9 +6,44 @@ import { Button } from '@/components/ui/button';
 import { Star, MapPin, Calendar, Award, Building2, FileText, CheckCircle2, Clock, XCircle, Image as ImageIcon, IdCard, CreditCard, ExternalLink, Wallet } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { EXPERTISE_DOMAINS } from '@/constants/expertise';
+import { useState, useEffect } from 'react';
+import { tasksApi, assignmentsApi } from '@/db/api';
+import ProfileHeader from '@/components/dashboard/ProfileHeader';
+import StatsSection from '@/components/dashboard/StatsSection';
+import CoinsSection from '@/components/dashboard/CoinsSection';
+import ReferralSection from '@/components/dashboard/ReferralSection';
+import WalletSection from '@/components/dashboard/WalletSection';
 
 export default function ProfilePage() {
-  const { profile } = useAuth();
+  const { user, profile, refreshProfile } = useAuth();
+  const [tasksCount, setTasksCount] = useState({ completed: 0, pending: 0, declined: 0 });
+
+  useEffect(() => {
+    if (!user || !profile) return;
+    
+    const loadStats = async () => {
+      try {
+        if (profile.role === 'bondhu') {
+          const assignments = await assignmentsApi.getMyAssignments(user.id);
+          setTasksCount({
+            completed: assignments.filter(a => a.status === 'completed').length,
+            pending: assignments.filter(a => a.status === 'in_progress' || a.status === 'accepted').length,
+            declined: assignments.filter(a => a.assignment?.status === 'declined').length
+          });
+        } else {
+          const tasks = await tasksApi.getMyTasks(user.id);
+          setTasksCount({
+            completed: tasks.filter(t => t.status === 'completed').length,
+            pending: tasks.filter(t => t.status === 'in_progress' || t.status === 'accepted').length,
+            declined: tasks.filter(t => t.status === 'cancelled').length
+          });
+        }
+      } catch (err) {
+        console.error('Failed to load stats', err);
+      }
+    };
+    loadStats();
+  }, [user, profile]);
 
   if (!profile) {
     return (
@@ -54,117 +89,42 @@ export default function ProfilePage() {
       <h1 className="text-3xl font-bold mb-8">Profile</h1>
 
       <div className="grid gap-6">
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-6">
-              <Avatar className="h-24 w-24">
-                <AvatarImage src={profile.photo_url || profile.avatar_url || undefined} alt={profile.full_name || profile.username} />
-                <AvatarFallback className="bg-primary text-primary-foreground text-2xl">
-                  {getInitials()}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-1">
-                <CardTitle className="text-2xl mb-2">
-                  {profile.full_name || profile.username}
-                </CardTitle>
-                <div className="flex items-center gap-2 mb-2 flex-wrap">
-                  <Badge variant="secondary" className="capitalize">
-                    {profile.role.replace('_', ' ')}
-                  </Badge>
-                  {profile.role === 'bondhu' && profile.availability_status && (
-                    <Badge variant="default" className="bg-success">
-                      Available
-                    </Badge>
-                  )}
-                  {getVerificationBadge()}
-                </div>
-                {profile.email && (
-                  <p className="text-sm text-muted-foreground">{profile.email}</p>
-                )}
-                {(profile.phone || profile.contact_no) && (
-                  <p className="text-sm text-muted-foreground">{profile.phone || profile.contact_no}</p>
-                )}
-              </div>
-            </div>
-          </CardHeader>
-        </Card>
+        <ProfileHeader profile={profile} role={profile.role} />
+        
+        <div className="grid lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 space-y-6">
+            {profile.role === 'bondhu' && (
+              <WalletSection 
+                userId={user?.id || ''} 
+                totalTasks={profile?.total_tasks || 0} 
+                totalEarnings={profile?.total_earnings || 0} 
+                upiId={profile?.upi_id || null} 
+                onUpdate={refreshProfile}
+              />
+            )}
+            
+            <StatsSection 
+              rating={profile.rating_avg || 0} 
+              completed={profile.role === 'bondhu' ? (profile.total_tasks || 0) : tasksCount.completed} 
+              pending={tasksCount.pending} 
+              declined={tasksCount.declined} 
+            />
 
-        {profile.role === 'bondhu' && (
-          <>
-            <Card>
-              <CardHeader>
-                <CardTitle>Helper Statistics</CardTitle>
-                <CardDescription>Your performance as a Bondhu helper</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid xl:grid-cols-3 gap-6">
-                  <div className="flex items-center gap-3">
-                    <div className="p-3 rounded-full bg-accent/20">
-                      <Star className="h-6 w-6 text-accent" />
-                    </div>
-                    <div>
-                      <p className="text-2xl font-bold">{profile.rating_avg.toFixed(1)}</p>
-                      <p className="text-sm text-muted-foreground">Average Rating</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="p-3 rounded-full bg-primary/20">
-                      <Award className="h-6 w-6 text-primary" />
-                    </div>
-                    <div>
-                      <p className="text-2xl font-bold">{profile.total_tasks}</p>
-                      <p className="text-sm text-muted-foreground">Tasks Completed</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="p-3 rounded-full bg-secondary/20">
-                      <Calendar className="h-6 w-6 text-secondary" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium">
-                        {formatDistanceToNow(new Date(profile.created_at), { addSuffix: false })}
-                      </p>
-                      <p className="text-sm text-muted-foreground">Member Since</p>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-gradient-to-br from-secondary/10 via-background to-primary/10 border-secondary/20">
-              <CardHeader>
-                <div className="flex items-center gap-3">
-                  <div className="p-3 rounded-full bg-secondary/20">
-                    <Wallet className="h-6 w-6 text-secondary" />
-                  </div>
-                  <div>
-                    <CardTitle>Wallet</CardTitle>
-                    <CardDescription>Your total earnings from completed tasks</CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-4xl font-bold text-secondary">₹{profile.total_earnings?.toFixed(2) || '0.00'}</span>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4 pt-4 border-t">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Tasks Completed</p>
-                      <p className="text-xl font-semibold">{profile.total_tasks}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Avg. per Task</p>
-                      <p className="text-xl font-semibold">
-                        ₹{profile.total_tasks > 0 ? ((profile.total_earnings || 0) / profile.total_tasks).toFixed(2) : '0.00'}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </>
-        )}
+            {profile.role !== 'bondhu' && (
+              <Card className="bg-primary/5 border-none shadow-sm overflow-hidden">
+                <CardContent className="p-6">
+                  <h3 className="text-lg font-bold mb-1">Post your need, Bondhu will help 🤝</h3>
+                  <p className="text-sm text-muted-foreground">Find helpers on campus for any task, big or small.</p>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+          
+          <div className="space-y-6">
+            <CoinsSection coins={profile.bondhu_coins || 0} />
+            <ReferralSection referralCode={profile.referral_code || null} />
+          </div>
+        </div>
 
         {profile.role === 'bondhu' && (profile.college_name || profile.about || (profile.expertise && profile.expertise.length > 0)) && (
           <Card>

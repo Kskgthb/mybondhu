@@ -21,10 +21,6 @@ import type { Task, TaskWithFullInfo } from '@/types/types';
 import { toast } from 'sonner';
 import { initializeNotifications } from '@/lib/notifications';
 import { showPushNotification } from '@/services/notificationService';
-import ProfileHeader from '@/components/dashboard/ProfileHeader';
-import ReferralSection from '@/components/dashboard/ReferralSection';
-import StatsSection from '@/components/dashboard/StatsSection';
-import CoinsSection from '@/components/dashboard/CoinsSection';
 import { Card, CardContent } from '@/components/ui/card';
 
 export default function NeedBondhuDashboard() {
@@ -239,31 +235,7 @@ export default function NeedBondhuDashboard() {
           </div>
         </div>
 
-        <div className="grid gap-6 mb-8">
-          <ProfileHeader profile={profile} role="need_bondhu" />
-          
-          <div className="grid lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 space-y-6">
-              <StatsSection 
-                rating={profile?.rating_avg || 0} 
-                completed={getTaskCount('completed')} 
-                pending={getTaskCount('in_progress') + getTaskCount('accepted')} 
-                declined={getTaskCount('cancelled')} 
-              />
-              <Card className="bg-primary/5 border-none shadow-sm overflow-hidden">
-                <CardContent className="p-6">
-                  <h3 className="text-lg font-bold mb-1">Post your need, Bondhu will help 🤝</h3>
-                  <p className="text-sm text-muted-foreground">Find helpers on campus for any task, big or small.</p>
-                </CardContent>
-              </Card>
-            </div>
-            
-            <div className="space-y-6">
-              <CoinsSection coins={profile?.bondhu_coins || 0} />
-              <ReferralSection referralCode={profile?.referral_code || null} />
-            </div>
-          </div>
-        </div>
+
 
       {/* Compact Banner */}
       <CompactBanner />

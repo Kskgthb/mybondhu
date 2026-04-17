@@ -21,11 +21,7 @@ import type { TaskWithDistance, TaskWithAssignment } from '@/types/types';
 import { toast } from 'sonner';
 import { navigateToLocation } from '@/lib/googleMaps';
 import { initializeNotifications, updateSWLocation } from '@/lib/notifications';
-import ProfileHeader from '@/components/dashboard/ProfileHeader';
-import WalletSection from '@/components/dashboard/WalletSection';
-import CoinsSection from '@/components/dashboard/CoinsSection';
-import ReferralSection from '@/components/dashboard/ReferralSection';
-import StatsSection from '@/components/dashboard/StatsSection';
+
 
 export default function BondhuDashboard() {
   const { user, profile, refreshProfile } = useAuth();
@@ -491,32 +487,7 @@ export default function BondhuDashboard() {
           </Card>
         )}
 
-        <div className="grid gap-6 mb-8">
-          <ProfileHeader profile={profile} role="bondhu" />
-          
-          <div className="grid lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 space-y-6">
-              <WalletSection 
-                userId={user?.id || ''} 
-                totalTasks={profile?.total_tasks || 0} 
-                totalEarnings={profile?.total_earnings || 0} 
-                upiId={profile?.upi_id || null} 
-                onUpdate={refreshProfile}
-              />
-              <StatsSection 
-                rating={profile?.rating_avg || 0} 
-                completed={profile?.total_tasks || 0} 
-                pending={getAssignmentCount('in_progress')} 
-                declined={getAssignmentCount('declined')} 
-              />
-            </div>
-            
-            <div className="space-y-6">
-              <CoinsSection coins={profile?.bondhu_coins || 0} />
-              <ReferralSection referralCode={profile?.referral_code || null} />
-            </div>
-          </div>
-        </div>
+
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <div className="overflow-x-auto pb-2 -mx-4 px-4">
