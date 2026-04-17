@@ -10,22 +10,28 @@ import TaskCard from '@/components/task/TaskCard';
 import TaskPostDialog from '@/components/task/TaskPostDialog';
 import TaskEditDialog from '@/components/task/TaskEditDialog';
 import CancelTaskDialog from '@/components/task/CancelTaskDialog';
+import RatingDialog from '@/components/task/RatingDialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import TaskCardSkeleton from '@/components/common/TaskCardSkeleton';
 import CompactBanner from '@/components/common/CompactBanner';
 import CampusBackground from '@/components/common/CampusBackground';
 import NotificationDialog from '@/components/common/NotificationDialog';
 import RoleSwitchButton from '@/components/common/RoleSwitchButton';
-import type { Task } from '@/types/types';
+import type { Task, TaskWithFullInfo } from '@/types/types';
 import { toast } from 'sonner';
 import { initializeNotifications } from '@/lib/notifications';
 import { showPushNotification } from '@/services/notificationService';
+import ProfileHeader from '@/components/dashboard/ProfileHeader';
+import ReferralSection from '@/components/dashboard/ReferralSection';
+import StatsSection from '@/components/dashboard/StatsSection';
+import CoinsSection from '@/components/dashboard/CoinsSection';
+import { Card, CardContent } from '@/components/ui/card';
 
 export default function NeedBondhuDashboard() {
   const { user, profile } = useAuth();
   const { currentRole } = useRole();
   const navigate = useNavigate();
-  const [tasks, setTasks] = useState<Task[]>([]);
+  const [tasks, setTasks] = useState<TaskWithFullInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('all');
   const [showPostDialog, setShowPostDialog] = useState(false);
@@ -33,6 +39,8 @@ export default function NeedBondhuDashboard() {
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [cancellingTask, setCancellingTask] = useState<Task | null>(null);
+  const [showRatingDialog, setShowRatingDialog] = useState(false);
+  const [ratingTask, setRatingTask] = useState<Task | null>(null);
   
   // Notification states
   const [showNotification, setShowNotification] = useState(false);
@@ -97,7 +105,7 @@ export default function NeedBondhuDashboard() {
       const previousTasks = [...tasks];
       
       // Retry logic for loading tasks
-      let data: Task[] = [];
+      let data: TaskWithFullInfo[] = [];
       for (let attempt = 1; attempt <= 3; attempt++) {
         try {
           data = await tasksApi.getMyTasks(user.id);
@@ -196,6 +204,17 @@ export default function NeedBondhuDashboard() {
     setShowCancelDialog(false);
     setCancellingTask(null);
     loadTasks();
+    toast.success('Task cancelled successfully');
+  };
+
+  const handleRateTask = (task: Task) => {
+    setRatingTask(task);
+    setShowRatingDialog(true);
+  };
+
+  const handleRatingSuccess = () => {
+    loadTasks();
+    setRatingTask(null);
   };
 
   const getTaskCount = (status?: string) => {
@@ -216,6 +235,32 @@ export default function NeedBondhuDashboard() {
             </div>
             <div className="flex items-center gap-2">
               <RoleSwitchButton variant="outline" size="default" />
+            </div>
+          </div>
+        </div>
+
+        <div className="grid gap-6 mb-8">
+          <ProfileHeader profile={profile} role="need_bondhu" />
+          
+          <div className="grid lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 space-y-6">
+              <StatsSection 
+                rating={profile?.rating_avg || 0} 
+                completed={getTaskCount('completed')} 
+                pending={getTaskCount('in_progress') + getTaskCount('accepted')} 
+                declined={getTaskCount('cancelled')} 
+              />
+              <Card className="bg-primary/5 border-none shadow-sm overflow-hidden">
+                <CardContent className="p-6">
+                  <h3 className="text-lg font-bold mb-1">Post your need, Bondhu will help 🤝</h3>
+                  <p className="text-sm text-muted-foreground">Find helpers on campus for any task, big or small.</p>
+                </CardContent>
+              </Card>
+            </div>
+            
+            <div className="space-y-6">
+              <CoinsSection coins={profile?.bondhu_coins || 0} />
+              <ReferralSection referralCode={profile?.referral_code || null} />
             </div>
           </div>
         </div>
@@ -285,6 +330,7 @@ export default function NeedBondhuDashboard() {
                   onView={() => handleViewTask(task.id)}
                   onEdit={() => handleEditTask(task)}
                   onCancel={() => handleCancelTask(task)}
+                  onRate={task.status === 'completed' && !task.rating ? () => handleRateTask(task) : undefined}
                   showEdit={true}
                   showCancel={true}
                 />
@@ -313,6 +359,7 @@ export default function NeedBondhuDashboard() {
                   onView={() => handleViewTask(task.id)}
                   onEdit={() => handleEditTask(task)}
                   onCancel={() => handleCancelTask(task)}
+                  onRate={task.status === 'completed' && !task.rating ? () => handleRateTask(task) : undefined}
                   showEdit={true}
                   showCancel={true}
                 />
@@ -340,6 +387,7 @@ export default function NeedBondhuDashboard() {
                   task={task}
                   onView={() => handleViewTask(task.id)}
                   onEdit={() => handleEditTask(task)}
+                  onRate={task.status === 'completed' && !task.rating ? () => handleRateTask(task) : undefined}
                   showEdit={true}
                 />
               ))}
@@ -366,6 +414,7 @@ export default function NeedBondhuDashboard() {
                   task={task}
                   onView={() => handleViewTask(task.id)}
                   onEdit={() => handleEditTask(task)}
+                  onRate={task.status === 'completed' && !task.rating ? () => handleRateTask(task) : undefined}
                   showEdit={true}
                 />
               ))}
@@ -418,6 +467,16 @@ export default function NeedBondhuDashboard() {
         onAction={notificationTaskId ? () => navigate(`/task/${notificationTaskId}`) : undefined}
         actionLabel={notificationTaskId ? 'View Task' : undefined}
       />
+
+      {ratingTask && (
+        <RatingDialog
+          open={showRatingDialog}
+          onOpenChange={setShowRatingDialog}
+          taskId={ratingTask.id}
+          bondhuId={tasks.find(t => t.id === ratingTask.id)?.assignment?.bondhu_id || ''}
+          onSuccess={handleRatingSuccess}
+        />
+      )}
       </div>
     </div>
   );

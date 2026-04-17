@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { toast } from 'sonner';
-import { Loader2, UserCheck, HandHeart, Mail, Phone } from 'lucide-react';
+import { Loader2, UserCheck, HandHeart, Mail, Phone, Gift } from 'lucide-react';
 import Logo from '@/components/common/Logo';
 import CampusBackground from '@/components/common/CampusBackground';
 
@@ -18,6 +18,7 @@ export default function SignupPage() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [role, setRole] = useState<'need_bondhu' | 'bondhu'>('need_bondhu');
+  const [referralCode, setReferralCode] = useState('');
   const [loading, setLoading] = useState(false);
   const { signUp, signInWithGoogle } = useAuth();
   const navigate = useNavigate();
@@ -27,6 +28,15 @@ export default function SignupPage() {
       navigate('/signup/bondhu');
     }
   }, [role, navigate]);
+
+  // Handle referral code from URL
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const ref = params.get('ref');
+    if (ref) {
+      setReferralCode(ref.toUpperCase());
+    }
+  }, []);
 
   const handleGoogleSignIn = async () => {
     try {
@@ -96,7 +106,7 @@ export default function SignupPage() {
 
     setLoading(true);
     try {
-      await signUp(username, password, role, email, phone);
+      await signUp(username, password, role, email, phone, referralCode);
       
       // Show success message with role-specific information
       if (role === 'bondhu') {
@@ -244,6 +254,26 @@ export default function SignupPage() {
                 autoComplete="new-password"
               />
             </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="referralCode" className="flex items-center gap-2">
+                <Gift className="h-4 w-4" />
+                Referral Code (Optional)
+              </Label>
+              <Input
+                id="referralCode"
+                type="text"
+                placeholder="Enter referral code"
+                value={referralCode}
+                onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
+                disabled={loading}
+                className="uppercase"
+              />
+              <p className="text-[10px] text-muted-foreground">
+                Enter a code to help a friend earn Bondhu Coins!
+              </p>
+            </div>
+
             <div className="space-y-3">
               <Label>I want to</Label>
               <RadioGroup value={role} onValueChange={(value) => setRole(value as 'need_bondhu' | 'bondhu')}>

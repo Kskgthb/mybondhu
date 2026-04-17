@@ -11,7 +11,7 @@ interface AuthContextType {
   loading: boolean;
   signIn: (username: string, password: string) => Promise<void>;
   signInWithGoogle: () => Promise<void>;
-  signUp: (username: string, password: string, role: 'need_bondhu' | 'bondhu', email?: string, phone?: string) => Promise<void>;
+  signUp: (username: string, password: string, role: 'need_bondhu' | 'bondhu', email?: string, phone?: string, referralCode?: string) => Promise<void>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
@@ -158,12 +158,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     password: string, 
     role: 'need_bondhu' | 'bondhu',
     email?: string,
-    phone?: string
+    phone?: string,
+    referralCode?: string
   ) => {
     const authEmail = email || `${username}@miaoda.com`;
     
-    // Username is no longer unique - multiple users can have the same username
-    // Only check email and phone for uniqueness
+    // Check if referral code is valid
+    let referredBy: string | null = null;
+    if (referralCode) {
+      const { data: referrer } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('referral_code', referralCode.toUpperCase())
+        .maybeSingle();
+      
+      if (referrer) {
+        referredBy = referrer.id;
+      } else {
+        throw new Error('Invalid referral code. Please check and try again, or leave it blank.');
+      }
+    }
     
     // Check if email already exists (if real email provided)
     if (email && !email.endsWith('@miaoda.com')) {
@@ -228,6 +242,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           email: email || null,
           phone: phone || null,
           contact_no: phone || null,
+          referred_by: referredBy,
           updated_at: new Date().toISOString(),
         })
         .eq('id', data.user.id);

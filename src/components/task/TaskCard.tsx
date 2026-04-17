@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MapPin, Clock, IndianRupee, AlertCircle, ExternalLink, Navigation, Edit, X } from 'lucide-react';
+import { MapPin, Clock, IndianRupee, AlertCircle, ExternalLink, Navigation, Edit, X, Star } from 'lucide-react';
 import type { Task, TaskWithDistance } from '@/types/types';
 import { formatDistanceToNow } from 'date-fns';
 import { getCategoryLabel, getCategoryIcon } from '@/lib/categories';
@@ -14,6 +14,7 @@ interface TaskCardProps {
   onNavigate?: () => void;
   onEdit?: () => void;
   onCancel?: () => void;
+  onRate?: () => void;
   showActions?: boolean;
   showDistance?: boolean;
   showNavigate?: boolean;
@@ -44,6 +45,7 @@ export default function TaskCard({
   onNavigate,
   onEdit,
   onCancel,
+  onRate,
   showActions = false, 
   showDistance = false,
   showNavigate = false,
@@ -128,6 +130,12 @@ export default function TaskCard({
             <Button className="flex-1 bg-secondary hover:bg-secondary/90" onClick={onNavigate}>
               <Navigation className="h-4 w-4 mr-2" />
               Navigate
+            </Button>
+          )}
+          {onRate && task.status === 'completed' && (
+            <Button className="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white" onClick={onRate}>
+              <Star className="h-4 w-4 mr-2 fill-current" />
+              Rate Bondhu
             </Button>
           )}
           {onView && (

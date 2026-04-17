@@ -83,6 +83,16 @@ export const profilesApi = {
 
     if (error) throw error;
   },
+
+  async requestWithdrawal(amount: number, upiId: string): Promise<{ success: boolean; message: string }> {
+    const { data, error } = await supabase.rpc('withdraw_request', {
+      p_amount: amount,
+      p_upi_id: upiId,
+    });
+
+    if (error) throw error;
+    return data;
+  },
 };
 
 export const tasksApi = {
@@ -180,10 +190,10 @@ export const tasksApi = {
     return null;
   },
 
-  async getMyTasks(userId: string, status?: string, page = 0, pageSize = 20): Promise<Task[]> {
+  async getMyTasks(userId: string, status?: string, page = 0, pageSize = 20): Promise<TaskWithFullInfo[]> {
     let query = supabase
       .from('tasks')
-      .select('*')
+      .select('*, assignment:task_assignments(*), rating:ratings(*)')
       .eq('poster_id', userId)
       .order('created_at', { ascending: false });
 
@@ -194,7 +204,20 @@ export const tasksApi = {
     const { data, error } = await query.range(page * pageSize, (page + 1) * pageSize - 1);
 
     if (error) throw error;
-    return Array.isArray(data) ? data : [];
+    
+    // Process data to match TaskWithFullInfo structure
+    const processedData = (data || []).map(item => {
+      const assignment = Array.isArray(item.assignment) ? item.assignment[0] : item.assignment;
+      const rating = Array.isArray(item.rating) ? item.rating[0] : item.rating;
+      return {
+        ...item,
+        assignment: assignment || null,
+        rating: rating || null,
+        bondhu: null
+      };
+    });
+
+    return processedData as TaskWithFullInfo[];
   },
 
   async getNearbyTasks(lat: number, lng: number, maxDistance = 50): Promise<TaskWithDistance[]> {

@@ -52,6 +52,11 @@ export interface Profile {
   expertise_description: string | null;
   registration_completed: boolean;
   registration_step: number;
+  upi_id: string | null;
+  bondhu_coins: number;
+  referral_code: string | null;
+  referred_by: string | null;
+  total_tasks_posted: number;
 }
 
 export interface Document {
@@ -191,6 +196,12 @@ export interface TaskWithAssignment extends Task {
 }
 
 export interface TaskWithRating extends Task {
+  rating: Rating | null;
+}
+
+export interface TaskWithFullInfo extends Task {
+  assignment: TaskAssignment | null;
+  bondhu: Profile | null;
   rating: Rating | null;
 }
 

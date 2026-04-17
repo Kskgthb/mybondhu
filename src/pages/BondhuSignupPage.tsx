@@ -21,10 +21,9 @@ import {
   Camera,
   IdCard,
   CreditCard,
-  CheckCircle2,
-  ArrowRight,
   ArrowLeft,
-  FileCheck
+  FileCheck,
+  Gift
 } from 'lucide-react';
 import { EXPERTISE_DOMAINS } from '@/constants/expertise';
 import { BondhuSignupData, BondhuSignupStep1, BondhuSignupStep2, BondhuSignupStep3 } from '@/types/types';
@@ -35,6 +34,7 @@ export default function BondhuSignupPage() {
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<Record<string, UploadProgress>>({});
+  const [referralCode, setReferralCode] = useState('');
   const { signUp, user } = useAuth();
   const navigate = useNavigate();
 
@@ -45,6 +45,15 @@ export default function BondhuSignupPage() {
       navigate('/register/bondhu');
     }
   }, [user, navigate]);
+
+  // Handle referral code from URL
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const ref = params.get('ref');
+    if (ref) {
+      setReferralCode(ref.toUpperCase());
+    }
+  }, []);
 
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -233,6 +242,24 @@ export default function BondhuSignupPage() {
     setLoading(true);
 
     try {
+      // Check if referral code is valid
+      let referredBy: string | null = null;
+      if (referralCode) {
+        const { data: referrer } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('referral_code', referralCode.toUpperCase())
+          .maybeSingle();
+        
+        if (referrer) {
+          referredBy = referrer.id;
+        } else {
+          setLoading(false);
+          toast.error('Invalid referral code. Please check and try again, or leave it blank.');
+          return;
+        }
+      }
+
       // Username is no longer unique - multiple users can have the same username
       // Only email and phone are checked for uniqueness (handled by database constraints)
 
@@ -286,7 +313,8 @@ export default function BondhuSignupPage() {
           role: 'bondhu',
           verification_status: 'pending',
           terms_accepted: true,
-          terms_accepted_at: new Date().toISOString()
+          terms_accepted_at: new Date().toISOString(),
+          referred_by: referredBy,
         })
         .eq('id', userId);
 
@@ -464,6 +492,24 @@ export default function BondhuSignupPage() {
         </div>
         <p className="text-xs text-muted-foreground">
           {step1Data.about.length}/50 characters
+        </p>
+      </div>
+
+      <div className="space-y-2 pt-2 border-t border-border mt-4">
+        <Label htmlFor="referralCode" className="flex items-center gap-2">
+          <Gift className="h-4 w-4 text-primary" />
+          Referral Code (Optional)
+        </Label>
+        <Input
+          id="referralCode"
+          type="text"
+          placeholder="Enter referral code"
+          value={referralCode}
+          onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
+          className="uppercase"
+        />
+        <p className="text-[10px] text-muted-foreground">
+          Enter a code to help a friend earn Bondhu Coins!
         </p>
       </div>
     </div>
