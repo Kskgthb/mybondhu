@@ -13,17 +13,19 @@ import StatsSection from '@/components/dashboard/StatsSection';
 import CoinsSection from '@/components/dashboard/CoinsSection';
 import ReferralSection from '@/components/dashboard/ReferralSection';
 import WalletSection from '@/components/dashboard/WalletSection';
+import { useRole } from '@/contexts/RoleContext';
 
 export default function ProfilePage() {
   const { user, profile, refreshProfile } = useAuth();
+  const { currentRole } = useRole();
   const [tasksCount, setTasksCount] = useState({ completed: 0, pending: 0, declined: 0 });
 
   useEffect(() => {
-    if (!user || !profile) return;
+    if (!user || !profile || !currentRole) return;
     
     const loadStats = async () => {
       try {
-        if (profile.role === 'bondhu') {
+        if (currentRole === 'bondhu') {
           const assignments = await assignmentsApi.getMyAssignments(user.id);
           setTasksCount({
             completed: assignments.filter(a => a.status === 'completed').length,
@@ -43,7 +45,7 @@ export default function ProfilePage() {
       }
     };
     loadStats();
-  }, [user, profile]);
+  }, [user, profile, currentRole]);
 
   if (!profile) {
     return (
@@ -65,7 +67,7 @@ export default function ProfilePage() {
   };
 
   const getVerificationBadge = () => {
-    if (profile.role !== 'bondhu') return null;
+    if (currentRole !== 'bondhu') return null;
 
     const statusConfig = {
       pending: { icon: Clock, label: 'Pending Verification', variant: 'secondary' as const },
@@ -89,11 +91,11 @@ export default function ProfilePage() {
       <h1 className="text-3xl font-bold mb-8">Profile</h1>
 
       <div className="grid gap-6">
-        <ProfileHeader profile={profile} role={profile.role} />
+        <ProfileHeader profile={profile} role={currentRole || profile.role} />
         
         <div className="grid lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
-            {profile.role === 'bondhu' && (
+            {currentRole === 'bondhu' && (
               <WalletSection 
                 userId={user?.id || ''} 
                 totalTasks={profile?.total_tasks || 0} 
@@ -105,12 +107,12 @@ export default function ProfilePage() {
             
             <StatsSection 
               rating={profile.rating_avg || 0} 
-              completed={profile.role === 'bondhu' ? (profile.total_tasks || 0) : tasksCount.completed} 
+              completed={currentRole === 'bondhu' ? (profile.total_tasks || 0) : tasksCount.completed} 
               pending={tasksCount.pending} 
               declined={tasksCount.declined} 
             />
 
-            {profile.role !== 'bondhu' && (
+            {currentRole !== 'bondhu' && (
               <Card className="bg-primary/5 border-none shadow-sm overflow-hidden">
                 <CardContent className="p-6">
                   <h3 className="text-lg font-bold mb-1">Post your need, Bondhu will help 🤝</h3>
@@ -126,7 +128,7 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {profile.role === 'bondhu' && (profile.college_name || profile.about || (profile.expertise && profile.expertise.length > 0)) && (
+        {currentRole === 'bondhu' && (profile.college_name || profile.about || (profile.expertise && profile.expertise.length > 0)) && (
           <Card>
             <CardHeader>
               <CardTitle>Bondhu Details</CardTitle>
@@ -183,7 +185,7 @@ export default function ProfilePage() {
           </Card>
         )}
 
-        {profile.role === 'bondhu' && (profile.photo_url || profile.college_id_url || profile.aadhaar_url) && (
+        {currentRole === 'bondhu' && (profile.photo_url || profile.college_id_url || profile.aadhaar_url) && (
           <Card>
             <CardHeader>
               <CardTitle>Verification Documents</CardTitle>
