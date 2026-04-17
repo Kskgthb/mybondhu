@@ -38,6 +38,8 @@ export default function TaskCompletionWorkflow({
       : 'code'
   );
   const [proofUploaded, setProofUploaded] = useState(!!task.assignment?.proof_url);
+  const [localCodeVerified, setLocalCodeVerified] = useState(false);
+  const [isCashPayment, setIsCashPayment] = useState(task.payment_method === 'cash');
 
   // Generate QR data if missing (fallback)
   const paymentQRData = useMemo(() => {
@@ -81,14 +83,16 @@ export default function TaskCompletionWorkflow({
       }
 
       toast.success(result.message || 'Code verified successfully!');
+      setLocalCodeVerified(true);
       
-      // If cash payment, task is auto-completed
+      // Always move to proof step next
+      setCurrentStep('proof');
+
       if (result.auto_completed) {
-        setCurrentStep('complete');
-        onComplete();
+        setIsCashPayment(true);
+        // Do NOT call onComplete() yet to prevent NavigateToTask from redirecting immediately.
+        // We want the user to upload the proof first.
       } else {
-        // For online payment, move to proof upload step
-        setCurrentStep('proof');
         onComplete();
       }
     } catch (error) {
@@ -109,8 +113,14 @@ export default function TaskCompletionWorkflow({
       
       toast.success('Proof uploaded successfully!');
       setProofUploaded(true);
-      setCurrentStep('payment');
-      onComplete();
+      
+      if (isCashPayment || task.payment_method === 'cash') {
+        setCurrentStep('complete');
+        onComplete(); // Trigger reload and redirect now
+      } else {
+        setCurrentStep('payment');
+        // We can call onComplete to refresh task data if needed, but not required
+      }
     } catch (error) {
       console.error('Error updating proof:', error);
       toast.error('Failed to save proof. Please try again.');
@@ -119,7 +129,12 @@ export default function TaskCompletionWorkflow({
 
   const handleSkipProof = () => {
     toast.info('Skipped proof upload. You can upload later if needed.');
-    setCurrentStep('payment');
+    if (isCashPayment || task.payment_method === 'cash') {
+      setCurrentStep('complete');
+      onComplete(); // Trigger reload and redirect now
+    } else {
+      setCurrentStep('payment');
+    }
   };
 
   const handlePaymentConfirmed = () => {
@@ -133,7 +148,7 @@ export default function TaskCompletionWorkflow({
       title: 'Verify Completion Code',
       description: 'Enter the 6-digit code from task poster',
       icon: Shield,
-      status: task.code_verified ? 'completed' : currentStep === 'code' ? 'active' : 'pending',
+      status: task.code_verified || localCodeVerified ? 'completed' : currentStep === 'code' ? 'active' : 'pending',
     },
     {
       id: 'proof',
