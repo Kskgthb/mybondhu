@@ -443,24 +443,7 @@ export default function BondhuDashboard() {
               </p>
             </div>
             <div className="flex items-center gap-3">
-              <RoleSwitchButton variant="outline" size="default" />
-              <Card className="w-auto">
-                <CardContent className="pt-6">
-                  <div className="flex items-center gap-3">
-                    <Power className={`h-5 w-5 ${isAvailable ? 'text-secondary' : 'text-muted-foreground'}`} />
-                    <div className="flex items-center gap-2">
-                      <Switch
-                        id="availability"
-                        checked={isAvailable}
-                        onCheckedChange={handleAvailabilityToggle}
-                      />
-                      <Label htmlFor="availability" className="cursor-pointer">
-                        {isAvailable ? 'Available' : 'Offline'}
-                      </Label>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              {/* Availability and Role Switch are now in the Top Header */}
             </div>
           </div>
         </div>
@@ -529,7 +512,7 @@ export default function BondhuDashboard() {
 
         <TabsContent value="nearby" className="space-y-4">
           {loading ? (
-            <div className="grid gap-6 xl:grid-cols-2 2xl:grid-cols-3">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {[1, 2, 3, 4, 5, 6].map(i => (
                 <TaskCardSkeleton key={i} />
               ))}
@@ -544,7 +527,7 @@ export default function BondhuDashboard() {
               )}
             </div>
           ) : (
-            <div className="grid gap-6 xl:grid-cols-2 2xl:grid-cols-3">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {nearbyTasks.map(task => (
                 <TaskCard
                   key={task.id}
@@ -562,7 +545,7 @@ export default function BondhuDashboard() {
 
         <TabsContent value="all" className="space-y-4">
           {loading ? (
-            <div className="grid gap-6 xl:grid-cols-2 2xl:grid-cols-3">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {[1, 2, 3, 4].map(i => (
                 <TaskCardSkeleton key={i} />
               ))}
@@ -572,7 +555,7 @@ export default function BondhuDashboard() {
               <p className="text-muted-foreground">You haven't accepted any tasks yet</p>
             </div>
           ) : (
-            <div className="grid gap-6 xl:grid-cols-2 2xl:grid-cols-3">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {myAssignments.map(task => {
                 const isActive = task.status === 'accepted' || task.status === 'in_progress';
                 return (
@@ -591,7 +574,7 @@ export default function BondhuDashboard() {
 
         <TabsContent value="in_progress" className="space-y-4">
           {loading ? (
-            <div className="grid gap-6 xl:grid-cols-2 2xl:grid-cols-3">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {[1, 2, 3].map(i => (
                 <TaskCardSkeleton key={i} />
               ))}
@@ -601,7 +584,7 @@ export default function BondhuDashboard() {
               <p className="text-muted-foreground">No tasks in progress</p>
             </div>
           ) : (
-            <div className="grid gap-6 xl:grid-cols-2 2xl:grid-cols-3">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {filterAssignments('in_progress').map(task => (
                 <TaskCard
                   key={task.id}
@@ -617,7 +600,7 @@ export default function BondhuDashboard() {
 
         <TabsContent value="completed" className="space-y-4">
           {loading ? (
-            <div className="grid gap-6 xl:grid-cols-2 2xl:grid-cols-3">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {[1, 2, 3].map(i => (
                 <TaskCardSkeleton key={i} />
               ))}
@@ -627,7 +610,7 @@ export default function BondhuDashboard() {
               <p className="text-muted-foreground">No completed tasks</p>
             </div>
           ) : (
-            <div className="grid gap-6 xl:grid-cols-2 2xl:grid-cols-3">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {filterAssignments('completed').map(task => (
                 <TaskCard
                   key={task.id}

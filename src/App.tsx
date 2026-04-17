@@ -6,6 +6,7 @@ import { RoleProvider } from '@/contexts/RoleContext';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { RequireAuth } from '@/components/common/RequireAuth';
 import Header from '@/components/common/Header';
+import MainLayout from '@/components/layout/MainLayout';
 import SplashScreen from '@/components/common/SplashScreen';
 import { GoogleMapsProvider } from '@/components/maps';
 import routes from './routes';
@@ -56,24 +57,21 @@ const App = () => {
                 <SplashScreen onComplete={handleSplashComplete} duration={3000} />
               )}
 
-              <div className="flex flex-col min-h-screen">
-                <Header />
-                <main className="flex-grow">
-                  <RequireAuth whiteList={PUBLIC_PATHS}>
-                    <Routes>
-                      {routes.map((route) => (
-                        <Route
-                          key={route.path}
-                          path={route.path}
-                          element={route.element}
-                        />
-                      ))}
-                      {/* Catch-all: redirect unknown paths to home */}
-                      <Route path="*" element={<Navigate to="/" replace />} />
-                    </Routes>
-                  </RequireAuth>
-                </main>
-              </div>
+              <MainLayout>
+                <RequireAuth whiteList={PUBLIC_PATHS}>
+                  <Routes>
+                    {routes.map((route) => (
+                      <Route
+                        key={route.path}
+                        path={route.path}
+                        element={route.element}
+                      />
+                    ))}
+                    {/* Catch-all: redirect unknown paths to home */}
+                    <Route path="*" element={<Navigate to="/" replace />} />
+                  </Routes>
+                </RequireAuth>
+              </MainLayout>
             </GoogleMapsProvider>
           </RoleProvider>
         </AuthProvider>

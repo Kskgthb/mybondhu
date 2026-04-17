@@ -365,7 +365,7 @@ export default function TaskDetailPage() {
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="grid xl:grid-cols-2 gap-4">
+          <div className="grid md:grid-cols-2 gap-4">
             <div className="flex items-center gap-3">
               <MapPin className="h-5 w-5 text-muted-foreground" />
               <div className="flex-1">
@@ -473,7 +473,7 @@ export default function TaskDetailPage() {
                   <Button
                     onClick={handleStartTask}
                     disabled={actionLoading}
-                    className="w-full"
+                    className="w-full min-h-[44px]"
                   >
                     {actionLoading ? 'Starting...' : 'Start Task'}
                   </Button>
@@ -544,7 +544,7 @@ export default function TaskDetailPage() {
               <Separator />
               <Button
                 onClick={() => setShowRatingDialog(true)}
-                className="w-full"
+                className="w-full min-h-[44px]"
               >
                 <Star className="mr-2 h-4 w-4" />
                 Rate & Review
@@ -557,7 +557,7 @@ export default function TaskDetailPage() {
               <Separator />
               <Button
                 onClick={() => navigate(`/track/${taskId}`)}
-                className="w-full"
+                className="w-full min-h-[44px]"
                 variant="outline"
               >
                 <Navigation className="mr-2 h-4 w-4" />
@@ -595,7 +595,7 @@ export default function TaskDetailPage() {
                   <Button
                     onClick={handleConfirmPayment}
                     disabled={actionLoading}
-                    className="w-full"
+                    className="w-full min-h-[44px]"
                     size="lg"
                   >
                     {actionLoading ? (
@@ -688,7 +688,7 @@ export default function TaskDetailPage() {
                   ) : (
                     <Button
                       onClick={() => setShowRatingDialog(true)}
-                      className="w-full bg-green-600 hover:bg-green-700 text-white"
+                      className="w-full bg-green-600 hover:bg-green-700 text-white min-h-[44px]"
                       size="lg"
                     >
                       <Star className="mr-2 h-5 w-5" />
@@ -706,7 +706,7 @@ export default function TaskDetailPage() {
               <div className="grid grid-cols-1 gap-2">
                 <Button
                   onClick={() => setShowChatDialog(true)}
-                  className="w-full"
+                  className="w-full min-h-[44px]"
                   variant="outline"
                 >
                   <MessageCircle className="mr-2 h-4 w-4" />
@@ -717,7 +717,7 @@ export default function TaskDetailPage() {
                 {!isBondhu && task.bondhu?.phone && (
                   <Button
                     onClick={() => window.open(`tel:${task.bondhu?.phone}`, '_self')}
-                    className="w-full"
+                    className="w-full min-h-[44px]"
                     variant="outline"
                   >
                     <Phone className="mr-2 h-4 w-4" />

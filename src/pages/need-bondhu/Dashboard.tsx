@@ -280,7 +280,7 @@ export default function NeedBondhuDashboard() {
 
         <TabsContent value="all" className="space-y-4">
           {loading ? (
-            <div className="grid gap-6 xl:grid-cols-2 2xl:grid-cols-3">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {[1, 2, 3].map(i => (
                 <TaskCardSkeleton key={i} />
               ))}
@@ -294,7 +294,7 @@ export default function NeedBondhuDashboard() {
               </Button>
             </div>
           ) : (
-            <div className="grid gap-6 xl:grid-cols-2 2xl:grid-cols-3">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {tasks.map(task => (
                 <TaskCard
                   key={task.id}
@@ -313,7 +313,7 @@ export default function NeedBondhuDashboard() {
 
         <TabsContent value="pending" className="space-y-4">
           {loading ? (
-            <div className="grid gap-6 xl:grid-cols-2 2xl:grid-cols-3">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {[1, 2].map(i => (
                 <TaskCardSkeleton key={i} />
               ))}
@@ -323,7 +323,7 @@ export default function NeedBondhuDashboard() {
               <p className="text-muted-foreground">No pending tasks</p>
             </div>
           ) : (
-            <div className="grid gap-6 xl:grid-cols-2 2xl:grid-cols-3">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {filterTasks('pending').map(task => (
                 <TaskCard
                   key={task.id}
@@ -342,7 +342,7 @@ export default function NeedBondhuDashboard() {
 
         <TabsContent value="in_progress" className="space-y-4">
           {loading ? (
-            <div className="grid gap-6 xl:grid-cols-2 2xl:grid-cols-3">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {[1, 2].map(i => (
                 <TaskCardSkeleton key={i} />
               ))}
@@ -352,7 +352,7 @@ export default function NeedBondhuDashboard() {
               <p className="text-muted-foreground">No tasks in progress</p>
             </div>
           ) : (
-            <div className="grid gap-6 xl:grid-cols-2 2xl:grid-cols-3">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {[...filterTasks('accepted'), ...filterTasks('in_progress')].map(task => (
                 <TaskCard
                   key={task.id}
@@ -369,7 +369,7 @@ export default function NeedBondhuDashboard() {
 
         <TabsContent value="completed" className="space-y-4">
           {loading ? (
-            <div className="grid gap-6 xl:grid-cols-2 2xl:grid-cols-3">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {[1, 2].map(i => (
                 <TaskCardSkeleton key={i} />
               ))}
@@ -379,7 +379,7 @@ export default function NeedBondhuDashboard() {
               <p className="text-muted-foreground">No completed tasks</p>
             </div>
           ) : (
-            <div className="grid gap-6 xl:grid-cols-2 2xl:grid-cols-3">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {filterTasks('completed').map(task => (
                 <TaskCard
                   key={task.id}
@@ -397,7 +397,7 @@ export default function NeedBondhuDashboard() {
 
       <Button
         size="lg"
-        className="fixed bottom-8 right-8 h-14 w-14 rounded-full shadow-hover xl:h-16 xl:w-16 bg-secondary hover:bg-secondary/90"
+        className="hidden md:flex fixed bottom-8 right-8 h-14 w-14 items-center justify-center rounded-full shadow-hover xl:h-16 xl:w-16 bg-secondary hover:bg-secondary/90 z-40"
         onClick={() => setShowPostDialog(true)}
       >
         <Plus className="h-6 w-6" />

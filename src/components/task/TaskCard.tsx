@@ -113,43 +113,43 @@ export default function TaskCard({
         </div>
       </CardContent>
       {(showActions || onView || showNavigate || showEdit || showCancel) && (
-        <CardFooter className="flex gap-2 pt-3">
+        <CardFooter className="flex gap-2 pt-3 flex-wrap">
           {showCancel && onCancel && task.status === 'pending' && (
-            <Button variant="destructive" className="flex-1" onClick={onCancel}>
+            <Button variant="destructive" className="flex-1 min-h-[44px]" onClick={onCancel}>
               <X className="h-4 w-4 mr-2" />
               Cancel
             </Button>
           )}
           {showEdit && onEdit && task.status === 'pending' && (
-            <Button variant="outline" className="flex-1" onClick={onEdit}>
+            <Button variant="outline" className="flex-1 min-h-[44px]" onClick={onEdit}>
               <Edit className="h-4 w-4 mr-2" />
               Edit
             </Button>
           )}
           {showNavigate && onNavigate && (
-            <Button className="flex-1 bg-secondary hover:bg-secondary/90" onClick={onNavigate}>
+            <Button className="flex-1 bg-secondary hover:bg-secondary/90 min-h-[44px]" onClick={onNavigate}>
               <Navigation className="h-4 w-4 mr-2" />
               Navigate
             </Button>
           )}
           {onRate && task.status === 'completed' && (
-            <Button className="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white" onClick={onRate}>
+            <Button className="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white min-h-[44px]" onClick={onRate}>
               <Star className="h-4 w-4 mr-2 fill-current" />
               Rate Bondhu
             </Button>
           )}
           {onView && (
-            <Button variant="outline" className="flex-1" onClick={onView}>
+            <Button variant="outline" className="flex-1 min-h-[44px]" onClick={onView}>
               View Details
             </Button>
           )}
           {showActions && onAccept && (
-            <Button className="flex-1 bg-secondary hover:bg-secondary/90" onClick={onAccept}>
+            <Button className="flex-1 bg-secondary hover:bg-secondary/90 min-h-[44px]" onClick={onAccept}>
               Accept
             </Button>
           )}
           {showActions && onDecline && (
-            <Button variant="outline" className="flex-1" onClick={onDecline}>
+            <Button variant="outline" className="flex-1 min-h-[44px]" onClick={onDecline}>
               Decline
             </Button>
           )}

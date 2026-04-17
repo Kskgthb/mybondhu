@@ -14,15 +14,21 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Bell, LogOut, User, Settings, LayoutDashboard, Shield } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useEffect, useState } from 'react';
-import { notificationsApi } from '@/db/api';
+import { notificationsApi, profilesApi } from '@/db/api';
+import { toast } from 'sonner';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { Power, MapPin } from 'lucide-react';
 import Logo from '@/components/common/Logo';
 import RoleSwitchButton from '@/components/common/RoleSwitchButton';
 
 export default function Header() {
-  const { user, profile, signOut, loading } = useAuth();
+  const { user, profile, signOut, loading, refreshProfile } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const [unreadCount, setUnreadCount] = useState(0);
+  const [isAvailable, setIsAvailable] = useState(false);
+  const [locationEnabled, setLocationEnabled] = useState(false);
 
   const loadUnreadCount = async () => {
     if (!user) return;
@@ -41,6 +47,37 @@ export default function Header() {
       return () => clearInterval(interval);
     }
   }, [user]);
+
+  useEffect(() => {
+    if (profile) {
+      setIsAvailable(profile.availability_status);
+    }
+  }, [profile]);
+
+  useEffect(() => {
+    // Check if location is enabled
+    if (navigator.geolocation) {
+      navigator.permissions.query({ name: 'geolocation' as PermissionName }).then((result) => {
+        if (result.state === 'granted') setLocationEnabled(true);
+        result.onchange = () => {
+          if (result.state === 'granted') setLocationEnabled(true);
+          else setLocationEnabled(false);
+        };
+      });
+    }
+  }, []);
+
+  const handleAvailabilityToggle = async (checked: boolean) => {
+    if (!user) return;
+    try {
+      await profilesApi.updateAvailability(user.id, checked);
+      setIsAvailable(checked);
+      await refreshProfile();
+      toast.success(checked ? 'You are now available for tasks' : 'You are now offline');
+    } catch (error) {
+      toast.error('Failed to update availability');
+    }
+  };
 
   // Don't render header while auth is loading (after all hooks)
   if (loading) {
@@ -84,13 +121,35 @@ export default function Header() {
         <div className="flex items-center gap-4">
           {user && profile ? (
             <>
+              {(profile.role === 'bondhu' || profile.active_role === 'bondhu') && (
+                <div className="hidden md:flex items-center gap-4 mr-2">
+                  <div className="flex items-center gap-2 bg-secondary/10 px-3 py-1.5 rounded-full border border-secondary/20">
+                    <MapPin className={`h-4 w-4 ${locationEnabled ? 'text-green-500' : 'text-muted-foreground'}`} />
+                    <span className="text-xs font-medium">{locationEnabled ? 'Loc On' : 'Loc Off'}</span>
+                  </div>
+                  
+                  <div className="flex items-center gap-2 bg-secondary/10 px-3 py-1.5 rounded-full border border-secondary/20">
+                    <Power className={`h-4 w-4 ${isAvailable ? 'text-green-500' : 'text-muted-foreground'}`} />
+                    <Switch
+                      id="header-availability"
+                      checked={isAvailable}
+                      onCheckedChange={handleAvailabilityToggle}
+                      className="scale-75 data-[state=checked]:bg-green-500"
+                    />
+                    <Label htmlFor="header-availability" className="text-xs cursor-pointer font-medium">
+                      {isAvailable ? 'Online' : 'Offline'}
+                    </Label>
+                  </div>
+                </div>
+              )}
+
               <RoleSwitchButton variant="ghost" size="icon" showLabel={false} />
               
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={toggleTheme}
-                className="text-2xl hover:scale-110 transition-transform"
+                className="text-2xl hover:scale-110 transition-transform hidden sm:flex"
                 title={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
               >
                 🦉
@@ -99,7 +158,7 @@ export default function Header() {
               <Button
                 variant="ghost"
                 size="icon"
-                className="relative"
+                className="relative hidden sm:flex"
                 onClick={() => navigate('/notifications')}
               >
                 <Bell className="h-5 w-5" />
