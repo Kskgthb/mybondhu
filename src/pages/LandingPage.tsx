@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { UserCheck, HandHeart, Star, MapPin, Clock, Shield, Youtube, Instagram, Linkedin, Mail, MessageCircle } from 'lucide-react';
+import { UserCheck, HandHeart, Star, MapPin, Clock, Shield, Youtube, Instagram, Linkedin, Mail, MessageCircle, Search } from 'lucide-react';
 import { useEffect } from 'react';
 import HeroBanner from '@/components/common/HeroBanner';
 import Logo from '@/components/common/Logo';
@@ -36,30 +36,59 @@ export default function LandingPage() {
       <CampusBackground />
       
       <div className="container mx-auto px-4 py-8 relative z-10">
-        {/* Hero Banner with Brand Image */}
-        <div className="text-center mb-12 animate-fade-in">
-          {/* Logo */}
-          <div className="mb-8">
-            <Logo size="xl" showTagline />
-          </div>
+        {/* Hero Search Section */}
+        <div className="text-center mb-16 mt-8 md:mt-16 animate-fade-in relative z-20">
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-slate-800 mb-10 tracking-tight">
+            Post Your First Task!!
+          </h1>
           
-          <div className="relative max-w-6xl mx-auto mb-8">
-            <div className="relative rounded-3xl overflow-hidden shadow-2xl border-4 border-primary/20 bg-white/80 backdrop-blur-sm">
-              <img 
-                src="/hero-banner.jpg" 
-                alt="Bondhu - Task Done, Trust Delivered" 
-                className="w-full h-auto object-contain"
-                loading="eager"
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.style.display = 'none';
-                }}
-              />
+          <div className="max-w-4xl mx-auto px-4 relative">
+            <div className="relative flex items-center bg-white rounded-full shadow-lg border border-slate-200 overflow-hidden h-14 md:h-16 transition-all hover:shadow-xl hover:border-primary/30">
+              <div className="flex-1 flex items-center pl-6 md:pl-8 h-full border-r border-slate-100">
+                <input
+                  type="text"
+                  placeholder="What do you need help with?"
+                  className="w-full bg-transparent border-none outline-none text-base md:text-lg text-slate-700 placeholder:text-slate-400 h-full"
+                  onClick={() => navigate('/signup')}
+                />
+              </div>
+              <div className="hidden sm:flex items-center px-4 w-40 md:w-56 h-full bg-slate-50/50 hover:bg-slate-50 transition-colors">
+                <select 
+                  className="w-full bg-transparent border-none outline-none text-sm md:text-base text-slate-600 cursor-pointer h-full"
+                  onChange={(e) => {
+                    if (e.target.value) navigate('/signup');
+                  }}
+                  defaultValue=""
+                >
+                  <option value="" disabled>All Domains</option>
+                  {categoryData.map(c => (
+                    <option key={c.value} value={c.value}>{c.label}</option>
+                  ))}
+                </select>
+              </div>
+              <button 
+                onClick={() => navigate('/signup')}
+                className="bg-primary hover:bg-primary/90 text-white h-full px-6 md:px-10 flex items-center justify-center transition-colors"
+                aria-label="Search"
+              >
+                <Search className="w-5 h-5 md:w-6 md:h-6" />
+              </button>
+            </div>
+            
+            {/* Quick Links */}
+            <div className="flex flex-wrap items-center justify-center gap-2 mt-6">
+              <span className="text-sm font-medium text-slate-500 mr-2">Popular:</span>
+              {categoryData.slice(0, 4).map((category) => (
+                <button
+                  key={category.value}
+                  onClick={() => navigate('/signup')}
+                  className="text-sm px-4 py-1.5 rounded-full bg-white/80 backdrop-blur-sm border border-slate-200 text-slate-600 hover:border-primary hover:text-primary transition-all shadow-sm hover:shadow"
+                >
+                  {category.label}
+                </button>
+              ))}
             </div>
           </div>
-          <p className="text-base xl:text-lg text-muted-foreground max-w-2xl mx-auto">
-            Connect with nearby helpers for instant assistance or become a Bondhu and earn by helping others
-          </p>
         </div>
 
         {/* Hero Banner Carousel */}
