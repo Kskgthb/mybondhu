@@ -18,6 +18,8 @@ import SettingsPage from './pages/SettingsPage';
 import AdminDashboard from './pages/admin/Dashboard';
 import BondhuRegistration from './pages/registration/BondhuRegistration';
 import NotFound from './pages/NotFound';
+import TermsOfServicePage from './pages/TermsOfServicePage';
+import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
 
 interface RouteConfig {
   name: string;
@@ -45,6 +47,8 @@ const routes: RouteConfig[] = [
   { name: 'Profile',               path: '/profile',                   element: <ProfilePage /> },
   { name: 'Settings',              path: '/settings',                  element: <SettingsPage /> },
   { name: 'Admin Dashboard',       path: '/admin/dashboard',           element: <AdminDashboard /> },
+  { name: 'Terms of Service',      path: '/terms-of-service',          element: <TermsOfServicePage /> },
+  { name: 'Privacy Policy',        path: '/privacy-policy',            element: <PrivacyPolicyPage /> },
   { name: 'Not Found',             path: '/404',                       element: <NotFound /> },
 ];
 

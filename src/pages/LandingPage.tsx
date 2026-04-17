@@ -9,6 +9,7 @@ import Logo from '@/components/common/Logo';
 import CampusBackground from '@/components/common/CampusBackground';
 import CategoryCard from '@/components/common/CategoryCard';
 import { categoryData } from '@/lib/categoryData';
+import Footer from '@/components/common/Footer';
 
 export default function LandingPage() {
   const navigate = useNavigate();
@@ -364,6 +365,9 @@ export default function LandingPage() {
           </Card>
         </div>
       </div>
+
+      {/* Footer */}
+      <Footer />
     </div>
   );
 }

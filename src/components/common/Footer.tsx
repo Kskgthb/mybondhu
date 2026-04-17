@@ -1,66 +1,94 @@
-import React from "react";
+import { Link } from 'react-router-dom';
+import Logo from './Logo';
 
 const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="bg-gradient-to-r from-amber-50 to-orange-50 border-t border-amber-200">
-      <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {/* ================= About Us ================= */}
-          <div>
-            {/* Title: Change to your project's "About Us" */}
-            <h3 className="text-lg font-semibold text-amber-800 mb-4">
-              {/* About Us */}
-            </h3>
-            <p className="text-gray-600">
-              {/* Fill in your "About Us" introduction here, for example: Committed to xxx, making xxx more xxx */}
+    <footer className="bg-gradient-to-br from-slate-50 to-slate-100 border-t-2 border-primary/10 mt-8">
+      <div className="max-w-7xl mx-auto py-10 px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-10 items-start">
+          {/* Brand Section */}
+          <div className="flex flex-col items-center md:items-start gap-3">
+            <Logo size="md" />
+            <p className="text-sm text-muted-foreground text-center md:text-left max-w-xs mt-1">
+              India's first campus-level peer-to-peer task helper platform. Get help or become a Bondhu today!
             </p>
           </div>
 
-          {/* ================= Contact Information ================= */}
-          <div>
-            {/* Title: Contact Information */}
-            <h3 className="text-lg font-semibold text-amber-800 mb-4">
-              {/* Contact Information */}
-            </h3>
-            <div className="text-gray-600 space-y-2">
-              <p>
-                {/* Address: XXX Street, XXX District, XXX City, XXX Province */}
-              </p>
-              <p>
-                {/* Phone: 010-XXXXXXX */}
-              </p>
-              <p>
-                {/* Email: info@example.com */}
-              </p>
-            </div>
+          {/* Quick Links */}
+          <div className="flex flex-col items-center md:items-start">
+            <h3 className="text-lg font-semibold text-foreground mb-4">Legal</h3>
+            <ul className="space-y-3">
+              <li>
+                <Link
+                  to="/terms-of-service"
+                  className="text-muted-foreground hover:text-primary transition-colors duration-200 text-sm font-medium"
+                >
+                  Terms of Service
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/privacy-policy"
+                  className="text-muted-foreground hover:text-primary transition-colors duration-200 text-sm font-medium"
+                >
+                  Privacy Policy
+                </Link>
+              </li>
+            </ul>
           </div>
 
-          {/* ================= Business Hours / Other Information / Can be deleted ================= */}
-          <div>
-            {/* Title: Can be changed to "Business Hours" or "Service Hours" */}
-            <h3 className="text-lg font-semibold text-amber-800 mb-4">
-              {/* Business Hours */}
-            </h3>
-            <div className="text-gray-600 space-y-2">
-              <p>
-                {/* Monday to Friday: 9:00-18:00 */}
-              </p>
-              <p>
-                {/* Please check announcements for weekends and public holidays */}
-              </p>
-              <p>
-                {/* Other notes, such as "Advance booking required" */}
-              </p>
-            </div>
+          {/* Contact */}
+          <div className="flex flex-col items-center md:items-start">
+            <h3 className="text-lg font-semibold text-foreground mb-4">Connect</h3>
+            <ul className="space-y-3">
+              <li>
+                <a
+                  href="mailto:bondhuappnow@gmail.com"
+                  className="text-muted-foreground hover:text-primary transition-colors duration-200 text-sm font-medium"
+                >
+                  📧 bondhuappnow@gmail.com
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.instagram.com/bondhuapp"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-muted-foreground hover:text-pink-600 transition-colors duration-200 text-sm font-medium"
+                >
+                  Instagram
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.linkedin.com/company/bondhuapp"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-muted-foreground hover:text-blue-600 transition-colors duration-200 text-sm font-medium"
+                >
+                  LinkedIn
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://youtube.com/@bondhuapp?si=ZY8F3mB1e-J9lTP_"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-muted-foreground hover:text-red-600 transition-colors duration-200 text-sm font-medium"
+                >
+                  YouTube
+                </a>
+              </li>
+            </ul>
           </div>
         </div>
 
-        {/* ================= Copyright Section ================= */}
-        <div className="mt-8 pt-8 border-t border-amber-200 text-center text-gray-600">
-          <p>
-            {/* © {currentYear} Your Company or Organization Name */}
+        {/* Copyright */}
+        <div className="mt-10 pt-6 border-t border-primary/10 text-center">
+          <p className="text-sm text-muted-foreground">
+            © {currentYear} <span style={{ color: '#641acc', fontWeight: 600 }}>Bondhu</span><span style={{ color: '#2fbe6b', fontWeight: 600 }}>App</span>. All rights reserved.
           </p>
         </div>
       </div>
