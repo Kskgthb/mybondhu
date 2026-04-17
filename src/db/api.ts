@@ -8,6 +8,7 @@ import type {
   TaskWithDistance,
   TaskWithPoster,
   TaskWithAssignment,
+  TaskWithFullInfo,
   UserRole,
   Message,
 } from '@/types/types';

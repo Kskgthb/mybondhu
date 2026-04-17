@@ -22,6 +22,8 @@ import {
   IdCard,
   CreditCard,
   ArrowLeft,
+  ArrowRight,
+  CheckCircle2,
   FileCheck,
   Gift
 } from 'lucide-react';
