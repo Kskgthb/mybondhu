@@ -149,7 +149,7 @@ export default function Header() {
                 variant="ghost"
                 size="icon"
                 onClick={toggleTheme}
-                className="text-2xl hover:scale-110 transition-transform hidden sm:flex"
+                className="text-2xl hover:scale-110 transition-transform flex"
                 title={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
               >
                 🦉

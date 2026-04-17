@@ -41,7 +41,7 @@ export default function BottomNav() {
   const navItems = [
     { icon: Home, label: 'Dashboard', href: getDashboardLink() },
     { icon: ClipboardList, label: 'My Tasks', href: getDashboardLink() }, // Could be updated later to a specific tab
-    { icon: PlusCircle, label: 'Post Task', action: () => navigate('/need-bondhu/dashboard'), isAction: true },
+    { icon: PlusCircle, label: 'Post Task', action: () => navigate('/need-bondhu/dashboard?action=post'), isAction: true },
     { icon: Bell, label: 'Alerts', href: '/notifications', badge: unreadCount },
     { icon: User, label: 'Profile', href: '/profile' },
   ];

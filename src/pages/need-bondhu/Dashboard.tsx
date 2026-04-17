@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRole } from '@/contexts/RoleContext';
 import { tasksApi, realtimeApi } from '@/db/api';
@@ -44,6 +44,18 @@ export default function NeedBondhuDashboard() {
   const [notificationTitle, setNotificationTitle] = useState('');
   const [notificationMessage, setNotificationMessage] = useState('');
   const [notificationTaskId, setNotificationTaskId] = useState<string | null>(null);
+
+  const location = useLocation();
+
+  // Handle URL actions
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('action') === 'post') {
+      setShowPostDialog(true);
+      // Clean up the URL without triggering a full reload
+      navigate('/need-bondhu/dashboard', { replace: true });
+    }
+  }, [location.search, navigate]);
 
   // Initialize notifications on mount
   useEffect(() => {
@@ -397,7 +409,7 @@ export default function NeedBondhuDashboard() {
 
       <Button
         size="lg"
-        className="hidden md:flex fixed bottom-8 right-8 h-14 w-14 items-center justify-center rounded-full shadow-hover xl:h-16 xl:w-16 bg-secondary hover:bg-secondary/90 z-40"
+        className="flex fixed bottom-24 md:bottom-8 right-8 h-14 w-14 items-center justify-center rounded-full shadow-hover xl:h-16 xl:w-16 bg-secondary hover:bg-secondary/90 z-40"
         onClick={() => setShowPostDialog(true)}
       >
         <Plus className="h-6 w-6" />
