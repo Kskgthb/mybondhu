@@ -103,14 +103,7 @@ export const reverseGeocode = async (latitude: number, longitude: number): Promi
   const fetchNominatim = async () => {
     try {
       const response = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`,
-        {
-          headers: {
-            'Accept-Language': 'en-US,en;q=0.9',
-            // Nominatim policy requires identifying the app
-            'User-Agent': 'BondhuApp/1.0 (Location Fallback)'
-          }
-        }
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&email=support@bondhuapp.com`
       );
       
       if (!response.ok) {
