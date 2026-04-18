@@ -15,12 +15,12 @@ export default function CategoryCard({ category, onClick, className }: CategoryC
     <Card
       onClick={onClick}
       className={cn(
-        'group relative overflow-hidden cursor-pointer transition-all duration-300 hover:scale-[1.02] sm:hover:scale-110 hover:shadow-2xl border-3 border-border hover:border-primary/40 bg-white flex flex-row sm:flex-col h-28 sm:h-full',
+        'group relative overflow-hidden cursor-pointer transition-all duration-300 hover:scale-[1.02] sm:hover:scale-110 hover:shadow-2xl border-3 border-border hover:border-primary/40 bg-white flex flex-row sm:flex-col h-auto sm:h-full p-0 gap-0',
         className
       )}
     >
       {/* Image Background with Enhanced Sharpness */}
-      <div className="relative w-32 sm:w-full h-full sm:h-48 overflow-hidden flex-shrink-0">
+      <div className="relative w-32 sm:w-full h-auto sm:h-48 overflow-hidden flex-shrink-0">
         <img
           src={category.image}
           alt={category.label}
@@ -42,11 +42,11 @@ export default function CategoryCard({ category, onClick, className }: CategoryC
       </div>
 
       {/* Enhanced Content with Better Contrast */}
-      <div className="p-3 sm:p-5 flex-1 flex flex-col justify-center space-y-1 sm:space-y-2 bg-white min-w-0">
-        <h3 className="font-bold text-base sm:text-xl text-foreground group-hover:text-primary transition-colors drop-shadow-sm truncate">
+      <div className="p-4 sm:p-5 flex-1 flex flex-col justify-center bg-white min-w-0">
+        <h3 className="font-bold text-lg sm:text-xl text-foreground group-hover:text-primary transition-colors drop-shadow-sm mb-1">
           {category.label}
         </h3>
-        <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2 font-medium">
+        <p className="text-sm text-muted-foreground font-medium leading-relaxed">
           {category.description}
         </p>
       </div>
