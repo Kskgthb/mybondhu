@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 import { Loader2, CheckCircle, Lock, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '@/db/supabase';
 import Logo from '@/components/common/Logo';
-import CampusBackground from '@/components/common/CampusBackground';
+
 
 export default function ResetPasswordPage() {
   const [password, setPassword] = useState('');
@@ -69,7 +69,7 @@ export default function ResetPasswordPage() {
   if (checkingSession) {
     return (
       <div className="min-h-screen relative flex items-center justify-center p-4">
-        <CampusBackground />
+
         <Card className="w-full max-w-md shadow-card relative z-10 bg-white/95 backdrop-blur-sm">
           <CardContent className="p-8 text-center">
             <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
@@ -83,7 +83,7 @@ export default function ResetPasswordPage() {
   if (!isValidSession) {
     return (
       <div className="min-h-screen relative flex items-center justify-center p-4">
-        <CampusBackground />
+
         <Card className="w-full max-w-md shadow-card relative z-10 bg-white/95 backdrop-blur-sm">
           <CardContent className="p-8 text-center">
             <p className="text-muted-foreground">Invalid or expired reset link. Redirecting...</p>
@@ -95,7 +95,7 @@ export default function ResetPasswordPage() {
 
   return (
     <div className="min-h-screen relative flex items-center justify-center p-4">
-      <CampusBackground />
+
       <Card className="w-full max-w-md shadow-card relative z-10 bg-white/95 backdrop-blur-sm">
         <CardHeader className="space-y-1 text-center">
           <div className="flex justify-center mb-4">

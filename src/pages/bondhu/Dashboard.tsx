@@ -14,7 +14,7 @@ import TaskCard from '@/components/task/TaskCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import TaskCardSkeleton from '@/components/common/TaskCardSkeleton';
 import CompactBanner from '@/components/common/CompactBanner';
-import CampusBackground from '@/components/common/CampusBackground';
+
 import NotificationDialog from '@/components/common/NotificationDialog';
 import RoleSwitchButton from '@/components/common/RoleSwitchButton';
 import type { TaskWithDistance, TaskWithAssignment } from '@/types/types';
@@ -432,7 +432,7 @@ export default function BondhuDashboard() {
 
   return (
     <div className="relative min-h-screen">
-      <CampusBackground />
+
       <div className="container mx-auto px-4 py-8 max-w-7xl relative z-10">
         <div className="mb-6">
           <div className="flex items-center justify-between mb-4">

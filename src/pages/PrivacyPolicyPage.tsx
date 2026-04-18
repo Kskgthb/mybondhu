@@ -2,14 +2,14 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Logo from '@/components/common/Logo';
-import CampusBackground from '@/components/common/CampusBackground';
+
 
 export default function PrivacyPolicyPage() {
   const navigate = useNavigate();
 
   return (
     <div className="min-h-screen relative">
-      <CampusBackground />
+
       <div className="container mx-auto px-4 py-8 relative z-10 max-w-4xl">
         {/* Back Button */}
         <Button

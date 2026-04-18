@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/db/supabase';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import CampusBackground from '@/components/common/CampusBackground';
+
 
 export default function AuthCallbackPage() {
   const navigate = useNavigate();
@@ -86,7 +86,7 @@ export default function AuthCallbackPage() {
   if (error) {
     return (
       <div className="relative min-h-screen flex items-center justify-center">
-        <CampusBackground />
+
         <div className="relative z-10 text-center">
           <div className="text-destructive mb-4">
             <p className="text-lg font-semibold">Authentication Error</p>
@@ -100,7 +100,7 @@ export default function AuthCallbackPage() {
 
   return (
     <div className="relative min-h-screen flex items-center justify-center">
-      <CampusBackground />
+
       <div className="relative z-10 text-center">
         <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4 text-primary" />
         <p className="text-lg font-semibold">Completing sign in...</p>

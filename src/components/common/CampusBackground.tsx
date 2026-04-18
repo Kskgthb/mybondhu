@@ -7,7 +7,7 @@ export default function CampusBackground() {
         style={{
           backgroundImage: "url('/images/bg-pattern.png')",
           backgroundRepeat: 'repeat',
-          backgroundSize: '600px auto',
+          backgroundSize: '800px auto',
           backgroundPosition: 'center top',
         }}
       />

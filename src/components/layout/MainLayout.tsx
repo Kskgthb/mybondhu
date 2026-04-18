@@ -12,9 +12,12 @@ export default function MainLayout({ children }: MainLayoutProps) {
     <div className="flex flex-col min-h-screen relative isolate">
       {/* Subtle Full-screen Background Pattern (Watermark style) */}
       <div 
-        className="fixed inset-0 -z-10 opacity-[0.03] pointer-events-none bg-no-repeat bg-center bg-cover"
+        className="fixed inset-0 -z-10 opacity-[0.05] pointer-events-none"
         style={{ 
           backgroundImage: "url('/images/bg-pattern.png')",
+          backgroundRepeat: 'repeat',
+          backgroundSize: '800px auto',
+          backgroundPosition: 'center top',
           backgroundAttachment: 'fixed'
         }}
         aria-hidden="true"

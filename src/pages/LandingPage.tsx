@@ -6,7 +6,6 @@ import { UserCheck, HandHeart, Star, MapPin, Clock, Shield, Youtube, Instagram, 
 import { useEffect } from 'react';
 import HeroBanner from '@/components/common/HeroBanner';
 import Logo from '@/components/common/Logo';
-import CampusBackground from '@/components/common/CampusBackground';
 import CategoryCard from '@/components/common/CategoryCard';
 import { categoryData } from '@/lib/categoryData';
 import Footer from '@/components/common/Footer';
@@ -32,8 +31,7 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen relative">
-      {/* Campus Background */}
-      <CampusBackground />
+
       
       <div className="container mx-auto px-4 py-8 relative z-10">
         {/* Hero Search Section */}

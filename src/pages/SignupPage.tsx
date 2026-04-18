@@ -9,7 +9,6 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { toast } from 'sonner';
 import { Loader2, UserCheck, HandHeart, Mail, Phone, Gift } from 'lucide-react';
 import Logo from '@/components/common/Logo';
-import CampusBackground from '@/components/common/CampusBackground';
 
 export default function SignupPage() {
   const [username, setUsername] = useState('');
@@ -150,7 +149,7 @@ export default function SignupPage() {
 
   return (
     <div className="min-h-screen relative flex items-center justify-center p-4">
-      <CampusBackground />
+
       <div className="w-full max-w-4xl relative z-10">
         {/* Join Us Banner */}
         <div className="flex justify-center mb-8 animate-fade-in">

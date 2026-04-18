@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/db/supabase';
 import Logo from '@/components/common/Logo';
-import CampusBackground from '@/components/common/CampusBackground';
+
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');
@@ -105,7 +105,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen relative flex items-center justify-center p-4">
-      <CampusBackground />
+
       <Card className="w-full max-w-md shadow-card relative z-10 bg-white/95 backdrop-blur-sm">
         <CardHeader className="space-y-1 text-center">
           <div className="flex justify-center mb-4">
