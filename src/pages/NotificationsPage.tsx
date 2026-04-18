@@ -125,7 +125,6 @@ export default function NotificationsPage() {
             {unreadCount > 0 ? `You have ${unreadCount} unread notification${unreadCount > 1 ? 's' : ''}` : 'All caught up!'}
           </p>
         </div>
-        </div>
         <div className="flex gap-2">
           {unreadCount > 0 && (
             <Button variant="outline" size="sm" onClick={handleMarkAllAsRead}>
