@@ -20,6 +20,8 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     detectSessionInUrl: true,
     // Use a custom storage key to prevent conflicts and ensure reliable persistence
     storageKey: 'bondhu-auth-token',
+    // Explicitly define storage to ensure session persists across browser refreshes
+    storage: window.localStorage,
     // Use PKCE flow for OAuth (more secure)
     flowType: 'pkce',
   },
