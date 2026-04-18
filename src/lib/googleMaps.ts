@@ -99,8 +99,40 @@ const toRad = (degrees: number): number => {
 export const reverseGeocode = async (latitude: number, longitude: number): Promise<string> => {
   const apiKey = import.meta.env.VITE_GOOGLE_GEOCODING_API_KEY || import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
   
+  // Fallback to OpenStreetMap (Nominatim)
+  const fetchNominatim = async () => {
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`,
+        {
+          headers: {
+            'Accept-Language': 'en-US,en;q=0.9',
+            // Nominatim policy requires identifying the app
+            'User-Agent': 'BondhuApp/1.0 (Location Fallback)'
+          }
+        }
+      );
+      
+      if (!response.ok) {
+        throw new Error('Nominatim API failed');
+      }
+      
+      const data = await response.json();
+      
+      if (data && data.display_name) {
+        return data.display_name;
+      }
+      
+      throw new Error('No address found from OpenStreetMap.');
+    } catch (error) {
+      console.error('Nominatim fallback error:', error);
+      throw new Error('Unable to get address automatically. Please enter your address manually.');
+    }
+  };
+
   if (!apiKey) {
-    throw new Error('Location service is temporarily unavailable. Please enter your address manually.');
+    console.warn('Google API key missing. Falling back to OpenStreetMap for reverse geocoding.');
+    return fetchNominatim();
   }
 
   try {
@@ -109,35 +141,36 @@ export const reverseGeocode = async (latitude: number, longitude: number): Promi
     );
 
     if (!response.ok) {
-      throw new Error('Unable to fetch address. Please enter your address manually.');
+      console.warn('Google Maps API network failure. Falling back to OpenStreetMap.');
+      return fetchNominatim();
     }
 
     const data = await response.json();
 
-    // Handle Google API errors gracefully
     if (data.status === 'OK' && data.results && data.results.length > 0) {
       // Return the formatted address from the first result
       return data.results[0].formatted_address;
     } else if (data.status === 'ZERO_RESULTS') {
       throw new Error('No address found for this location. Please enter your address manually.');
-    } else if (data.status === 'REQUEST_DENIED') {
-      // API key not authorized - show user-friendly message
-      console.error('Google Geocoding API not enabled. Please enable it in Google Cloud Console.');
-      throw new Error('Location service is currently unavailable. Please enter your address manually.');
-    } else if (data.status === 'OVER_QUERY_LIMIT') {
-      throw new Error('Location service is busy. Please try again in a moment or enter your address manually.');
+    } else if (data.status === 'REQUEST_DENIED' || data.status === 'OVER_QUERY_LIMIT') {
+      // API key not authorized or limit reached - fallback to Nominatim
+      console.warn(`Google Geocoding API issue (${data.status}). Falling back to OpenStreetMap.`);
+      return fetchNominatim();
     } else {
-      // Generic error - don't expose technical details to users
-      console.error('Geocoding API error:', data.status, data.error_message);
-      throw new Error('Unable to get address automatically. Please enter your address manually.');
+      // Generic error - try fallback
+      console.warn('Geocoding API unexpected status:', data.status, data.error_message);
+      return fetchNominatim();
     }
   } catch (error: any) {
     console.error('Reverse geocoding error:', error);
-    // If it's already a user-friendly error, re-throw it
+    
+    // If error is already our friendly generic error, throw it
     if (error.message && error.message.includes('manually')) {
       throw error;
     }
-    // Otherwise, provide a generic user-friendly message
-    throw new Error('Unable to get address automatically. Please enter your address manually.');
+    
+    // Last resort fallback
+    console.warn('Attempting last resort OpenStreetMap fallback...');
+    return fetchNominatim();
   }
 };
