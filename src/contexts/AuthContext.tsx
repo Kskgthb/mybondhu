@@ -28,24 +28,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const notificationsInitializedRef = useRef(false);
   const notifChannelRef = useRef<any>(null);
 
-  const loadProfile = async (userId: string) => {
-    try {
-      const profileData = await profilesApi.getProfile(userId);
-      setProfile(profileData);
-      
-      // Initialize push notifications ONCE after profile is loaded
-      if (profileData && !notificationsInitializedRef.current) {
-        notificationsInitializedRef.current = true;
-        // Pass role so the SW knows whether to send proximity alerts (Bondhu only)
-        initializeNotificationSystem(userId, profileData.active_role || profileData.role).catch((error) => {
-          console.error('Failed to initialize notification system:', error);
-        });
-        // Subscribe to realtime notifications from Supabase (main thread backup)
-        notifChannelRef.current = subscribeToUserNotifications(userId);
+  const loadProfile = async (userId: string, retries = 3) => {
+    for (let attempt = 1; attempt <= retries; attempt++) {
+      try {
+        const profileData = await profilesApi.getProfile(userId);
+        if (profileData) {
+          setProfile(profileData);
+          
+          // Initialize push notifications ONCE after profile is loaded
+          if (!notificationsInitializedRef.current) {
+            notificationsInitializedRef.current = true;
+            // Pass role so the SW knows whether to send proximity alerts (Bondhu only)
+            initializeNotificationSystem(userId, profileData.active_role || profileData.role).catch((error) => {
+              console.error('Failed to initialize notification system:', error);
+            });
+            // Subscribe to realtime notifications from Supabase (main thread backup)
+            notifChannelRef.current = subscribeToUserNotifications(userId);
+          }
+        }
+        return; // Success, exit loop
+      } catch (error) {
+        console.error(`Attempt ${attempt}/${retries} failed to load profile:`, error);
+        if (attempt === retries) {
+          // On final failure, do NOT wipe the existing profile if we already have it in state
+          // This prevents transient network drops from breaking the UI
+          if (!profile) setProfile(null);
+        } else {
+          // Wait before retrying (exponential backoff)
+          await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+        }
       }
-    } catch (error) {
-      console.error('Error loading profile:', error);
-      setProfile(null);
     }
   };
 
