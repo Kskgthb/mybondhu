@@ -106,18 +106,11 @@ All colors MUST be HSL.
   body {
     @apply text-foreground;
     background-color: hsl(var(--background));
-    background-image: url('/images/bg-pattern.png');
-    background-repeat: repeat;
-    background-size: 600px auto;
-    background-attachment: fixed;
-    background-position: center top;
   }
 
   /* Dark mode: overlay darkens the pattern to blend with the dark theme */
   .dark body {
-    background-blend-mode: multiply;
     background-color: hsl(var(--background));
-    background-image: url('/images/bg-pattern.png');
   }
 
   /* Performance optimizations */
