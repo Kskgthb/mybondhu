@@ -120,7 +120,7 @@ All colors MUST be HSL.
     background-size: 800px auto;
     background-position: center top;
     background-attachment: fixed;
-    opacity: 0.08;
+    opacity: 0.18; /* Increased from 0.08 for better visibility */
     pointer-events: none;
   }
 
@@ -130,8 +130,8 @@ All colors MUST be HSL.
   }
 
   .dark body::before {
-    opacity: 0.04; /* Lower opacity in dark mode to keep it subtle */
-    mix-blend-mode: overlay;
+    opacity: 0.1; /* Increased from 0.04 for better visibility */
+    mix-blend-mode: plus-lighter; /* Better for dark mode visibility */
   }
 
   /* Performance optimizations */
