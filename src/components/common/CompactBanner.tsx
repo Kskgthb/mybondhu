@@ -87,7 +87,7 @@ export default function CompactBanner() {
         <CarouselContent>
           {bannerImages.map((image, index) => (
             <CarouselItem key={index}>
-              <Card className="border-0 overflow-hidden bg-gradient-to-br from-primary/5 to-secondary/5">
+              <Card className="border-0 p-0 overflow-hidden bg-gradient-to-br from-primary/5 to-secondary/5">
                 <div className="relative aspect-[16/5] w-full overflow-hidden rounded-lg">
                   <img
                     src={image.url}
