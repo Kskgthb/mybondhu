@@ -6,8 +6,16 @@ export default function CategoryExplorer() {
   const navigate = useNavigate();
   // Default to the first category (Academic)
   const [selectedCategoryValue, setSelectedCategoryValue] = useState(categoryData[0].value);
+  const [showAll, setShowAll] = useState(false);
+
+  const handleCategoryChange = (value: string) => {
+    setSelectedCategoryValue(value);
+    setShowAll(false); // Reset on category change
+  };
 
   const selectedCategory = categoryData.find(cat => cat.value === selectedCategoryValue) || categoryData[0];
+  
+  const itemsToShow = showAll ? selectedCategory.subcategories : selectedCategory.subcategories.slice(0, 6);
 
   return (
     <div className="w-full max-w-7xl mx-auto px-4 py-8 animate-fade-in">
@@ -22,7 +30,7 @@ export default function CategoryExplorer() {
             return (
               <button
                 key={category.value}
-                onClick={() => setSelectedCategoryValue(category.value)}
+                onClick={() => handleCategoryChange(category.value)}
                 className={`flex flex-col items-center justify-center min-w-[80px] sm:min-w-[100px] py-3 px-2 snap-center transition-all duration-300 relative group
                   ${isSelected ? 'text-green-600' : 'text-slate-500 hover:text-slate-800'}`}
               >
@@ -56,17 +64,27 @@ export default function CategoryExplorer() {
         <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-slate-200 -z-10" />
       </div>
 
-      {/* Sub-services Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mt-6">
-        {selectedCategory.subcategories.map((sub, idx) => (
+      {/* Sub-services Horizontal Chips */}
+      <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 mt-6 max-w-4xl mx-auto">
+        {itemsToShow.map((sub, idx) => (
           <button
             key={idx}
             onClick={() => navigate('/signup')}
-            className="flex items-center justify-center text-center px-4 sm:px-6 py-3 sm:py-4 bg-gray-50 border border-gray-200 rounded-full text-sm sm:text-base font-medium text-slate-700 hover:bg-green-50 hover:border-green-200 hover:text-green-700 hover:shadow-md transition-all duration-200 shadow-sm w-full touch-manipulation"
+            className="flex-shrink-0 flex items-center justify-center text-center px-5 sm:px-6 py-2.5 sm:py-3 bg-gray-50 border border-gray-200 rounded-full text-sm sm:text-base font-medium text-slate-700 hover:bg-green-50 hover:border-green-200 hover:text-green-700 hover:shadow-md transition-all duration-200 shadow-sm touch-manipulation"
           >
             {sub.label}
           </button>
         ))}
+        
+        {/* See More Button */}
+        {!showAll && selectedCategory.subcategories.length > 6 && (
+          <button
+            onClick={() => setShowAll(true)}
+            className="flex-shrink-0 flex items-center justify-center text-center px-5 sm:px-6 py-2.5 sm:py-3 bg-green-50 border border-green-200 rounded-full text-sm sm:text-base font-bold text-green-700 hover:bg-green-100 hover:shadow-md transition-all duration-200 shadow-sm touch-manipulation"
+          >
+            See More
+          </button>
+        )}
       </div>
       
     </div>
