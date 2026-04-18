@@ -673,6 +673,26 @@ export const storageApi = {
 
     if (error) throw error;
   },
+
+  async uploadAvatar(userId: string, file: File): Promise<string> {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${userId}/avatars/${Date.now()}.${fileExt}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('app-83dmv202aiv5_bondhu_documents')
+      .upload(fileName, file, {
+        cacheControl: '3600',
+        upsert: true,
+      });
+
+    if (uploadError) throw uploadError;
+
+    const { data } = supabase.storage
+      .from('app-83dmv202aiv5_bondhu_documents')
+      .getPublicUrl(fileName);
+
+    return data.publicUrl;
+  },
 };
 
 export const realtimeApi = {

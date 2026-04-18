@@ -13,12 +13,14 @@ import StatsSection from '@/components/dashboard/StatsSection';
 import CoinsSection from '@/components/dashboard/CoinsSection';
 import ReferralSection from '@/components/dashboard/ReferralSection';
 import WalletSection from '@/components/dashboard/WalletSection';
+import ProfileEditDialog from '@/components/profile/ProfileEditDialog';
 import { useRole } from '@/contexts/RoleContext';
 
 export default function ProfilePage() {
   const { user, profile, refreshProfile } = useAuth();
   const { currentRole } = useRole();
   const [tasksCount, setTasksCount] = useState({ completed: 0, pending: 0, declined: 0 });
+  const [isEditOpen, setIsEditOpen] = useState(false);
 
   useEffect(() => {
     if (!user || !profile || !currentRole) return;
@@ -91,7 +93,11 @@ export default function ProfilePage() {
       <h1 className="text-3xl font-bold mb-8">Profile</h1>
 
       <div className="grid gap-6">
-        <ProfileHeader profile={profile} role={currentRole || profile.role} />
+        <ProfileHeader 
+          profile={profile} 
+          role={currentRole || profile.role} 
+          onEditClick={() => setIsEditOpen(true)}
+        />
         
         <div className="grid lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
@@ -320,6 +326,13 @@ export default function ProfilePage() {
           </CardContent>
         </Card>
       </div>
+
+      <ProfileEditDialog
+        open={isEditOpen}
+        onOpenChange={setIsEditOpen}
+        profile={profile}
+        onSuccess={refreshProfile}
+      />
     </div>
   );
 }

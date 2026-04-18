@@ -1,24 +1,45 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Profile } from '@/types/types';
-import { User, Mail } from 'lucide-react';
+import { User, Mail, Edit2 } from 'lucide-react';
 
 interface ProfileHeaderProps {
   profile: Profile | null;
   role: string;
+  onEditClick?: () => void;
 }
 
-export default function ProfileHeader({ profile, role }: ProfileHeaderProps) {
+export default function ProfileHeader({ profile, role, onEditClick }: ProfileHeaderProps) {
   if (!profile) return null;
 
   return (
-    <div className="flex flex-col md:flex-row items-center gap-6 p-6 bg-white/50 backdrop-blur-sm rounded-2xl border border-white/20 shadow-sm">
-      <Avatar className="h-24 w-24 border-4 border-white shadow-md">
-        <AvatarImage src={profile.avatar_url || ''} alt={profile.full_name || profile.username} />
-        <AvatarFallback className="bg-primary/10 text-primary text-2xl font-bold">
-          {profile.full_name?.[0] || profile.username?.[0] || 'U'}
-        </AvatarFallback>
-      </Avatar>
+    <div className="flex flex-col md:flex-row items-center gap-6 p-6 bg-white/50 backdrop-blur-sm rounded-2xl border border-white/20 shadow-sm relative">
+      {onEditClick && (
+        <Button
+          variant="outline"
+          size="sm"
+          className="absolute top-4 right-4 h-8 gap-1 hidden md:flex"
+          onClick={onEditClick}
+        >
+          <Edit2 className="h-3.5 w-3.5" />
+          Edit
+        </Button>
+      )}
+
+      <div className="relative group cursor-pointer" onClick={onEditClick}>
+        <Avatar className="h-24 w-24 border-4 border-white shadow-md">
+          <AvatarImage src={profile.avatar_url || ''} alt={profile.full_name || profile.username} className="object-cover" />
+          <AvatarFallback className="bg-primary/10 text-primary text-2xl font-bold">
+            {profile.full_name?.[0] || profile.username?.[0] || 'U'}
+          </AvatarFallback>
+        </Avatar>
+        {onEditClick && (
+          <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+            <Edit2 className="h-6 w-6 text-white" />
+          </div>
+        )}
+      </div>
       
       <div className="flex-grow text-center md:text-left">
         <div className="flex flex-col md:flex-row md:items-center gap-2 mb-2">
@@ -26,6 +47,16 @@ export default function ProfileHeader({ profile, role }: ProfileHeaderProps) {
           <Badge variant="secondary" className="w-fit mx-auto md:mx-0 bg-primary/10 text-primary hover:bg-primary/20 border-none px-3 py-1">
             {role === 'bondhu' ? 'Bondhu Helper' : 'Bondhu Requester'}
           </Badge>
+          {onEditClick && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="md:hidden mt-2 mx-auto h-8 w-8 text-muted-foreground"
+              onClick={onEditClick}
+            >
+              <Edit2 className="h-4 w-4" />
+            </Button>
+          )}
         </div>
         
         <div className="flex flex-col gap-1 text-sm text-gray-600">
@@ -33,7 +64,12 @@ export default function ProfileHeader({ profile, role }: ProfileHeaderProps) {
             <Mail className="h-4 w-4 text-primary/60" />
             <span>{profile.email}</span>
           </div>
-          {profile.college_name && (
+          {profile.phone && (
+             <div className="flex items-center justify-center md:justify-start gap-2">
+               <span className="font-medium text-primary/80">{profile.phone}</span>
+             </div>
+          )}
+          {profile.college_name && !profile.phone && (
              <div className="flex items-center justify-center md:justify-start gap-2">
                <span className="font-medium text-primary/80">{profile.college_name}</span>
              </div>
