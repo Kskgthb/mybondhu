@@ -191,6 +191,10 @@ export async function sendCredentialsToSW(
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
   const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
+  // Fetch the current session to get the access token for RLS authentication
+  const { data } = await supabase.auth.getSession();
+  const accessToken = data.session?.access_token || null;
+
   sw.postMessage({
     type: 'INIT_REALTIME',
     payload: {
@@ -199,6 +203,7 @@ export async function sendCredentialsToSW(
       userId,
       userRole: userRole || null,
       location: location || null,
+      accessToken,
     },
   });
 

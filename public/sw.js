@@ -15,6 +15,7 @@ const SW_VERSION = '2.0.0';
 // ── State ────────────────────────────────────────────────────
 let supabaseUrl = null;
 let supabaseKey = null;
+let accessToken = null;
 let userId = null;
 let userRole = null; // 'bondhu' | 'need_bondhu'
 let userLocation = null; // { lat, lng }
@@ -141,6 +142,17 @@ function connectSupabaseRealtime() {
 
     realtimeSocket.onopen = () => {
       console.log('[SW] ✅ Realtime WebSocket connected');
+
+      // Authenticate the connection for Row Level Security (RLS)
+      if (accessToken) {
+        realtimeSocket.send(JSON.stringify({
+          topic: 'realtime',
+          event: 'access_token',
+          payload: { access_token: accessToken },
+          ref: 'auth'
+        }));
+        console.log('[SW] 🔐 Realtime WebSocket authenticated');
+      }
 
       // Join the realtime channel for postgres_changes
       // Subscribe to tasks table (new tasks for bondhu proximity alerts)
@@ -489,6 +501,7 @@ self.addEventListener('message', (event) => {
       supabaseKey = payload.supabaseKey;
       userId = payload.userId;
       userRole = payload.userRole || null;
+      accessToken = payload.accessToken || null;
       if (payload.location) {
         userLocation = payload.location;
       }
@@ -538,6 +551,7 @@ self.addEventListener('message', (event) => {
       userLocation = null;
       supabaseUrl = null;
       supabaseKey = null;
+      accessToken = null;
       break;
     }
 
