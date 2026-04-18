@@ -1,92 +1,74 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { categoryData } from '@/lib/categoryData';
-import { ChevronDown, ChevronUp, Sparkles } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
 
 export default function CategoryExplorer() {
   const navigate = useNavigate();
-  const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({});
+  // Default to the first category (Academic)
+  const [selectedCategoryValue, setSelectedCategoryValue] = useState(categoryData[0].value);
 
-  const toggleCategory = (value: string) => {
-    setExpandedCategories(prev => ({
-      ...prev,
-      [value]: !prev[value]
-    }));
-  };
+  const selectedCategory = categoryData.find(cat => cat.value === selectedCategoryValue) || categoryData[0];
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-4 py-16 animate-fade-in">
-      <div className="text-center mb-12">
-        <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 mb-4 flex items-center justify-center gap-3">
-          <Sparkles className="text-primary w-8 h-8" />
-          Browse Services by Category
-        </h2>
-        <p className="text-slate-500 text-lg max-w-2xl mx-auto">
-          From academic help to personal errands, find the perfect Bondhu for any task you need help with.
-        </p>
+    <div className="w-full max-w-7xl mx-auto px-4 py-8 animate-fade-in">
+      
+      {/* Horizontal Scrollable Category Selector (Tabs) */}
+      <div className="relative mb-8">
+        <div className="flex overflow-x-auto hide-scrollbar gap-2 pb-4 snap-x">
+          {categoryData.map((category) => {
+            const isSelected = category.value === selectedCategoryValue;
+            const Icon = category.icon;
+            
+            return (
+              <button
+                key={category.value}
+                onClick={() => setSelectedCategoryValue(category.value)}
+                className={`flex flex-col items-center justify-center min-w-[80px] sm:min-w-[100px] py-3 px-2 snap-center transition-all duration-300 relative group
+                  ${isSelected ? 'text-green-600' : 'text-slate-500 hover:text-slate-800'}`}
+              >
+                {/* Icon Background Blob */}
+                <div 
+                  className={`w-14 h-14 sm:w-16 sm:h-16 rounded-3xl flex items-center justify-center mb-2 transition-all duration-300
+                    ${isSelected ? 'bg-green-100/80 scale-110 shadow-sm' : 'bg-transparent group-hover:bg-slate-100'}`}
+                  style={isSelected ? {} : { borderRadius: '40% 60% 70% 30% / 40% 50% 60% 50%' }}
+                >
+                  <Icon 
+                    className={`w-6 h-6 sm:w-7 sm:h-7 transition-all duration-300 ${isSelected ? 'text-green-600 drop-shadow-sm' : 'text-slate-500 group-hover:text-slate-800'}`} 
+                    strokeWidth={isSelected ? 2.5 : 2}
+                  />
+                </div>
+                
+                {/* Category Text */}
+                <span className={`text-xs sm:text-sm font-semibold text-center whitespace-nowrap ${isSelected ? 'font-bold' : ''}`}>
+                  {category.label}
+                </span>
+
+                {/* Active Indicator Underline */}
+                {isSelected && (
+                  <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-1 bg-green-500 rounded-t-full" />
+                )}
+              </button>
+            );
+          })}
+        </div>
+        
+        {/* Subtle bottom border for the tabs area */}
+        <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-slate-200 -z-10" />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-        {categoryData.map((category) => {
-          const isExpanded = expandedCategories[category.value];
-          // Show 8 items initially as requested (6-8)
-          const displayItems = isExpanded ? category.subcategories : category.subcategories.slice(0, 8);
-          
-          return (
-            <div 
-              key={category.value} 
-              className="bg-white/40 backdrop-blur-md rounded-3xl p-6 border border-white/60 shadow-xl hover:shadow-2xl transition-all duration-300 group"
-            >
-              <div className="flex items-center gap-3 mb-6">
-                <div className={`w-12 h-12 rounded-2xl ${category.bgColor} flex items-center justify-center text-2xl shadow-inner group-hover:scale-110 transition-transform duration-300`}>
-                  {category.emoji}
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold text-slate-800 tracking-tight">{category.label}</h3>
-                  <p className="text-xs text-slate-400 font-medium">{category.subcategories.length} Services available</p>
-                </div>
-              </div>
-              
-              <div className="flex flex-wrap gap-2 min-h-[100px]">
-                {displayItems.map((sub, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => navigate('/signup')}
-                    className="px-4 py-2 rounded-xl bg-white/80 border border-slate-100 text-sm font-semibold text-slate-600 hover:bg-primary hover:text-white hover:border-primary hover:scale-105 transition-all duration-200 shadow-sm"
-                  >
-                    {sub.label}
-                  </button>
-                ))}
-              </div>
-
-              {category.subcategories.length > 8 && (
-                <button
-                  onClick={() => toggleCategory(category.value)}
-                  className="mt-6 w-full py-2 rounded-xl text-primary text-sm font-bold flex items-center justify-center gap-2 hover:bg-primary/5 transition-colors border border-dashed border-primary/20 hover:border-primary/40"
-                >
-                  {isExpanded ? (
-                    <>Show Less <ChevronUp className="w-4 h-4" /></>
-                  ) : (
-                    <>View More <ChevronDown className="w-4 h-4" /></>
-                  )}
-                </button>
-              )}
-            </div>
-          );
-        })}
+      {/* Sub-services Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mt-6">
+        {selectedCategory.subcategories.map((sub, idx) => (
+          <button
+            key={idx}
+            onClick={() => navigate('/signup')}
+            className="flex items-center justify-center text-center px-4 sm:px-6 py-3 sm:py-4 bg-gray-50 border border-gray-200 rounded-full text-sm sm:text-base font-medium text-slate-700 hover:bg-green-50 hover:border-green-200 hover:text-green-700 hover:shadow-md transition-all duration-200 shadow-sm w-full touch-manipulation"
+          >
+            {sub.label}
+          </button>
+        ))}
       </div>
       
-      {/* Pro Tip section as requested */}
-      <div className="mt-20 p-8 rounded-3xl bg-gradient-to-r from-primary/10 via-secondary/10 to-accent/10 border border-white/50 backdrop-blur-sm text-center">
-        <div className="flex items-center justify-center gap-2 mb-3">
-          <Sparkles className="text-primary w-5 h-5" />
-          <span className="text-sm font-bold text-primary uppercase tracking-widest">Pro Tip</span>
-        </div>
-        <p className="text-slate-700 font-medium text-lg">
-          Click on any service chip to get started and find your perfect Bondhu instantly!
-        </p>
-      </div>
     </div>
   );
 }

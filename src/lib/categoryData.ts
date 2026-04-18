@@ -1,15 +1,16 @@
 import type { LucideIcon } from 'lucide-react';
 import { 
-  GraduationCap, 
+  Book, 
   User, 
   Calendar, 
   Truck, 
-  Users, 
-  Wrench, 
+  MessageCircle, 
+  ClipboardList, 
   Palette, 
   Dumbbell, 
-  UtensilsCrossed, 
-  Plane 
+  ChefHat, 
+  Plane,
+  Flame
 } from 'lucide-react';
 
 export interface SubCategory {
@@ -34,7 +35,7 @@ export const categoryData: CategoryData[] = [
     value: 'academic_help',
     label: 'Academic',
     emoji: '🎓',
-    icon: GraduationCap,
+    icon: Book,
     color: '#3B82F6',
     bgColor: 'bg-blue-50',
     image: 'https://miaoda-conversation-file.s3cdn.medo.dev/user-83dmrzia70g0/conv-83dmv202aiv4/20251212/file-86hvph3yo8ow.png',
@@ -122,7 +123,7 @@ export const categoryData: CategoryData[] = [
     value: 'food_cooking',
     label: 'Food & Cooking',
     emoji: '🍳',
-    icon: UtensilsCrossed,
+    icon: ChefHat,
     color: '#F97316',
     bgColor: 'bg-orange-50',
     image: 'https://miaoda-conversation-file.s3cdn.medo.dev/user-83dmrzia70g0/conv-83dmv202aiv4/20251212/file-86k447cbn474.jpg',
@@ -144,7 +145,7 @@ export const categoryData: CategoryData[] = [
     value: 'companionship',
     label: 'Companionship',
     emoji: '🤝',
-    icon: Users,
+    icon: MessageCircle,
     color: '#10B981',
     bgColor: 'bg-emerald-50',
     image: 'https://miaoda-conversation-file.s3cdn.medo.dev/user-83dmrzia70g0/conv-83dmv202aiv4/20251212/file-86k4eae0dkao.jpg',
@@ -166,7 +167,7 @@ export const categoryData: CategoryData[] = [
     value: 'personal_task',
     label: 'Personal Tasks',
     emoji: '🧾',
-    icon: User,
+    icon: ClipboardList,
     color: '#8B5CF6',
     bgColor: 'bg-purple-50',
     image: 'https://miaoda-conversation-file.s3cdn.medo.dev/user-83dmrzia70g0/conv-83dmv202aiv4/20251212/file-86hvoljgwf0g.png',
@@ -229,7 +230,7 @@ export const categoryData: CategoryData[] = [
     value: 'trending',
     label: 'Trending',
     emoji: '🔥',
-    icon: Users, // Temporary icon
+    icon: Flame,
     color: '#F43F5E',
     bgColor: 'bg-rose-50',
     image: '/trending-services.png',
