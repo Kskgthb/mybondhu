@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { UserCheck, HandHeart, Star, MapPin, Clock, Shield, Youtube, Instagram, Linkedin, Mail, MessageCircle, Search } from 'lucide-react';
 import { useEffect } from 'react';
-import HeroBanner from '@/components/common/HeroBanner';
+import CategoryExplorer from '@/components/common/CategoryExplorer';
 import Logo from '@/components/common/Logo';
 import CategoryCard from '@/components/common/CategoryCard';
 import { categoryData } from '@/lib/categoryData';
@@ -89,8 +89,8 @@ export default function LandingPage() {
           </div>
         </div>
 
-        {/* Hero Banner Carousel */}
-        <HeroBanner />
+        {/* Dynamic Category Explorer - Replaces Carousel */}
+        <CategoryExplorer />
 
         {/* Categories Section */}
         <div className="max-w-7xl mx-auto mb-16 mt-12">
