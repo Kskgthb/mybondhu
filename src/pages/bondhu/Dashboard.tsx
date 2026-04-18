@@ -21,7 +21,7 @@ import type { TaskWithDistance, TaskWithAssignment } from '@/types/types';
 import { toast } from 'sonner';
 import { navigateToLocation } from '@/lib/googleMaps';
 import { initializeNotifications, updateSWLocation } from '@/lib/notifications';
-
+import { getClearedTasks, clearTask } from '@/lib/clearStorage';
 
 export default function BondhuDashboard() {
   const { user, profile, refreshProfile } = useAuth();
@@ -219,7 +219,8 @@ export default function BondhuDashboard() {
       
       // Only update assignments if we got data
       if (assignments && assignments.length >= 0) {
-        setMyAssignments(assignments);
+        const clearedTasks = getClearedTasks();
+        setMyAssignments(assignments.filter(t => !clearedTasks.includes(t.id)));
       }
 
       // Get all accepted task IDs to filter them out (exclude declined tasks)
@@ -565,6 +566,7 @@ export default function BondhuDashboard() {
                     onView={() => handleViewTask(task.id)}
                     showNavigate={isActive}
                     onNavigate={isActive ? () => handleNavigateToTask(task.id) : undefined}
+                    onClear={() => { clearTask(task.id); loadData(); }}
                   />
                 );
               })}
@@ -616,6 +618,7 @@ export default function BondhuDashboard() {
                   key={task.id}
                   task={task}
                   onView={() => handleViewTask(task.id)}
+                  onClear={() => { clearTask(task.id); loadData(); }}
                 />
               ))}
             </div>

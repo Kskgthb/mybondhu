@@ -22,6 +22,7 @@ import { toast } from 'sonner';
 import { initializeNotifications } from '@/lib/notifications';
 import { showPushNotification } from '@/services/notificationService';
 import { Card, CardContent } from '@/components/ui/card';
+import { getClearedTasks, clearTask } from '@/lib/clearStorage';
 
 export default function NeedBondhuDashboard() {
   const { user, profile } = useAuth();
@@ -125,7 +126,8 @@ export default function NeedBondhuDashboard() {
         }
       }
       
-      setTasks(data);
+      const clearedTasks = getClearedTasks();
+      setTasks(data.filter(t => !clearedTasks.includes(t.id)));
       
       // Check for status changes and show notifications
       if (previousTasks.length > 0) {
@@ -315,6 +317,7 @@ export default function NeedBondhuDashboard() {
                   onEdit={() => handleEditTask(task)}
                   onCancel={() => handleCancelTask(task)}
                   onRate={task.status === 'completed' && !task.rating ? () => handleRateTask(task) : undefined}
+                  onClear={() => { clearTask(task.id); loadTasks(); }}
                   showEdit={true}
                   showCancel={true}
                 />
@@ -344,6 +347,7 @@ export default function NeedBondhuDashboard() {
                   onEdit={() => handleEditTask(task)}
                   onCancel={() => handleCancelTask(task)}
                   onRate={task.status === 'completed' && !task.rating ? () => handleRateTask(task) : undefined}
+                  onClear={() => { clearTask(task.id); loadTasks(); }}
                   showEdit={true}
                   showCancel={true}
                 />
@@ -372,6 +376,7 @@ export default function NeedBondhuDashboard() {
                   onView={() => handleViewTask(task.id)}
                   onEdit={() => handleEditTask(task)}
                   onRate={task.status === 'completed' && !task.rating ? () => handleRateTask(task) : undefined}
+                  onClear={() => { clearTask(task.id); loadTasks(); }}
                   showEdit={true}
                 />
               ))}
@@ -399,6 +404,7 @@ export default function NeedBondhuDashboard() {
                   onView={() => handleViewTask(task.id)}
                   onEdit={() => handleEditTask(task)}
                   onRate={task.status === 'completed' && !task.rating ? () => handleRateTask(task) : undefined}
+                  onClear={() => { clearTask(task.id); loadTasks(); }}
                   showEdit={true}
                 />
               ))}

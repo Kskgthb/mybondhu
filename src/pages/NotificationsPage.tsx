@@ -9,7 +9,9 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Bell, CheckCheck, Clock } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
+import { X, Trash2 } from 'lucide-react';
 import type { Notification } from '@/types/types';
+import { getClearedNotifications, clearNotification, clearAllNotifications } from '@/lib/clearStorage';
 
 export default function NotificationsPage() {
   const { user } = useAuth();
@@ -36,7 +38,8 @@ export default function NotificationsPage() {
     
     try {
       const data = await notificationsApi.getMyNotifications(user.id);
-      setNotifications(data);
+      const cleared = getClearedNotifications();
+      setNotifications(data.filter(n => !cleared.includes(n.id)));
     } catch (error) {
       console.error('Error loading notifications:', error);
       toast.error('Failed to load notifications');
@@ -68,6 +71,19 @@ export default function NotificationsPage() {
       console.error('Error marking all as read:', error);
       toast.error('Failed to mark all as read');
     }
+  };
+
+  const handleClearAll = () => {
+    const notificationIds = notifications.map(n => n.id);
+    clearAllNotifications(notificationIds);
+    setNotifications([]);
+    toast.success('All notifications cleared');
+  };
+
+  const handleClear = (e: React.MouseEvent, notificationId: string) => {
+    e.stopPropagation();
+    clearNotification(notificationId);
+    setNotifications(prev => prev.filter(n => n.id !== notificationId));
   };
 
   const handleNotificationClick = (notification: Notification) => {
@@ -109,12 +125,21 @@ export default function NotificationsPage() {
             {unreadCount > 0 ? `You have ${unreadCount} unread notification${unreadCount > 1 ? 's' : ''}` : 'All caught up!'}
           </p>
         </div>
-        {unreadCount > 0 && (
-          <Button variant="outline" onClick={handleMarkAllAsRead}>
-            <CheckCheck className="mr-2 h-4 w-4" />
-            Mark All Read
-          </Button>
-        )}
+        </div>
+        <div className="flex gap-2">
+          {unreadCount > 0 && (
+            <Button variant="outline" size="sm" onClick={handleMarkAllAsRead}>
+              <CheckCheck className="mr-2 h-4 w-4" />
+              Mark All Read
+            </Button>
+          )}
+          {notifications.length > 0 && (
+            <Button variant="outline" size="sm" onClick={handleClearAll}>
+              <Trash2 className="mr-2 h-4 w-4" />
+              Clear All
+            </Button>
+          )}
+        </div>
       </div>
 
       <div className="space-y-3">
@@ -148,9 +173,19 @@ export default function NotificationsPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2 mb-1">
                       <h3 className="font-medium">{notification.title}</h3>
-                      {!notification.read && (
-                        <Badge variant="default" className="flex-shrink-0">New</Badge>
-                      )}
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        {!notification.read && (
+                          <Badge variant="default">New</Badge>
+                        )}
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-6 w-6 text-muted-foreground hover:text-destructive -mr-2"
+                          onClick={(e) => handleClear(e, notification.id)}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                     <p className="text-sm text-muted-foreground mb-2">
                       {notification.message}

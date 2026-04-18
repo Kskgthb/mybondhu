@@ -15,6 +15,7 @@ interface TaskCardProps {
   onEdit?: () => void;
   onCancel?: () => void;
   onRate?: () => void;
+  onClear?: () => void;
   showActions?: boolean;
   showDistance?: boolean;
   showNavigate?: boolean;
@@ -46,6 +47,7 @@ export default function TaskCard({
   onEdit,
   onCancel,
   onRate,
+  onClear,
   showActions = false, 
   showDistance = false,
   showNavigate = false,
@@ -136,6 +138,12 @@ export default function TaskCard({
             <Button className="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white min-h-[44px]" onClick={onRate}>
               <Star className="h-4 w-4 mr-2 fill-current" />
               Rate Bondhu
+            </Button>
+          )}
+          {onClear && (task.status === 'completed' || task.status === 'cancelled') && (
+            <Button variant="outline" className="flex-1 text-muted-foreground min-h-[44px]" onClick={onClear}>
+              <X className="h-4 w-4 mr-2" />
+              Clear
             </Button>
           )}
           {onView && (
