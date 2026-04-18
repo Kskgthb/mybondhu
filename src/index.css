@@ -106,11 +106,32 @@ All colors MUST be HSL.
   body {
     @apply text-foreground;
     background-color: hsl(var(--background));
+    position: relative;
+  }
+
+  /* Global Background Pattern */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background-image: url('/images/bg-pattern.png?v=2');
+    background-repeat: repeat;
+    background-size: 800px auto;
+    background-position: center top;
+    background-attachment: fixed;
+    opacity: 0.08;
+    pointer-events: none;
   }
 
   /* Dark mode: overlay darkens the pattern to blend with the dark theme */
   .dark body {
     background-color: hsl(var(--background));
+  }
+
+  .dark body::before {
+    opacity: 0.04; /* Lower opacity in dark mode to keep it subtle */
+    mix-blend-mode: overlay;
   }
 
   /* Performance optimizations */

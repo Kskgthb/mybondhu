@@ -9,19 +9,7 @@ interface MainLayoutProps {
 
 export default function MainLayout({ children }: MainLayoutProps) {
   return (
-    <div className="flex flex-col min-h-screen relative isolate">
-      {/* Subtle Full-screen Background Pattern (Watermark style) */}
-      <div 
-        className="fixed inset-0 -z-10 opacity-[0.05] pointer-events-none"
-        style={{ 
-          backgroundImage: "url('/images/bg-pattern.png')",
-          backgroundRepeat: 'repeat',
-          backgroundSize: '800px auto',
-          backgroundPosition: 'center top',
-          backgroundAttachment: 'fixed'
-        }}
-        aria-hidden="true"
-      />
+    <div className="flex flex-col min-h-screen relative">
       <Header />
       
       {/* We use flex-1 to take up remaining height, but Header is sticky so it doesn't take height in flex context necessarily. Wait, Header has sticky top-0, but it is IN the document flow, so it takes up space. */}
