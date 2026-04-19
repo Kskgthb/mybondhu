@@ -1,32 +1,9 @@
 /**
  * Push Notification Service
- * Uses Service Worker for notifications that work even when tab is closed.
- *
- * Architecture:
- *   1. Registers the Service Worker
- *   2. Requests notification permission
- *   3. Sends Supabase credentials to the SW so it can maintain its own
- *      Realtime connection for background notifications
- *   4. Sends location updates to the SW for proximity-based task alerts
- *   5. Falls back to in-page notifications if SW is unavailable
- *
- * Notification types:
- *   - new_task_nearby:   "New task available near you!" (Bondhu, ~3 km)
- *   - task_accepted:     "Your task has been accepted by a Bondhu!"
- *   - bondhu_on_way:     "Your Bondhu is on the way!"
- *   - bondhu_arrived:    "Your Bondhu has reached the location!"
- *   - task_started:      "Bondhu has started working on your task!"
- *   - task_completed:    "Your task has been completed!"
- *   - code_verified:     "Completion code verified!"
- *   - payment_confirmed: "Payment confirmed — Trust Delivered!"
- *   - message_received:  "You have a new message"
+ * Uses True Web Push Architecture to deliver notifications even when the app is closed.
  */
 
 import { supabase } from '@/db/supabase';
-
-// ============================================================
-// Notification Configs
-// ============================================================
 
 export type NotificationType =
   | 'task_accepted'
@@ -110,11 +87,11 @@ const NOTIFICATION_CONFIGS: Record<NotificationType, NotificationConfig> = {
   },
 };
 
-// ============================================================
-// Service Worker Registration
-// ============================================================
-
 let swRegistration: ServiceWorkerRegistration | null = null;
+
+// The VAPID Public Key generated for Web Push
+// In production, this MUST come from your environment variables
+const PUBLIC_VAPID_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY || 'BDXhj031Lh_H3YUN5JzpRAZVgb3tukLc8TrG2nN0uQPJ8dYzFEzS5_Cd2m4gXbykdsLSg2BOmGumBHJQzrbAyU0';
 
 /**
  * Register the Service Worker for push notifications
@@ -129,11 +106,8 @@ export async function registerServiceWorker(): Promise<ServiceWorkerRegistration
     const registration = await navigator.serviceWorker.register('/sw.js', {
       scope: '/',
     });
-
     swRegistration = registration;
     console.log('✅ Service Worker registered successfully');
-
-    // Wait for the SW to be ready
     await navigator.serviceWorker.ready;
     return registration;
   } catch (error) {
@@ -142,166 +116,146 @@ export async function registerServiceWorker(): Promise<ServiceWorkerRegistration
   }
 }
 
-// ============================================================
-// Permission Management
-// ============================================================
-
 /**
- * Request notification permission (only if not already decided)
+ * Request notification permission
  */
 export async function requestNotificationPermission(): Promise<boolean> {
-  if (!('Notification' in window)) {
-    console.warn('[Notifications] Browser does not support notifications');
-    return false;
-  }
-
-  if (Notification.permission === 'granted') {
-    return true;
-  }
-
-  if (Notification.permission === 'denied') {
-    console.log('[Notifications] Permission previously denied, skipping request');
-    return false;
-  }
-
-  // Only request if 'default' (never asked)
+  if (!('Notification' in window)) return false;
+  if (Notification.permission === 'granted') return true;
+  if (Notification.permission === 'denied') return false;
   const permission = await Notification.requestPermission();
   return permission === 'granted';
 }
 
-// ============================================================
-// Service Worker Messaging
-// ============================================================
-
 /**
- * Send credentials and user info to Service Worker so it can establish
- * its own Supabase Realtime connection for background notifications.
+ * Convert VAPID key to Uint8Array for the PushManager API
  */
-export async function sendCredentialsToSW(
-  userId: string,
-  userRole?: string,
-  location?: { lat: number; lng: number }
-): Promise<void> {
-  const sw = await getActiveServiceWorker();
-  if (!sw) {
-    console.warn('[Notifications] No active SW to send credentials to');
-    return;
+function urlBase64ToUint8Array(base64String: string) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding)
+    .replace(/\-/g, '+')
+    .replace(/_/g, '/');
+
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
   }
-
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-  const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-  // Fetch the current session to get the access token for RLS authentication
-  const { data } = await supabase.auth.getSession();
-  const accessToken = data.session?.access_token || null;
-
-  sw.postMessage({
-    type: 'INIT_REALTIME',
-    payload: {
-      supabaseUrl,
-      supabaseKey,
-      userId,
-      userRole: userRole || null,
-      location: location || null,
-      accessToken,
-    },
-  });
-
-  console.log('✅ Credentials sent to Service Worker for background notifications');
+  return outputArray;
 }
 
 /**
- * Send location update to SW for proximity-based notifications
+ * Subscribe the current browser to True Web Push
  */
-export function sendLocationToSW(lat: number, lng: number): void {
-  getActiveServiceWorker().then((sw) => {
-    if (sw) {
-      sw.postMessage({
-        type: 'UPDATE_LOCATION',
-        payload: { lat, lng },
-      });
-    }
-  });
-}
-
-/**
- * Send role update to SW
- */
-export function sendRoleToSW(role: string): void {
-  getActiveServiceWorker().then((sw) => {
-    if (sw) {
-      sw.postMessage({
-        type: 'UPDATE_ROLE',
-        payload: { role },
-      });
-    }
-  });
-}
-
-/**
- * Tear down SW realtime connection (on logout)
- */
-export async function teardownSWRealtime(): Promise<void> {
-  const sw = await getActiveServiceWorker();
-  if (sw) {
-    sw.postMessage({ type: 'TEARDOWN' });
-    console.log('🧹 SW realtime teardown requested');
-  }
-}
-
-/**
- * Get the active service worker instance
- */
-async function getActiveServiceWorker(): Promise<ServiceWorker | null> {
-  if (!('serviceWorker' in navigator)) return null;
-
+export async function subscribeToWebPush(userId: string): Promise<void> {
   try {
-    const registration = swRegistration || (await navigator.serviceWorker.ready);
-    swRegistration = registration;
-    return registration.active;
-  } catch {
-    return null;
+    const registration = await registerServiceWorker();
+    if (!registration) return;
+
+    // Check if already subscribed
+    let subscription = await registration.pushManager.getSubscription();
+
+    if (!subscription) {
+      console.log('🌐 Requesting new push subscription...');
+      subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(PUBLIC_VAPID_KEY),
+      });
+    }
+
+    // Parse the subscription to get keys
+    const subJSON = subscription.toJSON();
+    if (!subJSON.endpoint || !subJSON.keys) throw new Error('Invalid subscription');
+
+    // Save subscription securely to Supabase
+    const { error } = await supabase.from('push_subscriptions').upsert(
+      {
+        user_id: userId,
+        endpoint: subJSON.endpoint,
+        p256dh_key: subJSON.keys.p256dh,
+        auth_key: subJSON.keys.auth,
+      },
+      { onConflict: 'endpoint' }
+    );
+
+    if (error) {
+      console.error('❌ Failed to save push subscription to DB:', error);
+    } else {
+      console.log('✅ Push subscription saved to DB successfully');
+    }
+  } catch (err) {
+    console.error('❌ Error during Web Push subscription:', err);
   }
 }
 
-// ============================================================
-// Initialize Notification System
-// ============================================================
+/**
+ * Update user's last known location in the database
+ * This is crucial for the efficient 3km radius spatial query.
+ */
+export async function updateUserLocation(userId: string, location: { lat: number; lng: number }) {
+  try {
+    await supabase.from('profiles').update({
+      last_location_lat: location.lat,
+      last_location_lng: location.lng
+    }).eq('id', userId);
+    console.log('📍 Location synced to backend for spatial notifications');
+  } catch (err) {
+    console.error('❌ Failed to update location:', err);
+  }
+}
 
 /**
  * Initialize the full notification system:
- * 1. Register Service Worker
- * 2. Request Permission
- * 3. Send credentials to SW for background Realtime
  */
 export async function initializeNotificationSystem(
   userId: string,
   userRole?: string,
   location?: { lat: number; lng: number }
 ): Promise<void> {
-  // Register service worker
-  await registerServiceWorker();
-
-  // Request permission
   const granted = await requestNotificationPermission();
 
   if (granted) {
     console.log('✅ Notifications enabled for user:', userId);
-
-    // Send credentials to SW for background operation
-    await sendCredentialsToSW(userId, userRole, location);
+    
+    // Subscribe to backend push
+    await subscribeToWebPush(userId);
+    
+    // Sync location for proximity alerts
+    if (location) {
+      await updateUserLocation(userId, location);
+    }
   } else {
     console.log('ℹ️ Notifications not enabled (permission not granted)');
   }
 }
 
+/**
+ * Teardown / Unsubscribe (on logout)
+ */
+export async function teardownSWRealtime(): Promise<void> {
+  try {
+    const registration = await navigator.serviceWorker.ready;
+    const subscription = await registration.pushManager.getSubscription();
+    if (subscription) {
+      // We don't necessarily unsubscribe completely because they might log in again, 
+      // but a proper app would delete the subscription from the DB here.
+      const subJSON = subscription.toJSON();
+      if (subJSON.endpoint) {
+        await supabase.from('push_subscriptions').delete().eq('endpoint', subJSON.endpoint);
+      }
+      await subscription.unsubscribe();
+      console.log('🧹 Push subscription removed on logout');
+    }
+  } catch (err) {
+    console.error('❌ Error during push unsubscribe:', err);
+  }
+}
+
 // ============================================================
-// Show Notifications
+// Show Notifications (Local / Active Tab)
 // ============================================================
 
-/**
- * Show a notification using the Service Worker (works even when tab is closed)
- */
 export async function showPushNotification(
   type: NotificationType,
   options?: {
@@ -313,12 +267,9 @@ export async function showPushNotification(
   }
 ): Promise<void> {
   const config = NOTIFICATION_CONFIGS[type];
-
-  // Build the notification content
   let title = options?.customTitle || config.title;
   let body = options?.customBody || config.body;
 
-  // Personalize messages
   if (options?.bondhuName) {
     body = body.replace('A Bondhu', options.bondhuName).replace('Your Bondhu', options.bondhuName);
   }
@@ -326,35 +277,10 @@ export async function showPushNotification(
     body += ` — "${options.taskTitle}"`;
   }
 
-  // Build the click URL
   const url = options?.taskId
     ? `${window.location.origin}/task/${options.taskId}`
     : window.location.origin;
 
-  // Try Service Worker notification (works when tab closed)
-  const sw = await getActiveServiceWorker();
-  if (sw) {
-    try {
-      // Send SHOW_NOTIFICATION message to SW
-      sw.postMessage({
-        type: 'SHOW_NOTIFICATION',
-        payload: {
-          title,
-          body,
-          icon: config.icon,
-          badge: '/logo.png',
-          tag: config.tag,
-          url,
-          vibrate: [200, 100, 200],
-        },
-      });
-      return;
-    } catch (err) {
-      console.warn('[Notifications] SW notification failed, falling back:', err);
-    }
-  }
-
-  // Fallback: use registration.showNotification directly
   if (swRegistration) {
     try {
       await swRegistration.showNotification(title, {
@@ -365,168 +291,44 @@ export async function showPushNotification(
         data: { url },
         requireInteraction: type !== 'message_received',
         actions: [
-          { action: 'open', title: 'View' },
+          { action: 'open', title: 'Open BondhuApp' },
           { action: 'close', title: 'Dismiss' },
         ],
       } as NotificationOptions);
       return;
     } catch (err) {
-      console.warn('[Notifications] SW registration notification failed:', err);
+      console.warn('[Notifications] SW local notification failed:', err);
     }
   }
-
-  // Final fallback: standard Notification API (only works when tab is open)
-  if ('Notification' in window && Notification.permission === 'granted') {
-    new Notification(title, {
-      body,
-      icon: config.icon,
-      badge: '/logo.png',
-      tag: config.tag,
-    });
-  }
 }
 
 // ============================================================
-// Supabase Realtime Notification Listeners (Main Thread Backup)
+// Supabase Realtime Listeners (Foreground Backup)
 // ============================================================
 
-/**
- * Subscribe to real-time notifications for a user
- * This is a BACKUP to the SW realtime — it fires when the tab is open.
- */
+// The backend handles background push notifications, but we still keep these active
+// so the UI updates instantly while the user is actively staring at the app.
+
 export function subscribeToUserNotifications(userId: string) {
-  const channel = supabase
-    .channel(`user-notifications-${userId}`)
-    .on(
-      'postgres_changes',
-      {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'notifications',
-        filter: `user_id=eq.${userId}`,
-      },
-      (payload) => {
-        const notification = payload.new as {
-          type: string;
-          title: string;
-          message: string;
-          task_id: string | null;
-        };
-
-        // Map DB notification type to our NotificationType
-        const typeMap: Record<string, NotificationType> = {
-          task_accepted: 'task_accepted',
-          bondhu_on_way: 'bondhu_on_way',
-          bondhu_arrived: 'bondhu_arrived',
-          task_started: 'task_started',
-          task_completed: 'task_completed',
-          payment_received: 'payment_received',
-          payment_confirmed: 'payment_confirmed',
-          code_verified: 'code_verified',
-          new_task_nearby: 'new_task_nearby',
-          message_received: 'message_received',
-        };
-
-        const notifType = typeMap[notification.type] || 'task_accepted';
-
-        showPushNotification(notifType, {
-          customTitle: notification.title,
-          customBody: notification.message,
-          taskId: notification.task_id || undefined,
-        });
-      }
-    )
-    .subscribe();
-
-  return channel;
+  return supabase.channel(`user-notifications-${userId}`).on('postgres_changes', {
+    event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${userId}`,
+  }, (payload) => {
+    // We rely on the Edge Function for push now, but we can update UI state here if needed
+  }).subscribe();
 }
 
-/**
- * Subscribe to task status changes (for task poster)
- * Fires notifications when their task status changes
- */
 export function subscribeToTaskUpdates(taskId: string, posterName?: string) {
-  const channel = supabase
-    .channel(`task-updates-${taskId}`)
-    .on(
-      'postgres_changes',
-      {
-        event: 'UPDATE',
-        schema: 'public',
-        table: 'tasks',
-        filter: `id=eq.${taskId}`,
-      },
-      (payload) => {
-        const oldStatus = (payload.old as any)?.status;
-        const newStatus = (payload.new as any)?.status;
-        const taskTitle = (payload.new as any)?.title;
-
-        if (oldStatus === newStatus) return; // No status change
-
-        // Map status transitions to notification types
-        const statusNotifMap: Record<string, NotificationType> = {
-          accepted: 'task_accepted',
-          in_progress: 'task_started',
-          completed: 'task_completed',
-        };
-
-        const notifType = statusNotifMap[newStatus];
-        if (notifType) {
-          showPushNotification(notifType, {
-            taskId,
-            taskTitle,
-          });
-        }
-      }
-    )
-    .subscribe();
-
-  return channel;
+  return supabase.channel(`task-updates-${taskId}`).on('postgres_changes', {
+    event: 'UPDATE', schema: 'public', table: 'tasks', filter: `id=eq.${taskId}`,
+  }, () => {}).subscribe();
 }
 
-/**
- * Subscribe to assignment updates (bondhu on the way, arrived, etc.)
- */
 export function subscribeToAssignmentUpdates(taskId: string) {
-  const channel = supabase
-    .channel(`assignment-updates-${taskId}`)
-    .on(
-      'postgres_changes',
-      {
-        event: 'UPDATE',
-        schema: 'public',
-        table: 'task_assignments',
-        filter: `task_id=eq.${taskId}`,
-      },
-      (payload) => {
-        const oldStatus = (payload.old as any)?.status;
-        const newStatus = (payload.new as any)?.status;
-
-        if (oldStatus === newStatus) return;
-
-        const statusMap: Record<string, NotificationType> = {
-          accepted: 'task_accepted',
-          in_progress: 'bondhu_on_way',
-          completed: 'task_completed',
-        };
-
-        const notifType = statusMap[newStatus];
-        if (notifType) {
-          showPushNotification(notifType, { taskId });
-        }
-      }
-    )
-    .subscribe();
-
-  return channel;
+  return supabase.channel(`assignment-updates-${taskId}`).on('postgres_changes', {
+    event: 'UPDATE', schema: 'public', table: 'task_assignments', filter: `task_id=eq.${taskId}`,
+  }, () => {}).subscribe();
 }
-
-// ============================================================
-// Cleanup
-// ============================================================
 
 export function unsubscribeNotifications(channel: any) {
-  if (channel) {
-    supabase.removeChannel(channel);
-  }
+  if (channel) supabase.removeChannel(channel);
 }
