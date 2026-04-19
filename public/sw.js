@@ -16,6 +16,7 @@ self.addEventListener('push', (event) => {
 
   try {
     const data = event.data.json();
+    console.log('[SW] 🔔 Push payload parsed:', data);
     
     const title = data.title || 'BondhuApp';
     const options = {
@@ -34,10 +35,13 @@ self.addEventListener('push', (event) => {
       ],
     };
 
-    event.waitUntil(self.registration.showNotification(title, options));
-    console.log('[SW] 🔔 Received Web Push:', title);
+    event.waitUntil(
+      self.registration.showNotification(title, options)
+        .then(() => console.log('[SW] ✅ Notification shown successfully:', title))
+        .catch(err => console.error('[SW] ❌ Error showing notification:', err))
+    );
   } catch (err) {
-    console.error('[SW] Error parsing push data:', err);
+    console.error('[SW] ❌ Error parsing push data or showing notification:', err);
     // Fallback if payload isn't JSON
     event.waitUntil(
       self.registration.showNotification('BondhuApp', {

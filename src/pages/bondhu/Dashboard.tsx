@@ -128,7 +128,7 @@ export default function BondhuDashboard() {
     };
   }, [user, currentLocation]); // Re-run when location changes
 
-  // Update location periodically when working on a task
+  // Update location periodically to keep background proximity alerts accurate
   useEffect(() => {
     if (!user || !locationEnabled) return;
 
@@ -137,9 +137,9 @@ export default function BondhuDashboard() {
       task => task.status === 'accepted' || task.status === 'in_progress'
     );
 
-    if (!hasActiveTasks) return;
+    // Update interval: 10s for active tasks, 30s when waiting for tasks
+    const intervalMs = hasActiveTasks ? 10000 : 30000;
 
-    // Update location every 10 seconds when working on a task
     const locationInterval = setInterval(() => {
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
@@ -155,10 +155,11 @@ export default function BondhuDashboard() {
           },
           (error) => {
             console.error('Location update error:', error);
-          }
+          },
+          { enableHighAccuracy: hasActiveTasks }
         );
       }
-    }, 10000); // Update every 10 seconds
+    }, intervalMs);
 
     return () => {
       clearInterval(locationInterval);

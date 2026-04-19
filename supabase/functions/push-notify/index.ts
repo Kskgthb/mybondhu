@@ -82,34 +82,39 @@ serve(async (req) => {
     
     // ── NEW TASK POSTED (BONDHU PROXIMITY ALERTS) ────────────────────
     else if (table === "tasks" && type === "INSERT" && record.status === "pending") {
-      if (!record.location_lat || !record.location_lng) {
-        console.log("Task has no location, skipping proximity alerts");
+      console.log(`[Push-Notify] New task posted: ${record.id} at [${record.location_lat}, ${record.location_lng}]`);
+      
+      if (!record.location_lat || !record.location_lng || record.location_lat === 0) {
+        console.log("[Push-Notify] Task has no valid location, skipping proximity alerts");
         return new Response("Task has no location", { headers: corsHeaders });
       }
 
-      // Query database for all bondhus within 3km using our custom RPC function
+      // Query database for all bondhus within 10km (increased from 3km for better testing/reliability)
       const { data: nearbyUsers, error } = await supabaseClient.rpc("get_users_within_radius", {
         target_lat: record.location_lat,
         target_lng: record.location_lng,
-        radius_km: 3,
+        radius_km: 10,
         target_role: "bondhu"
       });
 
       if (error) {
-        console.error("RPC Error:", error);
+        console.error("[Push-Notify] RPC Error getting nearby users:", error);
         return new Response("RPC Error", { headers: corsHeaders, status: 500 });
       }
 
       if (!nearbyUsers || nearbyUsers.length === 0) {
-        console.log("No Bondhus found within 3km of task:", record.id);
+        console.log("[Push-Notify] No Bondhus found within 10km of task:", record.id);
         return new Response("No nearby users", { headers: corsHeaders });
       }
 
+      console.log(`[Push-Notify] Found ${nearbyUsers.length} nearby Bondhus within 10km`);
+      
       targetUserIds = nearbyUsers.map((u: any) => u.user_id);
       pushTitle = "📢 New Task Near You!";
       pushBody = `"${record.title}" — ₹${record.amount}`;
       pushUrl = `/task/${record.id}`;
-      pushTag = `new-task-${record.id}`;
+      // Use a unique tag but allow renotifying so multiple new tasks trigger sounds/popups
+      pushTag = `new-task-nearby`;
     }
     
     // ── UNHANDLED TABLE ──────────────────────────────────────────
