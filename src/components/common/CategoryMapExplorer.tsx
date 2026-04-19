@@ -1,33 +1,25 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MapPin, X, ChevronRight, Map as MapIcon, Compass } from 'lucide-react';
+import { X, ChevronRight, Compass } from 'lucide-react';
 import { categoryData, type CategoryData } from '@/lib/categoryData';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 
-// Custom Map Pin Component
+// Custom Map Pin Component - Mobile Friendly
 const MapMarker = ({ 
   category, 
   onClick, 
-  isSelected 
+  isSelected,
+  position
 }: { 
   category: CategoryData; 
   onClick: () => void; 
   isSelected: boolean;
+  position: { top: string; left: string };
 }) => {
   const Icon = category.icon;
   
-  // Random position for simulation within the map area
-  // We'll use stable random positions based on category value
-  const position = useMemo(() => {
-    const hash = category.value.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-    return {
-      top: 20 + (hash % 60) + '%',
-      left: 10 + ((hash * 13) % 80) + '%'
-    };
-  }, [category.value]);
-
   return (
     <motion.div
       initial={{ scale: 0, opacity: 0 }}
@@ -40,7 +32,7 @@ const MapMarker = ({
         onClick();
       }}
     >
-      <div className="relative group">
+      <div className="relative group flex flex-col items-center">
         {/* Shadow/Ring Effect */}
         <div 
           className={`absolute -inset-2 rounded-full blur-sm transition-opacity duration-300 ${isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-40'}`}
@@ -49,20 +41,20 @@ const MapMarker = ({
         
         {/* Marker Body */}
         <div 
-          className={`relative w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center border-2 border-white shadow-lg transition-all duration-300 ${isSelected ? 'scale-110' : ''}`}
+          className={`relative w-8 h-8 sm:w-12 sm:h-12 rounded-full flex items-center justify-center border-2 border-white shadow-lg transition-all duration-300 ${isSelected ? 'scale-110 shadow-xl' : ''}`}
           style={{ backgroundColor: category.color }}
         >
-          <Icon className="w-5 h-5 sm:w-6 sm:h-6 text-white" strokeWidth={2.5} />
+          <Icon className="w-4 h-4 sm:w-6 sm:h-6 text-white" strokeWidth={2.5} />
           
           {/* Bottom Pointer */}
           <div 
-            className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-3 h-3 rotate-45 border-r-2 border-b-2 border-white shadow-md"
+            className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 sm:w-3 sm:h-3 rotate-45 border-r-2 border-b-2 border-white shadow-md"
             style={{ backgroundColor: category.color }}
           />
         </div>
 
-        {/* Label (Mobile optimization: only show on hover or if selected) */}
-        <div className={`absolute top-full mt-3 left-1/2 -translate-x-1/2 bg-white/90 backdrop-blur-md px-2 py-0.5 rounded-full shadow-sm whitespace-nowrap text-[10px] font-bold text-slate-700 pointer-events-none transition-opacity duration-300 ${isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+        {/* Label - visible on mobile if selected, or on hover */}
+        <div className={`mt-2 bg-white/90 backdrop-blur-md px-2 py-0.5 rounded-full shadow-sm whitespace-nowrap text-[9px] sm:text-[10px] font-extrabold text-slate-700 transition-opacity duration-300 ${isSelected ? 'opacity-100' : 'opacity-0 sm:group-hover:opacity-100'}`}>
           {category.label}
         </div>
       </div>
@@ -73,128 +65,189 @@ const MapMarker = ({
 export default function CategoryMapExplorer() {
   const navigate = useNavigate();
   const [selectedCategory, setSelectedCategory] = useState<CategoryData | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  // Background map SVG pattern or illustration
-  // Using a simplified stylized city map SVG
+  // Pre-calculate stable positions for markers
+  const markerPositions = useMemo(() => {
+    return categoryData.map((category) => {
+      const hash = category.value.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+      return {
+        top: 15 + (hash % 60) + '%',
+        left: 10 + ((hash * 13) % 80) + '%'
+      };
+    });
+  }, []);
+
+  // Bicycle Path Simulation - Moving through markers
+  const [bicyclePos, setBicyclePos] = useState({ top: '50%', left: '50%' });
+  const [bicycleRotation, setBicycleRotation] = useState(0);
+
+  useEffect(() => {
+    let index = 0;
+    const moveBicycle = () => {
+      const target = markerPositions[index];
+      
+      // Calculate rotation based on previous position
+      setBicyclePos((prev) => {
+          const prevTop = parseFloat(prev.top);
+          const prevLeft = parseFloat(prev.left);
+          const targetTop = parseFloat(target.top);
+          const targetLeft = parseFloat(target.left);
+          
+          const angle = Math.atan2(targetTop - prevTop, targetLeft - prevLeft) * (180 / Math.PI);
+          setBicycleRotation(angle);
+          
+          return target;
+      });
+
+      index = (index + 1) % markerPositions.length;
+    };
+
+    const interval = setInterval(moveBicycle, 4000);
+    moveBicycle(); // Initial move
+    return () => clearInterval(interval);
+  }, [markerPositions]);
+
   return (
-    <div className="w-full max-w-7xl mx-auto px-4 py-8 animate-fade-in mb-16 overflow-hidden">
-      <div className="text-center mb-8">
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-green-50 text-green-700 text-sm font-bold mb-3 border border-green-100">
+    <div className="w-full max-w-7xl mx-auto px-4 py-4 sm:py-8 animate-fade-in mb-8 sm:mb-16 overflow-hidden">
+      <div className="text-center mb-6 sm:mb-8">
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-green-50 text-green-700 text-xs sm:text-sm font-bold mb-3 border border-green-100 shadow-sm">
           <Compass className="w-4 h-4 animate-spin-slow" />
-          Live Bondhu Map
+          Interactive Service Map
         </div>
-        <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-800 tracking-tight">
-          Find Help Across Campus
+        <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-800 tracking-tight leading-tight">
+          Explore Services Near You
         </h2>
-        <p className="text-slate-500 mt-2 font-medium">
-          Explore categories through our interactive city map
-        </p>
       </div>
 
-      <div className="relative aspect-[16/9] min-h-[400px] sm:min-h-[500px] w-full bg-[#f8fafc] rounded-[40px] border-8 border-white shadow-2xl overflow-hidden cursor-grab active:cursor-grabbing">
-        {/* Stylized City Map Illustration Layer */}
-        <div className="absolute inset-0 z-0 opacity-40">
-          <svg width="100%" height="100%" viewBox="0 0 1000 600" fill="none" xmlns="http://www.w3.org/2000/svg">
-            {/* Roads */}
-            <path d="M0 300 H1000 M300 0 V600 M700 0 V600 M0 150 H1000 M0 450 H1000" stroke="#e2e8f0" strokeWidth="40" />
-            {/* Circular Path for Bicycle */}
-            <circle cx="500" cy="300" r="150" fill="none" stroke="#cbd5e1" strokeWidth="2" strokeDasharray="8 8" />
-            
-            {/* Building Blocks */}
-            <rect x="50" y="50" width="200" height="80" rx="20" fill="#f1f5f9" />
-            <rect x="750" y="50" width="200" height="200" rx="40" fill="#f1f5f9" />
-            <rect x="50" y="350" width="200" height="200" rx="30" fill="#f1f5f9" />
-            <rect x="750" y="450" width="200" height="100" rx="20" fill="#f1f5f9" />
-            <circle cx="500" cy="300" r="80" fill="#f1f5f9" />
+      <div 
+        ref={containerRef}
+        className="relative aspect-[4/3] sm:aspect-[16/9] min-h-[350px] sm:min-h-[500px] w-full bg-[#f1f5f9] rounded-[30px] sm:rounded-[50px] border-4 sm:border-8 border-white shadow-2xl overflow-hidden cursor-crosshair"
+      >
+        {/* Stylized Realistic Map Layout */}
+        <div className="absolute inset-0 z-0">
+          <svg width="100%" height="100%" viewBox="0 0 1000 600" preserveAspectRatio="xMidYMid slice" fill="none" xmlns="http://www.w3.org/2000/svg">
+             {/* Base Layer */}
+             <rect width="1000" height="600" fill="#f8fafc" />
+             
+             {/* Green Zones (Parks) */}
+             <path d="M50 50 Q150 20 250 80 T450 50 L450 200 Q300 250 50 200 Z" fill="#ecfdf5" />
+             <path d="M700 400 Q850 350 950 450 L950 550 Q800 600 700 550 Z" fill="#ecfdf5" />
+             <path d="M100 400 Q250 450 300 350 T500 400 L450 550 Q200 600 50 500 Z" fill="#ecfdf5" />
+             
+             {/* River */}
+             <path d="M0 100 Q150 80 300 200 T600 150 T1000 250 L1000 300 Q700 200 400 250 T0 150 Z" fill="#e0f2fe" />
+             
+             {/* Complex Road Network */}
+             <g stroke="#cbd5e1" strokeWidth="20" strokeLinecap="round">
+                <path d="M0 300 H1000" />
+                <path d="M300 0 V600" />
+                <path d="M700 0 V600" />
+                <path d="M0 150 C300 150 400 450 1000 450" strokeWidth="15" />
+                <path d="M0 450 C200 450 500 150 1000 150" strokeWidth="15" />
+             </g>
+             
+             {/* Building Footprints */}
+             <g fill="#e2e8f0" opacity="0.6">
+                <rect x="320" y="50" width="60" height="40" rx="4" />
+                <rect x="400" y="70" width="80" height="30" rx="4" />
+                <rect x="720" y="100" width="40" height="80" rx="4" />
+                <rect x="50" y="320" width="100" height="40" rx="4" />
+                <rect x="800" y="320" width="80" height="50" rx="4" />
+             </g>
           </svg>
         </div>
 
-        {/* Bicycle Animation Component */}
-        <div className="absolute inset-0 z-10 pointer-events-none">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px]">
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-              className="w-full h-full relative"
-            >
-              <motion.div 
-                className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white p-2 rounded-full shadow-lg border border-slate-100"
-                animate={{ scale: [1, 1.1, 1] }}
-                transition={{ duration: 2, repeat: Infinity }}
-              >
-                <div className="text-2xl">🚲</div>
-              </motion.div>
-            </motion.div>
+        {/* Bicycle Path & Animation */}
+        <motion.div 
+          className="absolute z-10 pointer-events-none"
+          animate={{ 
+            top: bicyclePos.top, 
+            left: bicyclePos.left,
+            rotate: bicycleRotation
+          }}
+          transition={{ duration: 3.5, ease: "easeInOut" }}
+          style={{ width: '40px', height: '40px' }}
+        >
+          <div className="relative -translate-x-1/2 -translate-y-1/2">
+             <div className="bg-white/90 backdrop-blur-md p-1.5 rounded-full shadow-lg border border-slate-200">
+               <div className="text-xl sm:text-2xl animate-bounce">🚲</div>
+             </div>
+             {/* Mini Dotted Path Indicator */}
+             <div className="absolute top-full left-1/2 -translate-x-1/2 w-1 h-12 bg-gradient-to-t from-transparent via-green-400/40 to-transparent" />
           </div>
-        </div>
+        </motion.div>
 
-        {/* Map Pins */}
-        {categoryData.map((category) => (
+        {/* Map Markers */}
+        {categoryData.map((category, idx) => (
           <MapMarker 
             key={category.value} 
             category={category} 
+            position={markerPositions[idx]}
             isSelected={selectedCategory?.value === category.value}
             onClick={() => setSelectedCategory(category)}
           />
         ))}
 
-        {/* Floating Card Popup */}
+        {/* Dynamic Card Overlay */}
         <AnimatePresence>
           {selectedCategory && (
             <motion.div
-              initial={{ y: 50, opacity: 0, scale: 0.9 }}
-              animate={{ y: 0, opacity: 1, scale: 1 }}
-              exit={{ y: 50, opacity: 0, scale: 0.9 }}
-              className="absolute bottom-6 left-1/2 -translate-x-1/2 z-50 w-[90%] max-w-sm"
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 20, opacity: 0 }}
+              className="absolute inset-x-0 bottom-4 sm:bottom-8 flex justify-center z-50 px-4"
             >
-              <Card className="p-4 sm:p-5 shadow-2xl border-2 border-white bg-white/90 backdrop-blur-xl rounded-3xl relative overflow-hidden group">
-                {/* Background Decor */}
+              <Card className="w-full max-w-sm sm:max-w-md p-4 sm:p-6 shadow-2xl border-2 border-white bg-white/95 backdrop-blur-xl rounded-[24px] sm:rounded-[32px] relative overflow-hidden group">
+                {/* Decorative Elements */}
                 <div 
-                  className="absolute top-0 right-0 w-32 h-32 -mr-16 -mt-16 rounded-full opacity-10 blur-2xl"
+                  className="absolute -top-12 -right-12 w-32 h-32 rounded-full opacity-10 blur-3xl"
                   style={{ backgroundColor: selectedCategory.color }}
                 />
                 
                 <button 
                   onClick={() => setSelectedCategory(null)}
-                  className="absolute top-3 right-3 p-1 rounded-full hover:bg-slate-100 text-slate-400 transition-colors"
+                  className="absolute top-4 right-4 p-1.5 rounded-full hover:bg-slate-100 text-slate-400 transition-colors z-10"
                 >
                   <X className="w-5 h-5" />
                 </button>
 
                 <div className="flex items-center gap-4 mb-4">
                   <div 
-                    className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-inner"
-                    style={{ backgroundColor: `${selectedCategory.color}20` }}
+                    className="w-14 h-14 sm:w-20 sm:h-20 rounded-2xl sm:rounded-3xl flex items-center justify-center shadow-inner overflow-hidden"
+                    style={{ backgroundColor: `${selectedCategory.color}15` }}
                   >
                     <selectedCategory.icon 
-                      className="w-8 h-8" 
+                      className="w-7 h-7 sm:w-10 sm:h-10" 
                       style={{ color: selectedCategory.color }} 
                       strokeWidth={2.5}
                     />
                   </div>
-                  <div>
-                    <h3 className="text-xl font-bold text-slate-800 leading-tight">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-xl sm:text-2xl font-black text-slate-800 leading-tight truncate">
                       {selectedCategory.label}
                     </h3>
-                    <p className="text-xs font-bold uppercase tracking-wider mt-0.5" style={{ color: selectedCategory.color }}>
-                      {selectedCategory.emoji} Category
-                    </p>
+                    <div className="flex items-center gap-2 mt-1">
+                       <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
+                          {selectedCategory.emoji} Service
+                       </span>
+                    </div>
                   </div>
                 </div>
 
-                <p className="text-slate-600 text-sm font-medium mb-5 line-clamp-2">
+                <p className="text-slate-600 text-xs sm:text-sm font-semibold mb-6 leading-relaxed">
                   {selectedCategory.description}
                 </p>
 
                 <Button 
                   onClick={() => navigate('/signup')}
-                  className="w-full h-12 rounded-2xl text-base font-bold shadow-lg transition-all duration-300 active:scale-95 group"
+                  className="w-full h-12 sm:h-14 rounded-2xl text-base sm:text-lg font-black shadow-xl transition-all duration-300 active:scale-95 group"
                   style={{ 
                     backgroundColor: selectedCategory.color,
-                    boxShadow: `0 8px 20px -6px ${selectedCategory.color}`
+                    boxShadow: `0 10px 25px -8px ${selectedCategory.color}80`
                   }}
                 >
-                  Explore {selectedCategory.label}
+                  Sign Up to Explore
                   <ChevronRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
                 </Button>
               </Card>
@@ -202,41 +255,27 @@ export default function CategoryMapExplorer() {
           )}
         </AnimatePresence>
 
-        {/* Map UI Elements */}
-        <div className="absolute top-6 left-6 flex flex-col gap-2 z-10">
-          <div className="bg-white/80 backdrop-blur-md p-2 rounded-2xl shadow-sm border border-white flex items-center gap-3">
-             <div className="w-8 h-8 rounded-xl bg-green-500 flex items-center justify-center shadow-lg shadow-green-200">
-               <MapIcon className="w-4 h-4 text-white" />
-             </div>
-             <span className="text-xs font-bold text-slate-700 pr-2">Interactive Campus</span>
-          </div>
-        </div>
-
-        {/* Tap to Explore CTA */}
-        <div className="absolute top-6 right-6 z-10">
+        {/* Floating Call to Action */}
+        <div className="absolute top-4 right-4 sm:top-8 sm:right-8 z-30">
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => navigate('/signup')}
-            className="bg-white/80 backdrop-blur-md px-5 py-2.5 rounded-full shadow-lg border-2 border-white text-slate-800 font-bold text-sm flex items-center gap-2 hover:bg-white transition-all"
+            className="bg-[#2fbe6b] text-white px-4 sm:px-6 py-2 sm:py-3 rounded-full shadow-[0_10px_20px_-5px_rgba(47,190,107,0.4)] font-black text-xs sm:text-sm flex items-center gap-2 transition-transform border-2 border-white/20"
           >
             <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
             </span>
-            Tap to explore
+            Tap to explore!
           </motion.button>
         </div>
       </div>
       
-      {/* Scroll Hint */}
-      <div className="flex justify-center mt-6">
-        <div className="flex items-center gap-2 text-slate-400 text-sm font-medium">
-          <div className="w-8 h-1 rounded-full bg-slate-200" />
-          Interactive Experience
-          <div className="w-8 h-1 rounded-full bg-slate-200" />
-        </div>
-      </div>
+      {/* Visual Instruction */}
+      <p className="text-center text-slate-400 text-[10px] sm:text-xs font-bold mt-4 uppercase tracking-widest">
+         Select a location pin to view details
+      </p>
     </div>
   );
 }
