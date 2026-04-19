@@ -164,6 +164,28 @@ export default function CategoryMapExplorer() {
                 <rect x="50" y="320" width="100" height="40" rx="4" />
                 <rect x="800" y="320" width="80" height="50" rx="4" />
              </g>
+             
+             {/* College Names Watermarks */}
+             <g fill="#94a3b8" opacity="0.5" fontSize="12" fontWeight="bold" fontFamily="system-ui, sans-serif">
+                <text x="80" y="45">Techno Main Salt Lake</text>
+                <text x="450" y="45">Techno India University</text>
+                <text x="750" y="80">IIM Calcutta</text>
+                <text x="800" y="280">Techno International Newtown</text>
+                <text x="60" y="180">IIT KGP</text>
+                <text x="350" y="180">NIT DURGAPUR</text>
+                <text x="550" y="220">JADAVPUR UNIVERSITY</text>
+                <text x="850" y="380">MAKUT</text>
+                <text x="120" y="260">IEM</text>
+                <text x="420" y="280">IHM</text>
+                <text x="680" y="340">Heritage Institute of Technology</text>
+                <text x="40" y="370">Haldia Institute of Technology</text>
+                <text x="300" y="430">WBNUJS</text>
+                <text x="820" y="480">(IIEST)</text>
+                <text x="120" y="480">St. Xavier's College</text>
+                <text x="480" y="520">BESC</text>
+                <text x="750" y="560">Amity University, Kolkata</text>
+                <text x="600" y="90">BPPIMT</text>
+             </g>
           </svg>
         </div>
 
