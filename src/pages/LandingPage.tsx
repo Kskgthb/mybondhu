@@ -38,7 +38,7 @@ export default function LandingPage() {
         {/* Hero Search Section */}
         <div className="text-center mb-16 mt-8 md:mt-16 animate-fade-in relative z-20">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold mb-10 tracking-tight" style={{ color: '#6411ac' }}>
-            <span style={{ color: '#2fbe6b' }}>Post</span> Your First Task!!
+            <span style={{ color: '#6411ac' }}>Post</span> Your <span style={{ color: '#2fbe6b' }}>First</span> Task!!
           </h1>
           
           <div className="max-w-4xl mx-auto px-4 relative">
@@ -67,10 +67,11 @@ export default function LandingPage() {
               </div>
               <button 
                 onClick={() => navigate('/signup')}
-                className="bg-primary hover:bg-primary/90 text-white h-full px-6 md:px-10 flex items-center justify-center transition-colors"
+                className="hover:opacity-90 h-full px-6 md:px-10 flex items-center justify-center transition-colors"
+                style={{ backgroundColor: '#2fbe6b' }}
                 aria-label="Search"
               >
-                <Search className="w-5 h-5 md:w-6 md:h-6" style={{ color: '#2fbe6b' }} />
+                <Search className="w-5 h-5 md:w-6 md:h-6" style={{ color: '#f1f5f9' }} />
               </button>
             </div>
             
