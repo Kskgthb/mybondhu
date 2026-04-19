@@ -14,8 +14,9 @@ export function HomeBannerCarousel() {
   const [api, setApi] = React.useState<CarouselApi>();
   const [current, setCurrent] = React.useState(0);
   
-  const plugin = React.useRef(
-    Autoplay({ delay: 4000, stopOnInteraction: true })
+  // Use a stable reference for the plugin
+  const autoplayRef = React.useRef(
+    Autoplay({ delay: 4000, stopOnInteraction: false, stopOnMouseEnter: true })
   );
 
   const banners = [
@@ -46,6 +47,7 @@ export function HomeBannerCarousel() {
         }
         .progress-bar {
           animation: fillProgress 4s linear forwards;
+          background-color: #6411ac;
         }
         .carousel-container:hover .progress-bar {
           animation-play-state: paused;
@@ -53,10 +55,10 @@ export function HomeBannerCarousel() {
       `}</style>
       <Carousel
         setApi={setApi}
-        plugins={[plugin.current]}
+        plugins={[autoplayRef.current]}
         className="w-full"
-        onMouseEnter={plugin.current.stop}
-        onMouseLeave={plugin.current.reset}
+        onMouseEnter={() => autoplayRef.current.stop()}
+        onMouseLeave={() => autoplayRef.current.reset()}
         opts={{ loop: true }}
       >
         <CarouselContent>
@@ -92,7 +94,7 @@ export function HomeBannerCarousel() {
             aria-label={`Go to slide ${index + 1}`}
           >
             {current === index && (
-              <div className="absolute top-0 left-0 h-full bg-black rounded-full progress-bar" />
+              <div className="absolute top-0 left-0 h-full rounded-full progress-bar" />
             )}
           </button>
         ))}
