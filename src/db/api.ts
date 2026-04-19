@@ -123,7 +123,9 @@ export const profilesApi = {
       p_user_id: userId,
       p_category: category,
       p_weight_increase: weightIncrease
-    }).catch(err => console.error('Failed to track interaction:', err));
+    }).then(({ error }) => {
+      if (error) console.error('Failed to track interaction:', error);
+    });
   }
 };
 

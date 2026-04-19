@@ -379,7 +379,7 @@ export default function BondhuDashboard() {
         // Smart Notification System: Track strong interest (weight +0.2)
         const acceptedTask = nearbyTasks.find(t => t.id === taskId);
         if (acceptedTask && acceptedTask.category) {
-          tasksApi.trackInteraction(user.id, acceptedTask.category, 0.2);
+          profilesApi.trackInteraction(user.id, acceptedTask.category, 0.2);
         }
         
         loadData();

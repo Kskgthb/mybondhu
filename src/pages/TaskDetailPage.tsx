@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { tasksApi, assignmentsApi, ratingsApi, storageApi } from '@/db/api';
+import { tasksApi, assignmentsApi, ratingsApi, storageApi, profilesApi } from '@/db/api';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -67,9 +67,9 @@ export default function TaskDetailPage() {
 
   // Smart Notification System: Track Bondhu interest when they view a task
   useEffect(() => {
-    if (task && user && task.poster_id !== user.id && profile?.active_role === 'bondhu' || profile?.role === 'bondhu') {
+    if (task && user && task.poster_id !== user.id && (profile?.active_role === 'bondhu' || profile?.role === 'bondhu')) {
       // Small weight increase for just viewing a task
-      tasksApi.trackInteraction(user.id, task.category, 0.05);
+      profilesApi.trackInteraction(user.id, task.category, 0.05);
     }
   }, [task?.id, user?.id]);
 

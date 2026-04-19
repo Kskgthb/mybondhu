@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { tasksApi } from '@/db/api';
+import { profilesApi } from '@/db/api';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
@@ -36,7 +36,7 @@ export default function SettingsPage() {
   const loadPreferences = async () => {
     if (!user) return;
     try {
-      const prefs = await tasksApi.getUserPreferences(user.id);
+      const prefs = await profilesApi.getUserPreferences(user.id);
       if (prefs) {
         setPreferences({
           preferred_radius_km: prefs.preferred_radius_km || 10,
@@ -57,7 +57,7 @@ export default function SettingsPage() {
     if (!user) return;
     setSaving(true);
     try {
-      await tasksApi.updateUserPreferences(user.id, {
+      await profilesApi.updateUserPreferences(user.id, {
         preferred_radius_km: preferences.preferred_radius_km,
         quiet_hours_start: preferences.quiet_hours_start ? `${preferences.quiet_hours_start}:00` : null,
         quiet_hours_end: preferences.quiet_hours_end ? `${preferences.quiet_hours_end}:00` : null,
