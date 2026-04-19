@@ -302,6 +302,20 @@ export async function showPushNotification(
   }
 }
 
+/**
+ * Send the user's current location to the Service Worker
+ * so it can perform proximity-based notifications for new tasks.
+ */
+export function sendLocationToSW(lat: number, lng: number) {
+  if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+    navigator.serviceWorker.controller.postMessage({
+      type: 'UPDATE_LOCATION',
+      payload: { lat, lng }
+    });
+  }
+}
+
+
 // ============================================================
 // Supabase Realtime Listeners (Foreground Backup)
 // ============================================================
