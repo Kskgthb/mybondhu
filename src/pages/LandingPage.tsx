@@ -120,79 +120,129 @@ export default function LandingPage() {
           </div>
         </div>
 
-        <div className="grid xl:grid-cols-2 gap-8 max-w-5xl mx-auto mb-16 mt-12">
-          <Card className="shadow-2xl hover:shadow-hover transition-all duration-300 border-3 border-primary/30 hover:border-primary/60 bg-white/95 backdrop-blur-sm">
-            <CardHeader className="text-center pb-4">
-              <div className="flex justify-center mb-4">
-                <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center shadow-lg">
-                  <UserCheck className="h-10 w-10 text-primary" strokeWidth={2.5} />
+        {/* Need an Instant Bondhu Section */}
+        <div className="max-w-5xl mx-auto mb-16 mt-12">
+          <Card className="shadow-2xl hover:shadow-hover transition-all duration-300 border-3 border-primary/30 hover:border-primary/60 bg-white/95 backdrop-blur-sm overflow-hidden">
+            <div className="flex flex-col md:flex-row items-center">
+              <div className="w-full md:w-1/2 p-8 sm:p-12 text-center md:text-left">
+                <div className="flex justify-center md:justify-start mb-6">
+                  <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center shadow-lg">
+                    <UserCheck className="h-10 w-10 text-primary" strokeWidth={2.5} />
+                  </div>
                 </div>
+                <h3 className="text-3xl sm:text-4xl font-black text-slate-800 mb-4 leading-tight">Need an Instant Bondhu</h3>
+                <p className="text-lg font-bold text-slate-600 mb-8">
+                  Post your task and get help from nearby trusted helpers
+                </p>
+                <ul className="space-y-4 mb-10">
+                  <li className="flex items-center gap-4 text-slate-700 font-bold">
+                    <div className="p-2 rounded-xl bg-primary/10 text-primary"><Clock className="h-6 w-6" strokeWidth={2.5} /></div>
+                    <span>Get instant help for urgent tasks</span>
+                  </li>
+                  <li className="flex items-center gap-4 text-slate-700 font-bold">
+                    <div className="p-2 rounded-xl bg-primary/10 text-primary"><MapPin className="h-6 w-6" strokeWidth={2.5} /></div>
+                    <span>Find helpers near your location</span>
+                  </li>
+                  <li className="flex items-center gap-4 text-slate-700 font-bold">
+                    <div className="p-2 rounded-xl bg-primary/10 text-primary"><Star className="h-6 w-6" strokeWidth={2.5} /></div>
+                    <span>Rate and review your experience</span>
+                  </li>
+                </ul>
+                <Button 
+                  className="w-full h-14 rounded-2xl text-lg font-black shadow-xl" 
+                  size="lg"
+                  onClick={() => navigate('/signup')}
+                >
+                  Post a Task
+                </Button>
               </div>
-              <CardTitle className="text-3xl font-bold">Need an Instant Bondhu</CardTitle>
-              <CardDescription className="text-base font-medium">
-                Post your task and get help from nearby trusted helpers
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <ul className="space-y-3">
-                <li className="flex items-start gap-3">
-                  <Clock className="h-6 w-6 text-primary mt-0.5 flex-shrink-0" strokeWidth={2.5} />
-                  <span className="text-base font-medium">Get instant help for urgent tasks</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <MapPin className="h-6 w-6 text-primary mt-0.5 flex-shrink-0" strokeWidth={2.5} />
-                  <span className="text-base font-medium">Find helpers near your location</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <Star className="h-6 w-6 text-primary mt-0.5 flex-shrink-0" strokeWidth={2.5} />
-                  <span className="text-base font-medium">Rate and review your experience</span>
-                </li>
-              </ul>
-              <Button 
-                className="w-full mt-6" 
-                size="lg"
-                onClick={() => navigate('/signup')}
-              >
-                Post a Task
-              </Button>
-            </CardContent>
+              <div className="hidden md:block w-1/2 h-[500px] bg-slate-100 relative">
+                 {/* Illustration placeholder or decoration */}
+                 <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-primary/20 flex items-center justify-center">
+                    <div className="text-8xl animate-pulse opacity-40">🙋‍♂️</div>
+                 </div>
+              </div>
+            </div>
           </Card>
+        </div>
 
-          <Card className="shadow-2xl hover:shadow-hover transition-all duration-300 border-3 border-secondary/30 hover:border-secondary/60 bg-white/95 backdrop-blur-sm">
-            <CardHeader className="text-center pb-4">
-              <div className="flex justify-center mb-4">
-                <div className="w-20 h-20 rounded-full bg-secondary/20 flex items-center justify-center shadow-lg">
-                  <HandHeart className="h-10 w-10 text-secondary" strokeWidth={2.5} />
+        {/* Join as Bondhu Section - Redesigned to EnglishYaari Style */}
+        <div className="max-w-6xl mx-auto mb-16 mt-12">
+          <Card className="shadow-2xl border-none bg-white rounded-[40px] overflow-hidden border-2 border-slate-100 p-4 sm:p-8">
+            <div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-16">
+              {/* Left Side: Student Profiles Grid */}
+              <div className="w-full lg:w-1/2 relative">
+                <div className="relative rounded-[32px] overflow-hidden shadow-2xl">
+                  <img 
+                    src="/student_helpers_grid_1776639707883.png" 
+                    alt="Bondhu Community Helpers" 
+                    className="w-full h-full object-cover aspect-square sm:aspect-auto"
+                  />
+                  {/* Overlay Gradient */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
+                </div>
+                
+                {/* Floating Stats Badge */}
+                <div className="absolute -bottom-4 -right-4 bg-white p-4 rounded-3xl shadow-2xl border border-slate-100 animate-bounce-slow">
+                   <p className="text-sm font-black text-slate-800">Joined by 500+ Students</p>
+                   <div className="flex -space-x-2 mt-2">
+                      {[1,2,3,4].map(i => (
+                        <div key={i} className="w-8 h-8 rounded-full border-2 border-white bg-slate-200" />
+                      ))}
+                   </div>
                 </div>
               </div>
-              <CardTitle className="text-3xl font-bold">Join as Bondhu</CardTitle>
-              <CardDescription className="text-base font-medium">
-                Help others and earn money by completing tasks
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <ul className="space-y-3">
-                <li className="flex items-start gap-3">
-                  <Shield className="h-6 w-6 text-secondary mt-0.5 flex-shrink-0" strokeWidth={2.5} />
-                  <span className="text-base font-medium">Build your reputation with ratings</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <MapPin className="h-6 w-6 text-secondary mt-0.5 flex-shrink-0" strokeWidth={2.5} />
-                  <span className="text-base font-medium">Accept tasks in your area</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <Clock className="h-6 w-6 text-secondary mt-0.5 flex-shrink-0" strokeWidth={2.5} />
-                  <span className="text-base font-medium">Work on your own schedule</span>
-                </li>
-              </ul>
-              <Button 
-                className="w-full mt-6 bg-secondary hover:bg-secondary/90" 
-                size="lg"
-                onClick={() => navigate('/register/bondhu')}
-              >
-                Become a Helper
-              </Button>
-            </CardContent>
+
+              {/* Right Side: Content */}
+              <div className="w-full lg:w-1/2 text-center lg:text-left">
+                <h2 className="text-4xl sm:text-5xl font-black text-slate-800 mb-6 leading-tight">
+                  Become a <span className="text-[#6411ac]">Bondhu</span> with BondhuApp
+                </h2>
+                <p className="text-lg font-bold text-slate-600 mb-10 tracking-tight">
+                  Help others on campus and earn on your own schedule
+                </p>
+
+                <div className="space-y-6 mb-12">
+                  <div className="flex items-center gap-5">
+                    <div className="w-12 h-12 rounded-2xl bg-secondary/10 flex items-center justify-center text-secondary shadow-sm flex-shrink-0">
+                      <Clock className="h-6 w-6" strokeWidth={3} />
+                    </div>
+                    <div className="text-left">
+                      <h4 className="font-black text-slate-800 leading-tight">Flexible working hours</h4>
+                      <p className="text-sm font-bold text-slate-500">Work whenever you have free time</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-5">
+                    <div className="w-12 h-12 rounded-2xl bg-secondary/10 flex items-center justify-center text-secondary shadow-sm flex-shrink-0">
+                      <Shield className="h-6 w-6" strokeWidth={3} />
+                    </div>
+                    <div className="text-left">
+                      <h4 className="font-black text-slate-800 leading-tight">Build your reputation</h4>
+                      <p className="text-sm font-bold text-slate-500">Get verified and earn top ratings</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-5">
+                    <div className="w-12 h-12 rounded-2xl bg-secondary/10 flex items-center justify-center text-secondary shadow-sm flex-shrink-0">
+                      <HandHeart className="h-6 w-6" strokeWidth={3} />
+                    </div>
+                    <div className="text-left">
+                      <h4 className="font-black text-slate-800 leading-tight">Community Support</h4>
+                      <p className="text-sm font-bold text-slate-500">Join a network of helpful students</p>
+                    </div>
+                  </div>
+                </div>
+
+                <Button 
+                  onClick={() => navigate('/register/bondhu')}
+                  className="w-full sm:w-auto px-12 h-16 rounded-[24px] text-xl font-black bg-secondary hover:bg-secondary/90 shadow-[0_15px_30px_-10px_rgba(47,190,107,0.4)] transition-all hover:scale-105 group"
+                >
+                  Become a Bondhu
+                  <ChevronRight className="ml-2 w-6 h-6 group-hover:translate-x-2 transition-transform" />
+                </Button>
+              </div>
+            </div>
           </Card>
         </div>
 
