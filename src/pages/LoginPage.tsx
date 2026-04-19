@@ -15,11 +15,22 @@ export default function LoginPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signIn, signInWithGoogle } = useAuth();
+  const { signIn, signInWithGoogle, user, profile, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
   const from = (location.state as any)?.from?.pathname || '/';
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user && !authLoading) {
+      const destination = (from === '/' || from === '/login') 
+        ? (profile?.role === 'bondhu' ? '/bondhu/dashboard' : '/need-bondhu/dashboard') 
+        : from;
+      navigate(destination, { replace: true });
+    }
+  }, [user, profile, authLoading, navigate, from]);
+
   
   // Show welcome message if coming from signup
   useEffect(() => {
@@ -75,15 +86,20 @@ export default function LoginPage() {
           .eq('id', user.id)
           .maybeSingle();
         
+        const destination = (from === '/' || from === '/login') 
+          ? (profile?.role === 'bondhu' ? '/bondhu/dashboard' : '/need-bondhu/dashboard') 
+          : from;
+          
         if (profile?.role === 'bondhu') {
           toast.success('Welcome back, Bondhu!');
-          navigate('/bondhu/dashboard', { replace: true });
+          navigate(destination, { replace: true });
         } else {
           toast.success('Welcome back!');
-          navigate(from === '/login' ? '/need-bondhu/dashboard' : from, { replace: true });
+          navigate(destination, { replace: true });
         }
       } else {
-        navigate(from, { replace: true });
+        const destination = (from === '/' || from === '/login') ? '/' : from;
+        navigate(destination, { replace: true });
       }
     } catch (error: any) {
       console.error('Login error:', error);
