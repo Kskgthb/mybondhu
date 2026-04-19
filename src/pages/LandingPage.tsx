@@ -9,6 +9,7 @@ import Logo from '@/components/common/Logo';
 import CategoryCard from '@/components/common/CategoryCard';
 import { categoryData } from '@/lib/categoryData';
 import Footer from '@/components/common/Footer';
+import { HomeBannerCarousel } from '@/components/common/HomeBannerCarousel';
 
 export default function LandingPage() {
   const navigate = useNavigate();
@@ -88,6 +89,9 @@ export default function LandingPage() {
             </div>
           </div>
         </div>
+
+        {/* Dynamic Home Banners */}
+        <HomeBannerCarousel />
 
         {/* Dynamic Category Explorer - Replaces Carousel */}
         <CategoryExplorer />
