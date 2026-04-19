@@ -37,8 +37,8 @@ export default function LandingPage() {
       <div className="container mx-auto px-4 py-8 relative z-10">
         {/* Hero Search Section */}
         <div className="text-center mb-16 mt-8 md:mt-16 animate-fade-in relative z-20">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-slate-800 mb-10 tracking-tight">
-            Post Your First Task!!
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold mb-10 tracking-tight" style={{ color: '#6411ac' }}>
+            <span style={{ color: '#2fbe6b' }}>Post</span> Your First Task!!
           </h1>
           
           <div className="max-w-4xl mx-auto px-4 relative">
@@ -70,7 +70,7 @@ export default function LandingPage() {
                 className="bg-primary hover:bg-primary/90 text-white h-full px-6 md:px-10 flex items-center justify-center transition-colors"
                 aria-label="Search"
               >
-                <Search className="w-5 h-5 md:w-6 md:h-6" />
+                <Search className="w-5 h-5 md:w-6 md:h-6" style={{ color: '#2fbe6b' }} />
               </button>
             </div>
             
@@ -101,7 +101,7 @@ export default function LandingPage() {
         {/* Categories Section */}
         <div className="max-w-7xl mx-auto mb-16 mt-12">
           <div className="text-center mb-10">
-            <h2 className="text-4xl font-bold mb-4 bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
+            <h2 className="text-4xl font-bold mb-4" style={{ color: '#2fbe6b' }}>
               Explore Our Services
             </h2>
             <p className="text-muted-foreground text-xl font-medium">
