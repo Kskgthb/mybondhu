@@ -20,12 +20,14 @@ self.addEventListener('push', (event) => {
     const title = data.title || 'BondhuApp';
     const options = {
       body: data.body || data.message || '',
-      icon: data.icon || '/logo.png', // Brand logo as requested
+      icon: data.icon || '/logo.png',
       badge: '/logo.png',
       tag: data.tag || 'bondhu-push',
       data: { url: data.url || data.click_action || APP_URL },
       vibrate: [200, 100, 200],
-      requireInteraction: true,
+      timestamp: data.timestamp || Date.now(),
+      renotify: data.renotify !== undefined ? data.renotify : true,
+      requireInteraction: data.requireInteraction !== undefined ? data.requireInteraction : false, // Changed to false by default to avoid spam flagging
       actions: [
         { action: 'open', title: 'Open BondhuApp' },
         { action: 'close', title: 'Dismiss' },
@@ -41,7 +43,9 @@ self.addEventListener('push', (event) => {
       self.registration.showNotification('BondhuApp', {
         body: event.data.text() || 'You have a new notification',
         icon: '/logo.png',
-        data: { url: APP_URL }
+        data: { url: APP_URL },
+        renotify: true,
+        tag: 'bondhu-fallback'
       })
     );
   }

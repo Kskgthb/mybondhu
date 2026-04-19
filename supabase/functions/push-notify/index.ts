@@ -28,7 +28,7 @@ serve(async (req) => {
     );
 
     const payload = await req.json();
-    console.log("Webhook payload received:", payload);
+    console.log("Webhook payload received:", JSON.stringify(payload, null, 2));
 
     const table = payload.table;
     const type = payload.type;
@@ -44,8 +44,17 @@ serve(async (req) => {
     let pushUrl = "/";
     let pushTag = "bondhu-notify";
 
-    // ── TASK STATUS UPDATES ──────────────────────────────────────────
-    if (table === "tasks" && type === "UPDATE") {
+    // ── NOTIFICATIONS TABLE (HANDLES ALL TYPES) ──────────────────────
+    if (table === "notifications" && type === "INSERT") {
+      targetUserIds.push(record.user_id);
+      pushTitle = record.title || "BondhuApp";
+      pushBody = record.message || "";
+      pushUrl = record.task_id ? `/task/${record.task_id}` : "/";
+      pushTag = `${record.type}-${record.task_id || record.id}`;
+    }
+    
+    // ── TASK STATUS UPDATES (POSTER ALERTS) ──────────────────────────
+    else if (table === "tasks" && type === "UPDATE") {
       const oldRecord = payload.old_record;
       if (!oldRecord || oldRecord.status === record.status) {
         return new Response("No status change", { headers: corsHeaders });
@@ -57,23 +66,24 @@ serve(async (req) => {
       if (record.status === "accepted") {
         pushTitle = "🎉 Task Accepted!";
         pushBody = `A Bondhu has accepted "${record.title}"`;
-        pushTag = "task-accepted";
+        pushTag = `task-accepted-${record.id}`;
       } else if (record.status === "in_progress") {
         pushTitle = "⚡ Task Started!";
         pushBody = `Bondhu is working on "${record.title}"`;
-        pushTag = "task-started";
+        pushTag = `task-started-${record.id}`;
       } else if (record.status === "completed") {
         pushTitle = "✅ Task Done!";
         pushBody = `"${record.title}" is completed. Please verify.`;
-        pushTag = "task-completed";
+        pushTag = `task-completed-${record.id}`;
       } else {
         return new Response("Status ignored", { headers: corsHeaders });
       }
     }
     
-    // ── NEW TASK POSTED (LOCATION BASED) ──────────────────────────
+    // ── NEW TASK POSTED (BONDHU PROXIMITY ALERTS) ────────────────────
     else if (table === "tasks" && type === "INSERT" && record.status === "pending") {
       if (!record.location_lat || !record.location_lng) {
+        console.log("Task has no location, skipping proximity alerts");
         return new Response("Task has no location", { headers: corsHeaders });
       }
 
@@ -91,6 +101,7 @@ serve(async (req) => {
       }
 
       if (!nearbyUsers || nearbyUsers.length === 0) {
+        console.log("No Bondhus found within 3km of task:", record.id);
         return new Response("No nearby users", { headers: corsHeaders });
       }
 
@@ -118,6 +129,7 @@ serve(async (req) => {
       .in("user_id", targetUserIds);
 
     if (subError || !subscriptions || subscriptions.length === 0) {
+      console.log("No push subscriptions found for targeted users:", targetUserIds);
       return new Response("No push subscriptions found", { headers: corsHeaders });
     }
 
@@ -125,7 +137,10 @@ serve(async (req) => {
       title: pushTitle,
       body: pushBody,
       url: pushUrl,
-      tag: pushTag
+      tag: pushTag,
+      timestamp: Date.now(),
+      renotify: true, // Crucial to ensure notifications pop up even if same tag exists
+      icon: "/logo.png"
     });
 
     let successCount = 0;
@@ -153,6 +168,7 @@ serve(async (req) => {
       })
     );
 
+    console.log(`Successfully sent ${successCount} push notifications`);
     return new Response(JSON.stringify({ success: true, sent: successCount }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,

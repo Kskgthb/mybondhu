@@ -195,9 +195,14 @@ export async function subscribeToWebPush(userId: string): Promise<void> {
  */
 export async function updateUserLocation(userId: string, location: { lat: number; lng: number }) {
   try {
+    // We update BOTH sets of columns to ensure all systems (active tracking & proximity push) 
+    // are working with the same data.
     await supabase.from('profiles').update({
       last_location_lat: location.lat,
-      last_location_lng: location.lng
+      last_location_lng: location.lng,
+      location_lat: location.lat,
+      location_lng: location.lng,
+      location_updated_at: new Date().toISOString()
     }).eq('id', userId);
     console.log('📍 Location synced to backend for spatial notifications');
   } catch (err) {
