@@ -4,9 +4,13 @@
 // ============================================================
 
 const APP_URL = self.location.origin;
-const SW_VERSION = '3.0.0';
+const SW_VERSION = '3.0.1';
+
+// Global state for location (lost when SW terminates, but useful for active sessions)
+let lastKnownLocation = null;
 
 // ── Push Event (VAPID Web Push) ────────────────────────────────
+
 self.addEventListener('push', (event) => {
   if (!event.data) return;
 
@@ -95,7 +99,14 @@ self.addEventListener('message', (event) => {
       ],
     });
   }
+
+  // Handle location updates from the main thread
+  if (type === 'UPDATE_LOCATION') {
+    lastKnownLocation = payload;
+    console.log('[SW] 📍 Location updated in Service Worker:', lastKnownLocation);
+  }
 });
+
 
 // ── Lifecycle ────────────────────────────────────────────────
 self.addEventListener('install', (event) => {
