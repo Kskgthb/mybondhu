@@ -5,6 +5,7 @@ import { X, ChevronRight, Compass } from 'lucide-react';
 import { categoryData, type CategoryData } from '@/lib/categoryData';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import Lottie from 'lottie-react';
 
 // Custom Map Pin Component - Mobile Friendly
 const MapMarker = ({ 
@@ -81,6 +82,14 @@ export default function CategoryMapExplorer() {
   // Bicycle Path Simulation - Moving through markers
   const [bicyclePos, setBicyclePos] = useState({ top: '50%', left: '50%' });
   const [bicycleRotation, setBicycleRotation] = useState(0);
+  const [animationData, setAnimationData] = useState<object | null>(null);
+
+  useEffect(() => {
+    fetch('/bondhu-splash.json')
+      .then((res) => res.json())
+      .then((data) => setAnimationData(data))
+      .catch((err) => console.error("Failed to load bicycle animation", err));
+  }, []);
 
   useEffect(() => {
     let index = 0;
@@ -169,12 +178,21 @@ export default function CategoryMapExplorer() {
           transition={{ duration: 3.5, ease: "easeInOut" }}
           style={{ width: '40px', height: '40px' }}
         >
-          <div className="relative -translate-x-1/2 -translate-y-1/2">
-             <div className="bg-white/90 backdrop-blur-md p-1.5 rounded-full shadow-lg border border-slate-200">
-               <div className="text-xl sm:text-2xl animate-bounce">🚲</div>
+          <div className="relative -translate-x-1/2 -translate-y-1/2 flex flex-col items-center">
+             <div className="w-16 h-16 sm:w-20 sm:h-20 drop-shadow-xl bg-white/50 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/50">
+               {animationData ? (
+                 <Lottie
+                   animationData={animationData}
+                   loop={true}
+                   autoplay={true}
+                   style={{ width: '120%', height: '120%' }}
+                 />
+               ) : (
+                 <div className="text-xl sm:text-2xl animate-bounce">🚲</div>
+               )}
              </div>
              {/* Mini Dotted Path Indicator */}
-             <div className="absolute top-full left-1/2 -translate-x-1/2 w-1 h-12 bg-gradient-to-t from-transparent via-green-400/40 to-transparent" />
+             <div className="w-1 h-12 bg-gradient-to-t from-transparent via-green-400/40 to-transparent mt-[-10px] z-[-1]" />
           </div>
         </motion.div>
 
