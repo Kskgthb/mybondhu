@@ -89,14 +89,12 @@ export default function LandingPage() {
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Dynamic Home Banners */}
-      <div className="w-full">
-        <HomeBannerCarousel />
-      </div>
+        {/* Dynamic Home Banners */}
+        <div className="mb-12">
+          <HomeBannerCarousel />
+        </div>
 
-      <div className="container mx-auto px-4 pb-8 relative z-10">
         {/* Dynamic Category Explorer - Replaces Carousel */}
         <CategoryExplorer />
 
