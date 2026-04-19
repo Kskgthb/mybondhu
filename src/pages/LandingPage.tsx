@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { UserCheck, HandHeart, Star, MapPin, Clock, Shield, Youtube, Instagram, Linkedin, Mail, MessageCircle, Search } from 'lucide-react';
+import { UserCheck, HandHeart, Star, MapPin, Clock, Shield, Youtube, Instagram, Linkedin, Mail, MessageCircle, Search, ChevronRight } from 'lucide-react';
 import { useEffect } from 'react';
 import CategoryMapExplorer from '@/components/common/CategoryMapExplorer';
 import Logo from '@/components/common/Logo';
