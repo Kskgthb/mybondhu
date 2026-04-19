@@ -189,9 +189,10 @@ export default function LandingPage() {
                 <div className="absolute -bottom-4 -right-4 bg-white p-4 rounded-3xl shadow-2xl border border-slate-100 animate-bounce-slow">
                    <p className="text-sm font-black text-slate-800">Joined by 500+ Students</p>
                    <div className="flex -space-x-2 mt-2">
-                      {[1,2,3,4].map(i => (
-                        <div key={i} className="w-8 h-8 rounded-full border-2 border-white bg-slate-200" />
-                      ))}
+                      <img src="/face1.jpg" className="w-8 h-8 rounded-full border-2 border-white object-cover shadow-sm" alt="Student" />
+                      <img src="/face2.jpg" className="w-8 h-8 rounded-full border-2 border-white object-cover shadow-sm" alt="Student" />
+                      <img src="/face3.jpg" className="w-8 h-8 rounded-full border-2 border-white object-cover shadow-sm" alt="Student" />
+                      <img src="/face4.jpg" className="w-8 h-8 rounded-full border-2 border-white object-cover shadow-sm" alt="Student" />
                    </div>
                 </div>
               </div>
