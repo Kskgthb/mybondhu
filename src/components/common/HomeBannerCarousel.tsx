@@ -22,7 +22,7 @@ export function HomeBannerCarousel() {
   ];
 
   return (
-    <div className="w-full max-w-5xl mx-auto mb-10 px-4 md:px-6">
+    <div className="w-full mb-10">
       <Carousel
         plugins={[plugin.current]}
         className="w-full"
@@ -30,16 +30,16 @@ export function HomeBannerCarousel() {
         onMouseLeave={plugin.current.reset}
         opts={{ loop: true }}
       >
-        <CarouselContent>
+        <CarouselContent className="ml-0">
           {banners.map((banner, index) => (
-            <CarouselItem key={index}>
-              <div className="p-1">
-                <Card className="border-0 shadow-lg overflow-hidden rounded-2xl">
+            <CarouselItem key={index} className="pl-0">
+              <div className="w-full h-full">
+                <Card className="border-0 shadow-none overflow-hidden rounded-none bg-transparent">
                   <CardContent className="flex items-center justify-center p-0">
                     <img 
                       src={banner} 
                       alt={`Banner ${index + 1}`} 
-                      className="w-full max-h-[300px] md:max-h-[400px] object-cover"
+                      className="w-full object-cover max-h-[300px] md:max-h-[500px]"
                       loading="lazy"
                     />
                   </CardContent>
@@ -48,8 +48,8 @@ export function HomeBannerCarousel() {
             </CarouselItem>
           ))}
         </CarouselContent>
-        <CarouselPrevious className="hidden md:flex left-2" />
-        <CarouselNext className="hidden md:flex right-2" />
+        <CarouselPrevious className="hidden md:flex left-4 border-2 shadow-lg" />
+        <CarouselNext className="hidden md:flex right-4 border-2 shadow-lg" />
       </Carousel>
     </div>
   );
