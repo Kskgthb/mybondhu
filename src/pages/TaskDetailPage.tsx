@@ -65,6 +65,14 @@ export default function TaskDetailPage() {
     };
   }, [taskId, task?.status, task?.code_verified, task?.payment_verified]);
 
+  // Smart Notification System: Track Bondhu interest when they view a task
+  useEffect(() => {
+    if (task && user && task.poster_id !== user.id && profile?.active_role === 'bondhu' || profile?.role === 'bondhu') {
+      // Small weight increase for just viewing a task
+      tasksApi.trackInteraction(user.id, task.category, 0.05);
+    }
+  }, [task?.id, user?.id]);
+
   const loadTaskDetails = async () => {
     if (!taskId) return;
     

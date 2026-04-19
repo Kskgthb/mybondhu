@@ -94,6 +94,37 @@ export const profilesApi = {
     if (error) throw error;
     return data;
   },
+
+  async getUserPreferences(userId: string) {
+    const { data, error } = await supabase
+      .from('user_preferences')
+      .select('*')
+      .eq('user_id', userId)
+      .maybeSingle();
+      
+    if (error && error.code !== 'PGRST116') throw error; // ignore not found
+    return data;
+  },
+
+  async updateUserPreferences(userId: string, updates: any) {
+    const { error } = await supabase
+      .from('user_preferences')
+      .upsert({ user_id: userId, ...updates })
+      .eq('user_id', userId);
+      
+    if (error) throw error;
+  },
+
+  async trackInteraction(userId: string, category: string, weightIncrease: number) {
+    if (!userId || !category) return;
+    
+    // Asynchronously call the RPC, don't wait for it to avoid blocking UI
+    supabase.rpc('update_user_interest_profile', {
+      p_user_id: userId,
+      p_category: category,
+      p_weight_increase: weightIncrease
+    }).catch(err => console.error('Failed to track interaction:', err));
+  }
 };
 
 export const tasksApi = {

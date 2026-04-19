@@ -43,6 +43,9 @@ serve(async (req) => {
     let pushBody = "";
     let pushUrl = "/";
     let pushTag = "bondhu-notify";
+    let targetUsersDetails: any[] = [];
+    let isSmartTarget = false;
+    let pushVariant = 'formal';
 
     // ── NOTIFICATIONS TABLE (HANDLES ALL TYPES) ──────────────────────
     if (table === "notifications" && type === "INSERT") {
@@ -80,40 +83,39 @@ serve(async (req) => {
       }
     }
     
-    // ── NEW TASK POSTED (BONDHU PROXIMITY ALERTS) ────────────────────
+    // ── NEW TASK POSTED (SMART BONDHU PROXIMITY ALERTS) ────────────────
     else if (table === "tasks" && type === "INSERT" && record.status === "pending") {
-      console.log(`[Push-Notify] New task posted: ${record.id} at [${record.location_lat}, ${record.location_lng}]`);
+      console.log(`[Push-Notify] New task posted: ${record.id} [${record.category}] at [${record.location_lat}, ${record.location_lng}]`);
       
       if (!record.location_lat || !record.location_lng || record.location_lat === 0) {
         console.log("[Push-Notify] Task has no valid location, skipping proximity alerts");
         return new Response("Task has no location", { headers: corsHeaders });
       }
 
-      // Query database for all bondhus within 10km (increased from 3km for better testing/reliability)
-      const { data: nearbyUsers, error } = await supabaseClient.rpc("get_users_within_radius", {
-        target_lat: record.location_lat,
-        target_lng: record.location_lng,
-        radius_km: 10,
-        target_role: "bondhu"
+      // Query database using the new smart notification RPC
+      const { data: nearbyUsers, error } = await supabaseClient.rpc("get_smart_notification_targets", {
+        p_target_lat: record.location_lat,
+        p_target_lng: record.location_lng,
+        p_category: record.category,
+        p_limit: 10
       });
 
       if (error) {
-        console.error("[Push-Notify] RPC Error getting nearby users:", error);
+        console.error("[Push-Notify] RPC Error getting smart targets:", error);
         return new Response("RPC Error", { headers: corsHeaders, status: 500 });
       }
 
       if (!nearbyUsers || nearbyUsers.length === 0) {
-        console.log("[Push-Notify] No Bondhus found within 10km of task:", record.id);
-        return new Response("No nearby users", { headers: corsHeaders });
+        console.log("[Push-Notify] No eligible Bondhus found via smart targets for task:", record.id);
+        return new Response("No eligible nearby users", { headers: corsHeaders });
       }
 
-      console.log(`[Push-Notify] Found ${nearbyUsers.length} nearby Bondhus within 10km`);
+      console.log(`[Push-Notify] Found ${nearbyUsers.length} smart targeted Bondhus`);
       
+      isSmartTarget = true;
+      targetUsersDetails = nearbyUsers;
       targetUserIds = nearbyUsers.map((u: any) => u.user_id);
-      pushTitle = "📢 New Task Near You!";
-      pushBody = `"${record.title}" — ₹${record.amount}`;
       pushUrl = `/task/${record.id}`;
-      // Use a unique tag but allow renotifying so multiple new tasks trigger sounds/popups
       pushTag = `new-task-nearby`;
     }
     
@@ -127,10 +129,10 @@ serve(async (req) => {
       return new Response("No target users", { headers: corsHeaders });
     }
 
-    // Fetch push subscriptions for all targeted users
+    // Fetch push subscriptions and profile data (for personalization)
     const { data: subscriptions, error: subError } = await supabaseClient
       .from("push_subscriptions")
-      .select("*")
+      .select("*, profile:profiles(username)")
       .in("user_id", targetUserIds);
 
     if (subError || !subscriptions || subscriptions.length === 0) {
@@ -138,22 +140,57 @@ serve(async (req) => {
       return new Response("No push subscriptions found", { headers: corsHeaders });
     }
 
-    const pushPayload = JSON.stringify({
-      title: pushTitle,
-      body: pushBody,
-      url: pushUrl,
-      tag: pushTag,
-      timestamp: Date.now(),
-      renotify: true, // Crucial to ensure notifications pop up even if same tag exists
-      icon: "/logo.png"
-    });
-
     let successCount = 0;
 
     // Send notifications in parallel
     await Promise.all(
       subscriptions.map(async (sub) => {
         try {
+          let finalTitle = pushTitle;
+          let finalBody = pushBody;
+          let variant = pushVariant;
+          
+          const profileData = Array.isArray(sub.profile) ? sub.profile[0] : sub.profile;
+          const userName = profileData?.username ? profileData.username.split(' ')[0] : 'Bondhu';
+
+          // Personalize smart notifications based on A/B testing variant
+          if (isSmartTarget) {
+            const userTargetData = targetUsersDetails.find(u => u.user_id === sub.user_id);
+            variant = userTargetData?.variant || 'formal';
+            
+            // Format distance to 1 decimal place
+            const distStr = userTargetData?.distance_km ? `${userTargetData.distance_km.toFixed(1)}km` : 'nearby';
+
+            if (variant === 'formal') {
+              finalTitle = `New Task Available (${distStr})`;
+              finalBody = `Category: ${record.category}. Reward: ₹${record.amount}. Tap to view.`;
+            } else if (variant === 'emoji') {
+              finalTitle = `🎯 ${record.category} Task Near You!`;
+              finalBody = `Hey ${userName}, earn ₹${record.amount} just ${distStr} away! 🚀`;
+            } else if (variant === 'urgent') {
+              finalTitle = `🔥 High Match Alert: ₹${record.amount}`;
+              finalBody = `${userName}, a new ${record.category} task was just posted ${distStr} away. Grab it fast! ⚡`;
+            }
+          }
+
+          const pushPayload = JSON.stringify({
+            title: finalTitle,
+            body: finalBody,
+            url: pushUrl,
+            tag: pushTag,
+            timestamp: Date.now(),
+            renotify: true, 
+            icon: "/logo.png",
+            // Pass metadata for SW click tracking
+            data: {
+              url: pushUrl,
+              task_id: record?.id,
+              trigger_type: isSmartTarget ? 'proximity' : 'lifecycle',
+              variant: variant,
+              log_id: crypto.randomUUID() // Client needs this to log clicks
+            }
+          });
+
           const pushConfig = {
             endpoint: sub.endpoint,
             keys: {
@@ -161,8 +198,22 @@ serve(async (req) => {
               auth: sub.auth_key,
             },
           };
+          
           await webpush.sendNotification(pushConfig, pushPayload);
           successCount++;
+          
+          // Log the notification for Anti-Spam and A/B Testing metrics
+          if (isSmartTarget) {
+            await supabaseClient.from("notification_logs").insert({
+              id: JSON.parse(pushPayload).data.log_id,
+              user_id: sub.user_id,
+              task_id: record.id,
+              trigger_type: 'proximity',
+              variant: variant,
+              clicked: false
+            });
+          }
+          
         } catch (error: any) {
           console.error(`Error sending push to ${sub.endpoint}:`, error);
           if (error.statusCode === 410 || error.statusCode === 404) {

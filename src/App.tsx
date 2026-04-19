@@ -9,6 +9,7 @@ import Header from '@/components/common/Header';
 import MainLayout from '@/components/layout/MainLayout';
 import SplashScreen from '@/components/common/SplashScreen';
 import { GoogleMapsProvider } from '@/components/maps';
+import GlobalTracker from '@/components/common/GlobalTracker';
 import routes from './routes';
 
 // Public paths that don't need authentication
@@ -46,6 +47,7 @@ const App = () => {
 
   return (
     <Router>
+      <GlobalTracker />
       <ThemeProvider>
         <AuthProvider>
           <RoleProvider>

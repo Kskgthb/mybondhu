@@ -59,7 +59,13 @@ self.addEventListener('push', (event) => {
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
 
-  const urlToOpen = event.notification.data?.url || APP_URL;
+  let urlToOpen = event.notification.data?.url || APP_URL;
+  const logId = event.notification.data?.log_id;
+
+  // Append log_id for A/B testing and click tracking by the main app
+  if (logId) {
+    urlToOpen += (urlToOpen.includes('?') ? '&' : '?') + 'click_log_id=' + logId;
+  }
 
   // If action is 'close', just dismiss
   if (event.action === 'close') return;

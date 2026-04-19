@@ -375,6 +375,13 @@ export default function BondhuDashboard() {
           description: 'You can now start working on this task.',
           duration: 3000,
         });
+        
+        // Smart Notification System: Track strong interest (weight +0.2)
+        const acceptedTask = nearbyTasks.find(t => t.id === taskId);
+        if (acceptedTask && acceptedTask.category) {
+          tasksApi.trackInteraction(user.id, acceptedTask.category, 0.2);
+        }
+        
         loadData();
       } else {
         toast.error(result.message);
