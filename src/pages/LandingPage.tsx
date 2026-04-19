@@ -121,16 +121,16 @@ export default function LandingPage() {
         </div>
 
         {/* Need an Instant Bondhu Section */}
-        <div className="max-w-5xl mx-auto mb-16 mt-12">
-          <Card className="shadow-2xl hover:shadow-hover transition-all duration-300 border-3 border-primary/30 hover:border-primary/60 bg-white/95 backdrop-blur-sm overflow-hidden">
-            <div className="flex flex-col md:flex-row items-center">
-              <div className="w-full md:w-1/2 p-8 sm:p-12 text-center md:text-left">
+        <div className="max-w-6xl mx-auto mb-16 mt-12">
+          <Card className="shadow-2xl hover:shadow-hover transition-all duration-300 border-none bg-white rounded-[40px] overflow-hidden border-2 border-slate-100 p-4 sm:p-8">
+            <div className="flex flex-col md:flex-row items-center gap-8 md:gap-16">
+              <div className="w-full md:w-1/2 p-4 text-center md:text-left">
                 <div className="flex justify-center md:justify-start mb-6">
                   <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center shadow-lg">
                     <UserCheck className="h-10 w-10 text-primary" strokeWidth={2.5} />
                   </div>
                 </div>
-                <h3 className="text-3xl sm:text-4xl font-black text-slate-800 mb-4 leading-tight">Need an Instant Bondhu</h3>
+                <h3 className="text-3xl sm:text-4xl font-black text-slate-800 mb-4 leading-tight">Need an Instant <span className="text-primary">Bondhu</span></h3>
                 <p className="text-lg font-bold text-slate-600 mb-8">
                   Post your task and get help from nearby trusted helpers
                 </p>
@@ -156,11 +156,15 @@ export default function LandingPage() {
                   Post a Task
                 </Button>
               </div>
-              <div className="hidden md:block w-1/2 h-[500px] bg-slate-100 relative">
-                 {/* Illustration placeholder or decoration */}
-                 <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-primary/20 flex items-center justify-center">
-                    <div className="text-8xl animate-pulse opacity-40">🙋‍♂️</div>
-                 </div>
+              <div className="w-full md:w-1/2 relative">
+                <div className="relative rounded-[32px] overflow-hidden shadow-2xl">
+                  <img 
+                    src="/need_bondhu_hero.jpg" 
+                    alt="Students needing help" 
+                    className="w-full h-full object-cover aspect-video sm:aspect-auto"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent pointer-events-none" />
+                </div>
               </div>
             </div>
           </Card>
@@ -170,16 +174,15 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto mb-16 mt-12">
           <Card className="shadow-2xl border-none bg-white rounded-[40px] overflow-hidden border-2 border-slate-100 p-4 sm:p-8">
             <div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-16">
-              {/* Left Side: Student Profiles Grid */}
+              {/* Left Side: Hero Image */}
               <div className="w-full lg:w-1/2 relative">
                 <div className="relative rounded-[32px] overflow-hidden shadow-2xl">
                   <img 
-                    src="/student_helpers_grid_1776639707883.png" 
-                    alt="Bondhu Community Helpers" 
-                    className="w-full h-full object-cover aspect-square sm:aspect-auto"
+                    src="/become_bondhu_hero.jpg" 
+                    alt="Happy student helpers" 
+                    className="w-full h-full object-cover aspect-video sm:aspect-auto"
                   />
-                  {/* Overlay Gradient */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent pointer-events-none" />
                 </div>
                 
                 {/* Floating Stats Badge */}
@@ -196,7 +199,7 @@ export default function LandingPage() {
               {/* Right Side: Content */}
               <div className="w-full lg:w-1/2 text-center lg:text-left">
                 <h2 className="text-4xl sm:text-5xl font-black text-slate-800 mb-6 leading-tight">
-                  Become a <span className="text-[#6411ac]">Bondhu</span> with BondhuApp
+                  Become a <span className="text-secondary">Bondhu</span> with BondhuApp
                 </h2>
                 <p className="text-lg font-bold text-slate-600 mb-10 tracking-tight">
                   Help others on campus and earn on your own schedule
