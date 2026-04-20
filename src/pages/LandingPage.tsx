@@ -251,59 +251,77 @@ export default function LandingPage() {
         </div>
 
         {/* How It Works Section */}
-        <div className="max-w-4xl mx-auto mb-16">
-          <Card className="shadow-card border-2 border-accent/30 bg-gradient-to-br from-accent/5 to-background">
-            <CardHeader className="text-center">
-              <CardTitle className="text-3xl mb-2">How It Works</CardTitle>
-              <CardDescription className="text-base">
-                Simple steps to get started with Bondhu
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex justify-center mb-6">
-                <div className="relative rounded-2xl overflow-hidden shadow-lg border-2 border-accent/20 bg-white max-w-md">
+        <div className="max-w-6xl mx-auto mb-16 mt-12">
+          <div className="text-center mb-10">
+            <h2 className="text-4xl sm:text-5xl font-black text-slate-800 mb-4 leading-tight">
+              How It <span className="text-primary">Works</span>
+            </h2>
+            <p className="text-lg font-bold text-slate-600">
+              Simple steps to get started with BondhuApp
+            </p>
+          </div>
+
+          <Card className="shadow-2xl hover:shadow-hover transition-all duration-300 border-none bg-white rounded-[40px] overflow-hidden border-2 border-slate-100 p-4 sm:p-10 relative">
+            <div className="flex flex-col lg:flex-row items-center gap-10 lg:gap-16">
+              {/* Left: Image / Visual */}
+              <div className="w-full lg:w-1/2 flex justify-center relative">
+                <div className="relative rounded-[32px] overflow-hidden shadow-2xl border-4 border-slate-50 bg-slate-50 w-full">
                   <img 
                     src="/task-flow.jpg" 
                     alt="Task Flow - From posting to completion" 
-                    className="w-full h-auto object-contain"
+                    className="w-full h-auto object-cover aspect-square sm:aspect-auto sm:min-h-[400px]"
                     loading="lazy"
                     onError={(e) => {
                       const target = e.target as HTMLImageElement;
                       target.style.display = 'none';
                     }}
                   />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/10 via-transparent to-transparent pointer-events-none" />
                 </div>
               </div>
-              <div className="grid xl:grid-cols-3 gap-6 mt-8">
-                <div className="text-center space-y-2">
-                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
-                    <span className="text-2xl font-bold text-primary">1</span>
+
+              {/* Right: Steps */}
+              <div className="w-full lg:w-1/2 space-y-8">
+                {/* Step 1 */}
+                <div className="flex gap-6 items-start group">
+                  <div className="w-16 h-16 rounded-[24px] bg-primary/10 flex items-center justify-center text-primary shadow-sm flex-shrink-0 border-2 border-primary/20 group-hover:scale-110 group-hover:bg-primary group-hover:text-white transition-all duration-300">
+                    <span className="text-2xl font-black">1</span>
                   </div>
-                  <h3 className="font-semibold text-lg">Post Your Task</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Describe what you need help with and set your preferred amount
-                  </p>
+                  <div>
+                    <h3 className="text-2xl font-black text-slate-800 mb-2 leading-tight">Post Your Task</h3>
+                    <p className="text-base font-bold text-slate-500">
+                      Describe what you need help with and set your preferred amount to get started instantly.
+                    </p>
+                  </div>
                 </div>
-                <div className="text-center space-y-2">
-                  <div className="w-12 h-12 rounded-full bg-secondary/10 flex items-center justify-center mx-auto mb-3">
-                    <span className="text-2xl font-bold text-secondary">2</span>
+
+                {/* Step 2 */}
+                <div className="flex gap-6 items-start group">
+                  <div className="w-16 h-16 rounded-[24px] bg-secondary/10 flex items-center justify-center text-secondary shadow-sm flex-shrink-0 border-2 border-secondary/20 group-hover:scale-110 group-hover:bg-secondary group-hover:text-white transition-all duration-300">
+                    <span className="text-2xl font-black">2</span>
                   </div>
-                  <h3 className="font-semibold text-lg">Get Matched</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Nearby Bondhus receive notifications and can accept your task
-                  </p>
+                  <div>
+                    <h3 className="text-2xl font-black text-slate-800 mb-2 leading-tight">Get Matched</h3>
+                    <p className="text-base font-bold text-slate-500">
+                      Nearby trusted Bondhus receive your request and accept the task in real-time.
+                    </p>
+                  </div>
                 </div>
-                <div className="text-center space-y-2">
-                  <div className="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-3">
-                    <span className="text-2xl font-bold text-accent">3</span>
+
+                {/* Step 3 */}
+                <div className="flex gap-6 items-start group">
+                  <div className="w-16 h-16 rounded-[24px] bg-accent/10 flex items-center justify-center text-accent shadow-sm flex-shrink-0 border-2 border-accent/20 group-hover:scale-110 group-hover:bg-accent group-hover:text-white transition-all duration-300">
+                    <span className="text-2xl font-black">3</span>
                   </div>
-                  <h3 className="font-semibold text-lg">Task Complete</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Track progress, complete payment, and rate your experience
-                  </p>
+                  <div>
+                    <h3 className="text-2xl font-black text-slate-800 mb-2 leading-tight">Task Complete</h3>
+                    <p className="text-base font-bold text-slate-500">
+                      Track progress, seamlessly complete your payment, and rate your overall experience.
+                    </p>
+                  </div>
                 </div>
               </div>
-            </CardContent>
+            </div>
           </Card>
         </div>
 
