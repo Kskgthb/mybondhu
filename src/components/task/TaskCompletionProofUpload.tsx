@@ -230,7 +230,6 @@ export default function TaskCompletionProofUpload({
               ref={fileInputRef}
               type="file"
               accept="image/*"
-              capture="environment"
               className="hidden"
               onChange={handleFileSelect}
             />

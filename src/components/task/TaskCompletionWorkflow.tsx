@@ -238,7 +238,7 @@ export default function TaskCompletionWorkflow({
                     </div>
                   )}
 
-                  {step.id === 'proof' && step.status === 'active' && (
+                  {step.id === 'proof' && (step.status === 'active' || step.status === 'completed') && (
                     <div className="mt-4">
                       <TaskCompletionProofUpload
                         taskId={task.id}
