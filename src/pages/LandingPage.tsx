@@ -9,6 +9,7 @@ import Logo from '@/components/common/Logo';
 import CategoryCard from '@/components/common/CategoryCard';
 import { categoryData } from '@/lib/categoryData';
 import Footer from '@/components/common/Footer';
+import CategoryExplorer from '@/components/common/CategoryExplorer';
 import { HomeBannerCarousel } from '@/components/common/HomeBannerCarousel';
 
 export default function LandingPage() {
@@ -95,6 +96,9 @@ export default function LandingPage() {
         <div className="mb-12">
           <HomeBannerCarousel />
         </div>
+
+        {/* Category Explorer Tabs */}
+        <CategoryExplorer />
 
         {/* Interactive Map Explorer */}
         <CategoryMapExplorer />
