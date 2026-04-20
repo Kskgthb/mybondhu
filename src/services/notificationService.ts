@@ -305,6 +305,16 @@ export async function showPushNotification(
       console.warn('[Notifications] SW local notification failed:', err);
     }
   }
+
+  // Final fallback: standard Notification API (only works when tab is open)
+  if ('Notification' in window && Notification.permission === 'granted') {
+    new Notification(title, {
+      body,
+      icon: config.icon,
+      badge: '/logo.png',
+      tag: config.tag,
+    });
+  }
 }
 
 /**
@@ -329,23 +339,121 @@ export function sendLocationToSW(lat: number, lng: number) {
 // so the UI updates instantly while the user is actively staring at the app.
 
 export function subscribeToUserNotifications(userId: string) {
-  return supabase.channel(`user-notifications-${userId}`).on('postgres_changes', {
-    event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${userId}`,
-  }, (payload) => {
-    // We rely on the Edge Function for push now, but we can update UI state here if needed
-  }).subscribe();
+  const channel = supabase
+    .channel(`user-notifications-${userId}`)
+    .on(
+      'postgres_changes',
+      {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'notifications',
+        filter: `user_id=eq.${userId}`,
+      },
+      (payload) => {
+        const notification = payload.new as {
+          type: string;
+          title: string;
+          message: string;
+          task_id: string | null;
+        };
+
+        const typeMap: Record<string, NotificationType> = {
+          task_accepted: 'task_accepted',
+          bondhu_on_way: 'bondhu_on_way',
+          bondhu_arrived: 'bondhu_arrived',
+          task_started: 'task_started',
+          task_completed: 'task_completed',
+          payment_received: 'payment_received',
+          payment_confirmed: 'payment_confirmed',
+          code_verified: 'code_verified',
+          new_task_nearby: 'new_task_nearby',
+          message_received: 'message_received',
+        };
+
+        const notifType = typeMap[notification.type] || 'task_accepted';
+
+        showPushNotification(notifType, {
+          customTitle: notification.title,
+          customBody: notification.message,
+          taskId: notification.task_id || undefined,
+        });
+      }
+    )
+    .subscribe();
+
+  return channel;
 }
 
 export function subscribeToTaskUpdates(taskId: string, posterName?: string) {
-  return supabase.channel(`task-updates-${taskId}`).on('postgres_changes', {
-    event: 'UPDATE', schema: 'public', table: 'tasks', filter: `id=eq.${taskId}`,
-  }, () => {}).subscribe();
+  const channel = supabase
+    .channel(`task-updates-${taskId}`)
+    .on(
+      'postgres_changes',
+      {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'tasks',
+        filter: `id=eq.${taskId}`,
+      },
+      (payload) => {
+        const oldStatus = (payload.old as any)?.status;
+        const newStatus = (payload.new as any)?.status;
+        const taskTitle = (payload.new as any)?.title;
+
+        if (oldStatus === newStatus) return; // No status change
+
+        const statusNotifMap: Record<string, NotificationType> = {
+          accepted: 'task_accepted',
+          in_progress: 'task_started',
+          completed: 'task_completed',
+        };
+
+        const notifType = statusNotifMap[newStatus];
+        if (notifType) {
+          showPushNotification(notifType, {
+            taskId,
+            taskTitle,
+          });
+        }
+      }
+    )
+    .subscribe();
+
+  return channel;
 }
 
 export function subscribeToAssignmentUpdates(taskId: string) {
-  return supabase.channel(`assignment-updates-${taskId}`).on('postgres_changes', {
-    event: 'UPDATE', schema: 'public', table: 'task_assignments', filter: `task_id=eq.${taskId}`,
-  }, () => {}).subscribe();
+  const channel = supabase
+    .channel(`assignment-updates-${taskId}`)
+    .on(
+      'postgres_changes',
+      {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'task_assignments',
+        filter: `task_id=eq.${taskId}`,
+      },
+      (payload) => {
+        const oldStatus = (payload.old as any)?.status;
+        const newStatus = (payload.new as any)?.status;
+
+        if (oldStatus === newStatus) return;
+
+        const statusMap: Record<string, NotificationType> = {
+          accepted: 'task_accepted',
+          in_progress: 'bondhu_on_way',
+          completed: 'task_completed',
+        };
+
+        const notifType = statusMap[newStatus];
+        if (notifType) {
+          showPushNotification(notifType, { taskId });
+        }
+      }
+    )
+    .subscribe();
+
+  return channel;
 }
 
 export function unsubscribeNotifications(channel: any) {
