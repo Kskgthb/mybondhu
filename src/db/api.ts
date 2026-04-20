@@ -360,6 +360,18 @@ export const tasksApi = {
     return { success: false, message: 'Failed to verify code after multiple attempts' };
   },
 
+  async completeCashTaskAfterProof(taskId: string): Promise<{ success: boolean; message: string }> {
+    const { data, error } = await supabase.rpc('complete_cash_task_after_proof', {
+      p_task_id: taskId,
+    });
+
+    if (error) {
+      return { success: false, message: error.message };
+    }
+
+    return data || { success: false, message: 'Unknown error occurred' };
+  },
+
   async verifyPaymentAndComplete(taskId: string): Promise<{ success: boolean; message: string }> {
     const { data, error } = await supabase.rpc('verify_payment_and_complete', {
       p_task_id: taskId,

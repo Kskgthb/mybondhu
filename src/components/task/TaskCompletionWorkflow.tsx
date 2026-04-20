@@ -88,13 +88,11 @@ export default function TaskCompletionWorkflow({
       // Always move to proof step next
       setCurrentStep('proof');
 
-      if (result.auto_completed) {
+      if (task.payment_method === 'cash') {
         setIsCashPayment(true);
-        // Do NOT call onComplete() yet to prevent NavigateToTask from redirecting immediately.
-        // We want the user to upload the proof first.
-      } else {
-        onComplete();
       }
+      
+      onComplete(); // Reload task data, but it won't redirect yet because status is still in_progress
     } catch (error) {
       console.error('Error verifying code:', error);
       throw error; // Re-throw to let CompletionCodeInput handle it
@@ -115,11 +113,17 @@ export default function TaskCompletionWorkflow({
       setProofUploaded(true);
       
       if (isCashPayment || task.payment_method === 'cash') {
+        // Complete the cash task after proof
+        const completeResult = await tasksApi.completeCashTaskAfterProof(task.id);
+        if (!completeResult.success) {
+          toast.error(completeResult.message || 'Failed to complete task');
+          return;
+        }
         setCurrentStep('complete');
         onComplete(); // Trigger reload and redirect now
       } else {
         setCurrentStep('payment');
-        // We can call onComplete to refresh task data if needed, but not required
+        onComplete(); // Refresh task data
       }
     } catch (error) {
       console.error('Error updating proof:', error);
@@ -128,13 +132,12 @@ export default function TaskCompletionWorkflow({
   };
 
   const handleSkipProof = () => {
-    toast.info('Skipped proof upload. You can upload later if needed.');
     if (isCashPayment || task.payment_method === 'cash') {
-      setCurrentStep('complete');
-      onComplete(); // Trigger reload and redirect now
-    } else {
-      setCurrentStep('payment');
+      toast.error('Proof upload is mandatory for cash tasks to verify completion.');
+      return;
     }
+    toast.info('Skipped proof upload. You can upload later if needed.');
+    setCurrentStep('payment');
   };
 
   const handlePaymentConfirmed = () => {
