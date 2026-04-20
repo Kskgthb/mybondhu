@@ -11,11 +11,9 @@ const Footer: React.FC = () => {
         {/* Top CTA Section */}
         <div className="flex flex-col md:flex-row items-center justify-between mb-10 pb-8 border-b border-white/20 gap-6">
           <div className="flex items-center gap-2">
-            {/* Minimal White Logo */}
-            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 sm:w-10 sm:h-10 text-white fill-current">
-               <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
-            </svg>
-            <span className="text-3xl font-extrabold tracking-tight text-white">bondhuapp</span>
+            {/* Map Pin Logo */}
+            <MapPin className="w-8 h-8 sm:w-10 sm:h-10 text-white fill-white" />
+            <span className="text-3xl font-extrabold tracking-tight text-white">BondhuApp</span>
           </div>
           
           <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
@@ -24,8 +22,8 @@ const Footer: React.FC = () => {
             </span>
             <button 
               onClick={() => navigate('/signup')}
-              className="px-8 py-3 rounded-full font-bold text-slate-900 transition-transform hover:scale-105"
-              style={{ backgroundColor: '#facc15' }} // Yellow color matching the reference
+              className="px-8 py-3 rounded-full font-bold text-white transition-transform hover:scale-105 shadow-lg"
+              style={{ backgroundColor: '#2fbe6b' }}
             >
               Get started
             </button>
@@ -39,15 +37,15 @@ const Footer: React.FC = () => {
             <p className="text-white/90 text-sm sm:text-base leading-relaxed">
               BondhuApp is a dynamic campus platform that offers a unique blend of peer-to-peer task assistance and community building.
             </p>
-            <div className="inline-flex items-center gap-2 bg-white px-4 py-2 rounded-full shadow-sm">
-              <span className="text-sm font-bold" style={{ color: '#641acc' }}>Proud product of India</span>
-              <span className="text-lg">🇮🇳</span>
+            <div className="flex flex-col gap-1">
+              <span className="font-bold text-white text-lg">#BondhuApp</span>
+              <span className="text-white/80 text-sm">Crafted with <span className="text-red-500">❤️</span> in Kolkata</span>
             </div>
           </div>
 
           {/* Connect us Column */}
           <div>
-            <h3 className="text-lg font-bold text-[#facc15] mb-5">Connect us</h3>
+            <h3 className="text-lg font-bold mb-5" style={{ color: '#2fbe6b' }}>Connect us</h3>
             <div className="space-y-4">
               <div>
                 <p className="font-bold text-white mb-1">Email</p>
@@ -60,10 +58,10 @@ const Footer: React.FC = () => {
                   Our Locations <MapPin className="w-4 h-4" />
                 </p>
                 <p className="text-white/80 text-sm leading-relaxed mb-2">
-                  <span className="font-semibold text-white">Corporate Office :</span> Kolkata, West Bengal
+                  <span className="font-semibold text-white">Corporate Office :</span> Salt Lake, Kolkata, West Bengal
                 </p>
                 <p className="text-white/80 text-sm leading-relaxed">
-                  <span className="font-semibold text-white">Registered Office :</span> IIT Kharagpur, West Bengal
+                  <span className="font-semibold text-white">Registered Office :</span> Salt Lake, Kolkata, West Bengal
                 </p>
               </div>
             </div>
@@ -71,13 +69,10 @@ const Footer: React.FC = () => {
 
           {/* Useful links Column */}
           <div>
-            <h3 className="text-lg font-bold text-[#facc15] mb-5">Useful links</h3>
+            <h3 className="text-lg font-bold mb-5" style={{ color: '#2fbe6b' }}>Useful links</h3>
             <ul className="space-y-3">
               <li>
                 <Link to="/" className="text-white/80 hover:text-white transition-colors text-sm font-medium">About Us</Link>
-              </li>
-              <li>
-                <a href="https://chat.whatsapp.com/EDOwN8UcN3NGfBQW3v1lf0?mode=gi_t" target="_blank" rel="noopener noreferrer" className="text-white/80 hover:text-white transition-colors text-sm font-medium">Join WhatsApp Community</a>
               </li>
               <li>
                 <Link to="/register/bondhu" className="text-white/80 hover:text-white transition-colors text-sm font-medium">Become a Bondhu</Link>
@@ -93,7 +88,7 @@ const Footer: React.FC = () => {
 
           {/* Download App Column */}
           <div>
-            <h3 className="text-lg font-bold text-[#facc15] mb-5">Download the App</h3>
+            <h3 className="text-lg font-bold mb-5" style={{ color: '#2fbe6b' }}>Download the App</h3>
             <div className="space-y-4">
               {/* Google Play Button Placeholder */}
               <button className="flex items-center gap-3 bg-transparent border border-white/40 hover:bg-white/10 transition-colors rounded-lg px-4 py-2 w-48">
@@ -135,22 +130,22 @@ const Footer: React.FC = () => {
 
           {/* Social Icons */}
           <div className="flex items-center gap-5">
-            <a href="https://chat.whatsapp.com/EDOwN8UcN3NGfBQW3v1lf0?mode=gi_t" target="_blank" rel="noopener noreferrer" className="text-white hover:text-[#facc15] transition-colors">
+            <a href="https://chat.whatsapp.com/EDOwN8UcN3NGfBQW3v1lf0?mode=gi_t" target="_blank" rel="noopener noreferrer" className="text-white hover:text-[#2fbe6b] transition-colors">
               <MessageCircle className="w-5 h-5" />
             </a>
-            <a href="https://www.linkedin.com/company/bondhuapp" target="_blank" rel="noopener noreferrer" className="text-white hover:text-[#facc15] transition-colors">
+            <a href="https://www.linkedin.com/company/bondhuapp" target="_blank" rel="noopener noreferrer" className="text-white hover:text-[#2fbe6b] transition-colors">
               <Linkedin className="w-5 h-5" />
             </a>
-            <a href="https://youtube.com/@bondhuapp?si=ZY8F3mB1e-J9lTP_" target="_blank" rel="noopener noreferrer" className="text-white hover:text-[#facc15] transition-colors">
+            <a href="https://youtube.com/@bondhuapp?si=ZY8F3mB1e-J9lTP_" target="_blank" rel="noopener noreferrer" className="text-white hover:text-[#2fbe6b] transition-colors">
               <Youtube className="w-5 h-5" />
             </a>
-            <a href="#" className="text-white hover:text-[#facc15] transition-colors">
+            <a href="#" className="text-white hover:text-[#2fbe6b] transition-colors">
               <Facebook className="w-5 h-5" />
             </a>
-            <a href="#" className="text-white hover:text-[#facc15] transition-colors">
+            <a href="#" className="text-white hover:text-[#2fbe6b] transition-colors">
               <Twitter className="w-5 h-5" />
             </a>
-            <a href="https://www.instagram.com/bondhuapp" target="_blank" rel="noopener noreferrer" className="text-white hover:text-[#facc15] transition-colors">
+            <a href="https://www.instagram.com/bondhuapp" target="_blank" rel="noopener noreferrer" className="text-white hover:text-[#2fbe6b] transition-colors">
               <Instagram className="w-5 h-5" />
             </a>
           </div>
