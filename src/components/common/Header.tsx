@@ -152,7 +152,7 @@ export default function Header() {
                 className="text-2xl hover:scale-110 transition-transform flex"
                 title={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
               >
-                🦉
+                {theme === 'light' ? '🐓' : '🦉'}
               </Button>
 
               <Button
