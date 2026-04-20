@@ -14,6 +14,8 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     // Persist session in localStorage so it survives tab/browser close
     persistSession: true,
+    // Explicitly set the storage engine to window.localStorage for PWAs
+    storage: window.localStorage,
     // Automatically refresh the JWT before it expires
     autoRefreshToken: true,
     // Detect OAuth callback tokens in the URL
