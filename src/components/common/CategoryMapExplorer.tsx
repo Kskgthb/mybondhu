@@ -165,26 +165,33 @@ export default function CategoryMapExplorer() {
                 <rect x="800" y="320" width="80" height="50" rx="4" />
              </g>
              
-             {/* College Names Watermarks */}
-             <g fill="#94a3b8" opacity="0.5" fontSize="12" fontWeight="bold" fontFamily="system-ui, sans-serif">
-                <text x="80" y="45">Techno Main Salt Lake</text>
-                <text x="450" y="45">Techno India University</text>
-                <text x="750" y="80">IIM Calcutta</text>
-                <text x="800" y="280">Techno International Newtown</text>
-                <text x="60" y="180">IIT KGP</text>
-                <text x="350" y="180">NIT DURGAPUR</text>
-                <text x="550" y="220">JADAVPUR UNIVERSITY</text>
-                <text x="850" y="380">MAKUT</text>
-                <text x="120" y="260">IEM</text>
-                <text x="420" y="280">IHM</text>
-                <text x="680" y="340">Heritage Institute of Technology</text>
-                <text x="40" y="370">Haldia Institute of Technology</text>
-                <text x="300" y="430">WBNUJS</text>
-                <text x="820" y="480">(IIEST)</text>
-                <text x="120" y="480">St. Xavier's College</text>
-                <text x="480" y="520">BESC</text>
-                <text x="750" y="560">Amity University, Kolkata</text>
-                <text x="600" y="90">BPPIMT</text>
+             {/* College Names Watermarks with Building Icons */}
+             <g opacity="0.4">
+                <defs>
+                  <svg id="college-icon" viewBox="0 0 24 24" width="14" height="14">
+                    <path fill="#94a3b8" d="M12 3L1 9h22L12 3zm-9 8h2v8H3v-8zm4 0h2v8H7v-8zm4 0h2v8h-2v-8zm4 0h2v8h-2v-8zm4 0h2v8h-2v-8zM1 21h22v2H1v-2z"/>
+                  </svg>
+                </defs>
+                <g fill="#94a3b8" fontSize="12" fontWeight="bold" fontFamily="system-ui, sans-serif">
+                    <g transform="translate(80, 45)"><use href="#college-icon" x="-18" y="-11"/><text>Techno Main Salt Lake</text></g>
+                    <g transform="translate(450, 45)"><use href="#college-icon" x="-18" y="-11"/><text>Techno India University</text></g>
+                    <g transform="translate(750, 80)"><use href="#college-icon" x="-18" y="-11"/><text>IIM Calcutta</text></g>
+                    <g transform="translate(800, 280)"><use href="#college-icon" x="-18" y="-11"/><text>Techno International Newtown</text></g>
+                    <g transform="translate(60, 180)"><use href="#college-icon" x="-18" y="-11"/><text>IIT KGP</text></g>
+                    <g transform="translate(350, 180)"><use href="#college-icon" x="-18" y="-11"/><text>NIT DURGAPUR</text></g>
+                    <g transform="translate(550, 220)"><use href="#college-icon" x="-18" y="-11"/><text>JADAVPUR UNIVERSITY</text></g>
+                    <g transform="translate(850, 380)"><use href="#college-icon" x="-18" y="-11"/><text>MAKUT</text></g>
+                    <g transform="translate(120, 260)"><use href="#college-icon" x="-18" y="-11"/><text>IEM</text></g>
+                    <g transform="translate(420, 280)"><use href="#college-icon" x="-18" y="-11"/><text>IHM</text></g>
+                    <g transform="translate(680, 340)"><use href="#college-icon" x="-18" y="-11"/><text>Heritage Institute of Technology</text></g>
+                    <g transform="translate(40, 370)"><use href="#college-icon" x="-18" y="-11"/><text>Haldia Institute of Technology</text></g>
+                    <g transform="translate(300, 430)"><use href="#college-icon" x="-18" y="-11"/><text>WBNUJS</text></g>
+                    <g transform="translate(820, 480)"><use href="#college-icon" x="-18" y="-11"/><text>(IIEST)</text></g>
+                    <g transform="translate(120, 480)"><use href="#college-icon" x="-18" y="-11"/><text>St. Xavier's College</text></g>
+                    <g transform="translate(480, 520)"><use href="#college-icon" x="-18" y="-11"/><text>BESC</text></g>
+                    <g transform="translate(750, 560)"><use href="#college-icon" x="-18" y="-11"/><text>Amity University, Kolkata</text></g>
+                    <g transform="translate(600, 90)"><use href="#college-icon" x="-18" y="-11"/><text>BPPIMT</text></g>
+                </g>
              </g>
           </svg>
         </div>
