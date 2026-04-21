@@ -10,17 +10,23 @@ if (!supabaseUrl || !supabaseAnonKey) {
   );
 }
 
+// Extract project ref for consistent storage key
+const projectRef = new URL(supabaseUrl).hostname.split('.')[0];
+
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     // Persist session in localStorage so it survives tab/browser close
     persistSession: true,
-    // Explicitly set the storage engine to window.localStorage for PWAs
-    storage: window.localStorage,
+    // Use Supabase's default storage (localStorage wrapper with edge-case handling)
+    // Do NOT set storage: window.localStorage — it bypasses internal session management
+    // Use a consistent storage key
+    storageKey: `sb-${projectRef}-auth-token`,
     // Automatically refresh the JWT before it expires
     autoRefreshToken: true,
     // Detect OAuth callback tokens in the URL
     detectSessionInUrl: true,
-    // Use PKCE flow for OAuth (more secure)
-    flowType: 'pkce',
+    // Use implicit flow (default) — PKCE uses sessionStorage for code verifiers
+    // which gets cleared when browser closes, causing session loss
+    flowType: 'implicit',
   },
 });

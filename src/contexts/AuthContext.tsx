@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
-import { User, Session } from '@supabase/supabase-js';
+import { User } from '@supabase/supabase-js';
 import { supabase } from '@/db/supabase';
 import { profilesApi } from '@/db/api';
 import { initializeNotificationSystem, subscribeToUserNotifications, unsubscribeNotifications, teardownSWRealtime } from '@/services/notificationService';
@@ -27,7 +27,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
   const notificationsInitializedRef = useRef(false);
   const notifChannelRef = useRef<any>(null);
-  // Track whether the user explicitly signed out (vs token refresh failure)
   const isExplicitSignOutRef = useRef(false);
 
   const loadProfile = async (userId: string, retries = 3) => {
@@ -69,143 +68,106 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  /**
-   * Try to recover the session using multiple strategies:
-   * 1. getSession() — reads from localStorage
-   * 2. If expired, try refreshSession() — uses refresh token to get new JWT
-   * 3. If all fails, return null
-   */
-  const recoverSession = async (): Promise<Session | null> => {
-    // Strategy 1: Try getSession() (reads from localStorage)
-    try {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      if (session?.user) {
-        console.log('🔐 Session restored from storage');
-        return session;
-      }
-      if (error) {
-        console.warn('⚠️ getSession error:', error.message);
-      }
-    } catch (err) {
-      console.warn('⚠️ getSession threw:', err);
+  const cleanupNotifications = () => {
+    if (notifChannelRef.current) {
+      unsubscribeNotifications(notifChannelRef.current);
+      notifChannelRef.current = null;
+      notificationsInitializedRef.current = false;
     }
-
-    // Strategy 2: Try to refresh the session (uses stored refresh token)
-    try {
-      const { data: { session }, error } = await supabase.auth.refreshSession();
-      if (session?.user) {
-        console.log('🔐 Session recovered via refresh token');
-        return session;
-      }
-      if (error) {
-        console.warn('⚠️ refreshSession error:', error.message);
-      }
-    } catch (err) {
-      console.warn('⚠️ refreshSession threw:', err);
-    }
-
-    // Strategy 3: Check if there's a raw session in localStorage and try setSession()
-    try {
-      const storageKey = `sb-${new URL(import.meta.env.VITE_SUPABASE_URL).hostname.split('.')[0]}-auth-token`;
-      const stored = localStorage.getItem(storageKey);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (parsed?.refresh_token) {
-          console.log('🔐 Found stored refresh token, attempting manual recovery...');
-          const { data: { session }, error } = await supabase.auth.refreshSession({
-            refresh_token: parsed.refresh_token,
-          });
-          if (session?.user) {
-            console.log('🔐 Session recovered from stored refresh token');
-            return session;
-          }
-          if (error) {
-            console.warn('⚠️ Manual refresh failed:', error.message);
-          }
-        }
-      }
-    } catch (err) {
-      console.warn('⚠️ Manual session recovery failed:', err);
-    }
-
-    console.log('🔐 No session could be recovered - user needs to sign in');
-    return null;
+    teardownSWRealtime().catch(() => {});
   };
 
   useEffect(() => {
-    const initAuth = async () => {
-      try {
-        const session = await recoverSession();
+    // Use onAuthStateChange as the SINGLE source of truth for auth state.
+    // In Supabase JS v2, it fires INITIAL_SESSION immediately with the stored session,
+    // so there's no need to also call getSession() (which can cause race conditions).
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log(`🔐 Auth event: ${event}`, session?.user?.id ? `(user: ${session.user.id.slice(0, 8)}...)` : '(no user)');
+      
+      if (event === 'INITIAL_SESSION') {
+        // First event on app load — restore session from localStorage
+        if (session?.user) {
+          console.log('🔐 Session restored from storage');
+          setUser(session.user);
+          await loadProfile(session.user.id);
+        } else {
+          // No stored session — try to refresh in case the access token expired
+          // but the refresh token is still valid in localStorage
+          console.log('🔐 No initial session, attempting refresh...');
+          try {
+            const { data: { session: refreshed } } = await supabase.auth.refreshSession();
+            if (refreshed?.user) {
+              console.log('🔐 Session recovered via refresh');
+              setUser(refreshed.user);
+              await loadProfile(refreshed.user.id);
+            } else {
+              console.log('🔐 No session to recover — user needs to sign in');
+              setUser(null);
+            }
+          } catch {
+            console.log('🔐 Refresh failed — user needs to sign in');
+            setUser(null);
+          }
+        }
+        setLoading(false);
+        return;
+      }
+
+      if (event === 'SIGNED_IN') {
         setUser(session?.user ?? null);
         if (session?.user) {
-          await loadProfile(session.user.id);
+          loadProfile(session.user.id);
         }
-      } catch (error) {
-        console.error('Error initializing auth:', error);
-      } finally {
         setLoading(false);
+        return;
       }
-    };
 
-    initAuth();
+      if (event === 'TOKEN_REFRESHED') {
+        console.log('🔐 Token refreshed successfully');
+        setUser(session?.user ?? null);
+        return;
+      }
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log(`🔐 Auth event: ${event}`, session?.user?.id ? `(user: ${session.user.id.slice(0, 8)}...)` : '');
-      
-      if (event === 'SIGNED_OUT') {
-        // Only wipe user state if this was an EXPLICIT sign out
-        // Token refresh failures also fire SIGNED_OUT — we should try to recover
-        if (isExplicitSignOutRef.current) {
-          console.log('🔐 Explicit sign out — clearing session');
-          isExplicitSignOutRef.current = false;
-          setUser(null);
-          setProfile(null);
-          if (notifChannelRef.current) {
-            unsubscribeNotifications(notifChannelRef.current);
-            notifChannelRef.current = null;
-            notificationsInitializedRef.current = false;
-          }
-          teardownSWRealtime().catch(() => {});
-        } else {
-          console.log('🔐 Unexpected SIGNED_OUT (likely token refresh failure) — attempting recovery...');
-          // Try to recover the session instead of wiping user state
-          const recovered = await recoverSession();
-          if (recovered?.user) {
-            console.log('🔐 Session recovered after unexpected SIGNED_OUT');
-            setUser(recovered.user);
-            // Profile should still be in state, no need to reload unless wiped
-          } else {
-            console.log('🔐 Recovery failed — user must sign in again');
-            setUser(null);
-            setProfile(null);
-            if (notifChannelRef.current) {
-              unsubscribeNotifications(notifChannelRef.current);
-              notifChannelRef.current = null;
-              notificationsInitializedRef.current = false;
-            }
-            teardownSWRealtime().catch(() => {});
-          }
+      if (event === 'USER_UPDATED') {
+        setUser(session?.user ?? null);
+        if (session?.user) {
+          loadProfile(session.user.id);
         }
         return;
       }
-      
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        // Load/reload profile on sign in, token refresh, or user update
-        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED' || event === 'INITIAL_SESSION') {
-          loadProfile(session.user.id);
+
+      if (event === 'SIGNED_OUT') {
+        if (isExplicitSignOutRef.current) {
+          // User explicitly signed out
+          console.log('🔐 Explicit sign out');
+          isExplicitSignOutRef.current = false;
+          setUser(null);
+          setProfile(null);
+          cleanupNotifications();
+        } else {
+          // Unexpected sign out (token refresh failed)
+          // Try to recover instead of immediately logging out
+          console.log('🔐 Unexpected SIGNED_OUT — attempting recovery...');
+          try {
+            const { data: { session: recovered } } = await supabase.auth.refreshSession();
+            if (recovered?.user) {
+              console.log('🔐 Recovered from unexpected sign out');
+              setUser(recovered.user);
+              // Don't need to reload profile — it should still be in state
+            } else {
+              console.log('🔐 Recovery failed — clearing session');
+              setUser(null);
+              setProfile(null);
+              cleanupNotifications();
+            }
+          } catch {
+            console.log('🔐 Recovery error — clearing session');
+            setUser(null);
+            setProfile(null);
+            cleanupNotifications();
+          }
         }
-      } else {
-        setProfile(null);
-        // Cleanup notification subscription on sign out
-        if (notifChannelRef.current) {
-          unsubscribeNotifications(notifChannelRef.current);
-          notifChannelRef.current = null;
-          notificationsInitializedRef.current = false;
-        }
-        // Tear down the SW's background Realtime connection
-        teardownSWRealtime().catch(() => {});
+        return;
       }
     });
 
@@ -378,7 +340,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signOut = async () => {
-    // Mark this as explicit so the onAuthStateChange handler knows to fully clear state
+    // Mark as explicit so onAuthStateChange knows to fully clear state
     isExplicitSignOutRef.current = true;
     const { error } = await supabase.auth.signOut();
     if (error) {
