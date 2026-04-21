@@ -11,6 +11,43 @@ import { categoryData } from '@/lib/categoryData';
 import Footer from '@/components/common/Footer';
 import CategoryExplorer from '@/components/common/CategoryExplorer';
 import { HomeBannerCarousel } from '@/components/common/HomeBannerCarousel';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+
+const faqs = [
+  {
+    question: "What is BondhuApp & how does it work?",
+    answer: "BondhuApp is a task-sharing platform connecting people who need help with 'Bondhus' who can assist. A user posts a task, a Bondhu accepts it, and gets paid plus rewards upon completion."
+  },
+  {
+    question: "Who can join and what tasks are allowed?",
+    answer: "Anyone can join! You can post or accept genuine tasks like assignment help, errands, or notes sharing. Fake, harmful, or time-pass tasks are strictly prohibited."
+  },
+  {
+    question: "How do I earn money as a Bondhu?",
+    answer: "By accepting and successfully completing tasks. Earnings are credited directly after verification. You work with full flexibility—accept tasks anytime that suits your schedule."
+  },
+  {
+    question: "What are Bondhu Coins and the Referral System?",
+    answer: "Bondhu Coins are digital rewards (1 coin per task). You also earn 5 coins for every friend you refer who registers and posts their first task."
+  },
+  {
+    question: "How can I withdraw my earnings?",
+    answer: "Add your UPI ID in the wallet section and request a withdrawal. Your amount is securely credited within 24–48 hours (a 15% platform fee applies)."
+  },
+  {
+    question: "Is my personal information and payment safe?",
+    answer: "Absolutely. BondhuApp uses secure systems to protect your data. If anyone misbehaves, strict actions including permanent bans are taken to keep the community safe."
+  },
+  {
+    question: "What if a task isn't done properly?",
+    answer: "You can report issues and provide a rating/feedback. Our support team reviews all cases to ensure a safe experience. Contact us anytime at support@bondhuapp.com."
+  }
+];
 
 export default function LandingPage() {
   const navigate = useNavigate();
@@ -327,6 +364,31 @@ export default function LandingPage() {
               </div>
             </div>
           </Card>
+        </div>
+
+        {/* FAQ Section */}
+        <div className="max-w-4xl mx-auto mb-16 mt-16 px-4">
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-800 mb-8 tracking-tight">
+            Frequently Asked Questions
+          </h2>
+          <div className="space-y-4">
+            <Accordion type="single" collapsible className="w-full space-y-4">
+              {faqs.map((faq, index) => (
+                <AccordionItem 
+                  key={index} 
+                  value={`item-${index}`}
+                  className="bg-white border border-slate-100 shadow-sm rounded-lg overflow-hidden px-6 transition-all hover:border-slate-200"
+                >
+                  <AccordionTrigger className="text-left font-semibold text-slate-800 py-5 hover:no-underline text-base sm:text-lg">
+                    {faq.question}
+                  </AccordionTrigger>
+                  <AccordionContent className="text-slate-600 pb-5 leading-relaxed text-sm sm:text-base">
+                    {faq.answer}
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
+          </div>
         </div>
 
         <div className="text-center">
