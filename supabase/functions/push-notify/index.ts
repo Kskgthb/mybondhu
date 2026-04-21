@@ -74,15 +74,15 @@ serve(async (req) => {
       if (record.status === "accepted") {
         pushTitle = "🎉 Task Accepted!";
         pushBody = `A Bondhu has accepted your task: ${record.title}`;
-        pushTag = `task-accepted-${record.id}-${Date.now()}`;
+        pushTag = `task-lifecycle-${record.id}`;
       } else if (record.status === "in_progress") {
         pushTitle = "⚡ Bondhu Started Task!";
         pushBody = `Bondhu started working on your task: ${record.title}`;
-        pushTag = `task-started-${record.id}-${Date.now()}`;
+        pushTag = `task-lifecycle-${record.id}`;
       } else if (record.status === "completed") {
         pushTitle = "✅ Task Completed!";
         pushBody = `Payment confirmed and task completed: ${record.title}`;
-        pushTag = `task-completed-${record.id}-${Date.now()}`;
+        pushTag = `task-lifecycle-${record.id}`;
       } else {
         return new Response("Status ignored", { headers: corsHeaders });
       }

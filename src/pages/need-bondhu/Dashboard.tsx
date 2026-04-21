@@ -20,7 +20,6 @@ import RoleSwitchButton from '@/components/common/RoleSwitchButton';
 import type { Task, TaskWithFullInfo } from '@/types/types';
 import { toast } from 'sonner';
 import { initializeNotifications } from '@/lib/notifications';
-import { showPushNotification } from '@/services/notificationService';
 import { Card, CardContent } from '@/components/ui/card';
 import { getClearedTasks, clearTask } from '@/lib/clearStorage';
 
@@ -129,7 +128,9 @@ export default function NeedBondhuDashboard() {
       const clearedTasks = getClearedTasks();
       setTasks(data.filter(t => !clearedTasks.includes(t.id)));
       
-      // Check for status changes and show notifications
+      // Check for status changes and show in-app notifications
+      // NOTE: Browser push notifications are handled server-side by the edge function.
+      // Do NOT call showPushNotification() here — it creates duplicates and triggers Chrome spam detection.
       if (previousTasks.length > 0) {
         data.forEach(newTask => {
           const oldTask = previousTasks.find(t => t.id === newTask.id);
@@ -141,18 +142,15 @@ export default function NeedBondhuDashboard() {
             setNotificationMessage(`A Bondhu has accepted your task: ${newTask.title}`);
             setNotificationTaskId(newTask.id);
             setShowNotification(true);
-            // Also fire a SW push notification (works in background)
-            showPushNotification('task_accepted', { taskId: newTask.id, taskTitle: newTask.title });
           }
           
-          // Bondhu arrived (task moved to in_progress)
+          // Bondhu started task (task moved to in_progress)
           if (oldTask && oldTask.status === 'accepted' && newTask.status === 'in_progress') {
             setNotificationType('bondhu_arrived');
             setNotificationTitle('⚡ Bondhu Started Task!');
             setNotificationMessage(`Bondhu started working on your task: ${newTask.title}`);
             setNotificationTaskId(newTask.id);
             setShowNotification(true);
-            showPushNotification('task_started', { taskId: newTask.id, taskTitle: newTask.title });
           }
           
           // Task completed
@@ -162,7 +160,6 @@ export default function NeedBondhuDashboard() {
             setNotificationMessage(`Payment confirmed and task completed: ${newTask.title}`);
             setNotificationTaskId(newTask.id);
             setShowNotification(true);
-            showPushNotification('task_completed', { taskId: newTask.id, taskTitle: newTask.title });
           }
         });
       }
