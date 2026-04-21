@@ -3,6 +3,11 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import webpush from "npm:web-push@3.6.7";
 
 // CORS headers
+// App URL for absolute icon paths (push notifications need absolute URLs)
+const APP_URL = Deno.env.get("APP_URL") || "https://bondhuapp-sumit-kumars-projects-e108fb81.vercel.app";
+const ICON_URL = `${APP_URL}/logo.png`;
+const BADGE_URL = `${APP_URL}/logo.png`;
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -53,7 +58,7 @@ serve(async (req) => {
       pushTitle = record.title || "BondhuApp";
       pushBody = record.message || "";
       pushUrl = record.task_id ? `/task/${record.task_id}` : "/";
-      pushTag = `${record.type}-${record.task_id || record.id}`;
+      pushTag = `${record.type}-${record.task_id || record.id}-${Date.now()}`;
     }
     
     // ── TASK STATUS UPDATES (POSTER ALERTS) ──────────────────────────
@@ -68,16 +73,16 @@ serve(async (req) => {
 
       if (record.status === "accepted") {
         pushTitle = "🎉 Task Accepted!";
-        pushBody = `A Bondhu has accepted "${record.title}"`;
-        pushTag = `task-accepted-${record.id}`;
+        pushBody = `A Bondhu has accepted your task: ${record.title}`;
+        pushTag = `task-accepted-${record.id}-${Date.now()}`;
       } else if (record.status === "in_progress") {
-        pushTitle = "⚡ Task Started!";
-        pushBody = `Bondhu is working on "${record.title}"`;
-        pushTag = `task-started-${record.id}`;
+        pushTitle = "⚡ Bondhu Started Task!";
+        pushBody = `Bondhu started working on your task: ${record.title}`;
+        pushTag = `task-started-${record.id}-${Date.now()}`;
       } else if (record.status === "completed") {
-        pushTitle = "✅ Task Done!";
-        pushBody = `"${record.title}" is completed. Please verify.`;
-        pushTag = `task-completed-${record.id}`;
+        pushTitle = "✅ Task Completed!";
+        pushBody = `Payment confirmed and task completed: ${record.title}`;
+        pushTag = `task-completed-${record.id}-${Date.now()}`;
       } else {
         return new Response("Status ignored", { headers: corsHeaders });
       }
@@ -116,7 +121,7 @@ serve(async (req) => {
       targetUsersDetails = nearbyUsers;
       targetUserIds = nearbyUsers.map((u: any) => u.user_id);
       pushUrl = `/task/${record.id}`;
-      pushTag = `new-task-nearby`;
+      pushTag = `new-task-nearby-${record.id}-${Date.now()}`;
     }
     
     // ── UNHANDLED TABLE ──────────────────────────────────────────
@@ -162,14 +167,14 @@ serve(async (req) => {
             const distStr = userTargetData?.distance_km ? `${userTargetData.distance_km.toFixed(1)}km` : 'nearby';
 
             if (variant === 'formal') {
-              finalTitle = `New Task Available (${distStr})`;
-              finalBody = `Category: ${record.category}. Reward: ₹${record.amount}. Tap to view.`;
+              finalTitle = `📢 New Task Posted!`;
+              finalBody = `"${record.title}" (${record.category}) — ₹${record.amount}, ${distStr} away. Tap to accept!`;
             } else if (variant === 'emoji') {
-              finalTitle = `🎯 ${record.category} Task Near You!`;
-              finalBody = `Hey ${userName}, earn ₹${record.amount} just ${distStr} away! 🚀`;
+              finalTitle = `🎯 New Task Near You!`;
+              finalBody = `Hey ${userName}, "${record.title}" — earn ₹${record.amount} just ${distStr} away! 🚀`;
             } else if (variant === 'urgent') {
-              finalTitle = `🔥 High Match Alert: ₹${record.amount}`;
-              finalBody = `${userName}, a new ${record.category} task was just posted ${distStr} away. Grab it fast! ⚡`;
+              finalTitle = `🔥 Task Alert: ${record.title}`;
+              finalBody = `${userName}, a new ${record.category} task (₹${record.amount}) was just posted ${distStr} away. Grab it! ⚡`;
             }
           }
 
@@ -180,7 +185,9 @@ serve(async (req) => {
             tag: pushTag,
             timestamp: Date.now(),
             renotify: true, 
-            icon: "/logo.png",
+            requireInteraction: false,
+            icon: ICON_URL,
+            badge: BADGE_URL,
             // Pass metadata for SW click tracking
             data: {
               url: pushUrl,

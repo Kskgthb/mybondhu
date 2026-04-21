@@ -4,7 +4,9 @@
 // ============================================================
 
 const APP_URL = self.location.origin;
-const SW_VERSION = '3.0.1';
+const SW_VERSION = '3.1.0';
+const ICON_URL = `${APP_URL}/logo.png`;
+const BADGE_URL = `${APP_URL}/logo.png`;
 
 // Global state for location (lost when SW terminates, but useful for active sessions)
 let lastKnownLocation = null;
@@ -19,16 +21,23 @@ self.addEventListener('push', (event) => {
     console.log('[SW] 🔔 Push payload parsed:', data);
     
     const title = data.title || 'BondhuApp';
+    
+    // Resolve icon URL - if relative, make absolute
+    let iconUrl = data.icon || ICON_URL;
+    if (iconUrl.startsWith('/')) {
+      iconUrl = `${APP_URL}${iconUrl}`;
+    }
+    
     const options = {
       body: data.body || data.message || '',
-      icon: data.icon || '/logo.png',
-      badge: '/logo.png',
-      tag: data.tag || 'bondhu-push',
-      data: { url: data.url || data.click_action || APP_URL },
+      icon: iconUrl,
+      badge: BADGE_URL,
+      tag: data.tag || `bondhu-push-${Date.now()}`,
+      data: { url: data.url || data.click_action || APP_URL, ...data.data },
       vibrate: [200, 100, 200],
       timestamp: data.timestamp || Date.now(),
       renotify: data.renotify !== undefined ? data.renotify : true,
-      requireInteraction: data.requireInteraction !== undefined ? data.requireInteraction : false, // Changed to false by default to avoid spam flagging
+      requireInteraction: false,
       actions: [
         { action: 'open', title: 'Open BondhuApp' },
         { action: 'close', title: 'Dismiss' },
@@ -46,10 +55,12 @@ self.addEventListener('push', (event) => {
     event.waitUntil(
       self.registration.showNotification('BondhuApp', {
         body: event.data.text() || 'You have a new notification',
-        icon: '/logo.png',
+        icon: ICON_URL,
+        badge: BADGE_URL,
         data: { url: APP_URL },
         renotify: true,
-        tag: 'bondhu-fallback'
+        requireInteraction: false,
+        tag: `bondhu-fallback-${Date.now()}`
       })
     );
   }
@@ -99,16 +110,21 @@ self.addEventListener('message', (event) => {
   // We can still allow the main thread to trigger local notifications if needed
   if (type === 'SHOW_NOTIFICATION') {
     const { title, body, icon, badge, tag, url, vibrate } = payload;
+    // Resolve icon URL - if relative, make absolute
+    let resolvedIcon = icon || ICON_URL;
+    if (resolvedIcon.startsWith('/')) {
+      resolvedIcon = `${APP_URL}${resolvedIcon}`;
+    }
     self.registration.showNotification(title || 'BondhuApp', {
       body: body || '',
-      icon: icon || '/logo.png',
-      badge: badge || '/logo.png',
-      tag: tag || 'bondhu-notification',
+      icon: resolvedIcon,
+      badge: BADGE_URL,
+      tag: tag || `bondhu-notification-${Date.now()}`,
       data: { url: url || APP_URL },
       vibrate: vibrate || [200, 100, 200],
-      requireInteraction: true,
+      requireInteraction: false,
       actions: [
-        { action: 'open', title: 'View' },
+        { action: 'open', title: 'Open BondhuApp' },
         { action: 'close', title: 'Dismiss' },
       ],
     });

@@ -44,14 +44,14 @@ const NOTIFICATION_CONFIGS: Record<NotificationType, NotificationConfig> = {
     tag: 'bondhu-arrived',
   },
   task_started: {
-    title: '⚡ Task Started!',
-    body: 'Your Bondhu has started working on your task.',
+    title: '⚡ Bondhu Started Task!',
+    body: 'Bondhu started working on your task.',
     icon: '/logo.png',
     tag: 'task-started',
   },
   task_completed: {
     title: '✅ Task Completed!',
-    body: 'Your task has been successfully completed!',
+    body: 'Payment confirmed and task completed!',
     icon: '/logo.png',
     tag: 'task-completed',
   },
@@ -62,7 +62,7 @@ const NOTIFICATION_CONFIGS: Record<NotificationType, NotificationConfig> = {
     tag: 'payment-received',
   },
   new_task_nearby: {
-    title: '📢 New Task Near You!',
+    title: '📢 New Task Posted!',
     body: 'A new task is available in your area. Be the first to accept!',
     icon: '/logo.png',
     tag: 'new-task',
@@ -290,11 +290,11 @@ export async function showPushNotification(
     try {
       await swRegistration.showNotification(title, {
         body,
-        icon: config.icon,
-        badge: '/logo.png',
-        tag: config.tag,
+        icon: `${window.location.origin}${config.icon}`,
+        badge: `${window.location.origin}/logo.png`,
+        tag: `${config.tag}-${Date.now()}`,
         data: { url },
-        requireInteraction: type !== 'message_received',
+        requireInteraction: false,
         actions: [
           { action: 'open', title: 'Open BondhuApp' },
           { action: 'close', title: 'Dismiss' },
@@ -310,9 +310,9 @@ export async function showPushNotification(
   if ('Notification' in window && Notification.permission === 'granted') {
     new Notification(title, {
       body,
-      icon: config.icon,
-      badge: '/logo.png',
-      tag: config.tag,
+      icon: `${window.location.origin}${config.icon}`,
+      badge: `${window.location.origin}/logo.png`,
+      tag: `${config.tag}-${Date.now()}`,
     });
   }
 }

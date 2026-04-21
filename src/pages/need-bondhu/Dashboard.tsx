@@ -138,7 +138,7 @@ export default function NeedBondhuDashboard() {
           if (oldTask && oldTask.status === 'pending' && newTask.status === 'accepted') {
             setNotificationType('task_accepted');
             setNotificationTitle('🎉 Task Accepted!');
-            setNotificationMessage('A Bondhu has accepted your task and is on the way!');
+            setNotificationMessage(`A Bondhu has accepted your task: ${newTask.title}`);
             setNotificationTaskId(newTask.id);
             setShowNotification(true);
             // Also fire a SW push notification (works in background)
@@ -148,18 +148,18 @@ export default function NeedBondhuDashboard() {
           // Bondhu arrived (task moved to in_progress)
           if (oldTask && oldTask.status === 'accepted' && newTask.status === 'in_progress') {
             setNotificationType('bondhu_arrived');
-            setNotificationTitle('📍 Bondhu Arrived!');
-            setNotificationMessage('Your Bondhu has reached the location and started working!');
+            setNotificationTitle('⚡ Bondhu Started Task!');
+            setNotificationMessage(`Bondhu started working on your task: ${newTask.title}`);
             setNotificationTaskId(newTask.id);
             setShowNotification(true);
-            showPushNotification('bondhu_arrived', { taskId: newTask.id, taskTitle: newTask.title });
+            showPushNotification('task_started', { taskId: newTask.id, taskTitle: newTask.title });
           }
           
           // Task completed
           if (oldTask && oldTask.status === 'in_progress' && newTask.status === 'completed') {
             setNotificationType('task_completed');
             setNotificationTitle('✅ Task Completed!');
-            setNotificationMessage('The task has been successfully completed! Please rate your Bondhu.');
+            setNotificationMessage(`Payment confirmed and task completed: ${newTask.title}`);
             setNotificationTaskId(newTask.id);
             setShowNotification(true);
             showPushNotification('task_completed', { taskId: newTask.id, taskTitle: newTask.title });

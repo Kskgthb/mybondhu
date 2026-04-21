@@ -47,12 +47,13 @@ export const showNotification = (type: NotificationType, customMessage?: string)
   
   // Show browser notification if permission granted
   if ('Notification' in window && Notification.permission === 'granted') {
+    const origin = window.location.origin;
     const options: NotificationOptions = {
       body: customMessage || config.message,
-      icon: '/logo.png',
-      badge: '/logo.png',
-      tag: type,
-      requireInteraction: true
+      icon: `${origin}/logo.png`,
+      badge: `${origin}/logo.png`,
+      tag: `${type}-${Date.now()}`,
+      requireInteraction: false
     };
     
     // Add vibrate if supported
