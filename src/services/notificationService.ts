@@ -105,9 +105,14 @@ export async function registerServiceWorker(): Promise<ServiceWorkerRegistration
   try {
     const registration = await navigator.serviceWorker.register('/sw.js', {
       scope: '/',
+      updateViaCache: 'none', // Always fetch fresh SW from server
     });
     swRegistration = registration;
     console.log('✅ Service Worker registered successfully');
+    
+    // Force check for updates immediately
+    registration.update().catch(() => {});
+    
     await navigator.serviceWorker.ready;
     return registration;
   } catch (error) {
