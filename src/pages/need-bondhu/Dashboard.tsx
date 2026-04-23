@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRole } from '@/contexts/RoleContext';
@@ -14,6 +14,7 @@ import RatingDialog from '@/components/task/RatingDialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import TaskCardSkeleton from '@/components/common/TaskCardSkeleton';
 import CompactBanner from '@/components/common/CompactBanner';
+import AnimatedPostTitle from '@/components/common/AnimatedPostTitle';
 
 import NotificationDialog from '@/components/common/NotificationDialog';
 import RoleSwitchButton from '@/components/common/RoleSwitchButton';
@@ -23,72 +24,6 @@ import { initializeNotifications } from '@/lib/notifications';
 import { Card, CardContent } from '@/components/ui/card';
 import { getClearedTasks, clearTask } from '@/lib/clearStorage';
 
-/* ── Animated Typewriter Text with curved underline on "First" ── */
-function AnimatedPostTitle() {
-  const words = ['Post', 'Your', 'First', 'Task'];
-  const [visibleCount, setVisibleCount] = useState(0);
-  const [showUnderline, setShowUnderline] = useState(false);
-
-  useEffect(() => {
-    const timers: ReturnType<typeof setTimeout>[] = [];
-    words.forEach((_, i) => {
-      timers.push(setTimeout(() => setVisibleCount(i + 1), 400 * (i + 1)));
-    });
-    // Show underline after "First" appears (3rd word, index 2)
-    timers.push(setTimeout(() => setShowUnderline(true), 400 * 3 + 250));
-    return () => timers.forEach(clearTimeout);
-  }, []);
-
-  return (
-    <span className="animated-post-title" style={{ display: 'inline-flex', flexWrap: 'wrap', gap: '0.35em', justifyContent: 'center' }}>
-      {words.map((word, i) => {
-        const isFirst = word === 'First';
-        return (
-          <span
-            key={i}
-            style={{
-              display: 'inline-block',
-              position: 'relative',
-              opacity: i < visibleCount ? 1 : 0,
-              transform: i < visibleCount ? 'translateY(0)' : 'translateY(12px)',
-              transition: 'opacity 0.35s ease, transform 0.35s ease',
-            }}
-          >
-            {word}
-            {isFirst && (
-              <svg
-                viewBox="0 0 70 12"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-                style={{
-                  position: 'absolute',
-                  bottom: '-6px',
-                  left: '-4%',
-                  width: '108%',
-                  height: '12px',
-                  overflow: 'visible',
-                }}
-              >
-                <path
-                  d="M2 9 C 15 2, 55 2, 68 9"
-                  stroke="#641acc"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  fill="none"
-                  style={{
-                    strokeDasharray: 80,
-                    strokeDashoffset: showUnderline ? 0 : 80,
-                    transition: 'stroke-dashoffset 0.5s ease',
-                  }}
-                />
-              </svg>
-            )}
-          </span>
-        );
-      })}
-    </span>
-  );
-}
 
 export default function NeedBondhuDashboard() {
   const { user, profile } = useAuth();
@@ -302,7 +237,9 @@ export default function NeedBondhuDashboard() {
         <div className="mb-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold mb-2">My Tasks</h1>
+              <h1 className="text-3xl font-bold mb-2">
+                <AnimatedPostTitle />
+              </h1>
               <p className="text-muted-foreground">
                 Manage your posted tasks and track their progress
               </p>

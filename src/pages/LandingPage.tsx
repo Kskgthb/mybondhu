@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { UserCheck, HandHeart, Star, MapPin, Clock, Shield, Youtube, Instagram, Linkedin, Mail, MessageCircle, Search, ChevronRight } from 'lucide-react';
 import { useEffect } from 'react';
+import AnimatedPostTitle from '@/components/common/AnimatedPostTitle';
 import CategoryMapExplorer from '@/components/common/CategoryMapExplorer';
 import Logo from '@/components/common/Logo';
 import CategoryCard from '@/components/common/CategoryCard';
@@ -76,7 +77,7 @@ export default function LandingPage() {
         {/* Hero Search Section */}
         <div className="text-center mb-16 mt-8 md:mt-16 animate-fade-in relative z-20">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold mb-10 tracking-tight" style={{ color: '#6411ac' }}>
-            <span style={{ color: '#6411ac' }}>Post</span> Your <span style={{ color: '#2fbe6b' }}>First</span> Task!!
+            <AnimatedPostTitle postColor="#6411ac" firstColor="#2fbe6b" underlineColor="#641acc" suffix="!!" />
           </h1>
           
           <div className="max-w-4xl mx-auto px-4 relative">
