@@ -27,13 +27,46 @@ export default function AnimatedPostTitle({
   const [showUnderline, setShowUnderline] = useState(false);
 
   useEffect(() => {
-    const timers: ReturnType<typeof setTimeout>[] = [];
-    words.forEach((_, i) => {
-      timers.push(setTimeout(() => setVisibleCount(i + 1), 400 * (i + 1)));
-    });
-    // Draw underline after "First" appears (3rd word, index 2)
-    timers.push(setTimeout(() => setShowUnderline(true), 400 * 3 + 250));
-    return () => timers.forEach(clearTimeout);
+    let timers: ReturnType<typeof setTimeout>[] = [];
+    let cancelled = false;
+
+    const runCycle = () => {
+      if (cancelled) return;
+      timers = [];
+
+      // Phase 1: Show words one by one (400ms apart)
+      words.forEach((_, i) => {
+        timers.push(setTimeout(() => {
+          if (!cancelled) setVisibleCount(i + 1);
+        }, 400 * (i + 1)));
+      });
+
+      // Phase 2: Draw underline after "First" appears
+      timers.push(setTimeout(() => {
+        if (!cancelled) setShowUnderline(true);
+      }, 400 * 3 + 250));
+
+      // Phase 3: Hold visible for 2s, then fade out and restart
+      const totalShowTime = 400 * (words.length + 1) + 2000;
+      timers.push(setTimeout(() => {
+        if (!cancelled) {
+          setVisibleCount(0);
+          setShowUnderline(false);
+        }
+      }, totalShowTime));
+
+      // Phase 4: After fade-out transition (400ms), restart the cycle
+      timers.push(setTimeout(() => {
+        if (!cancelled) runCycle();
+      }, totalShowTime + 500));
+    };
+
+    runCycle();
+
+    return () => {
+      cancelled = true;
+      timers.forEach(clearTimeout);
+    };
   }, []);
 
   const getWordColor = (word: string) => {
