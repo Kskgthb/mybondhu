@@ -78,14 +78,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
-    // Use onAuthStateChange as the SINGLE source of truth for auth state.
-    // In Supabase JS v2, it fires INITIAL_SESSION immediately with the stored session,
-    // so there's no need to also call getSession() (which can cause race conditions).
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log(`🔐 Auth event: ${event}`, session?.user?.id ? `(user: ${session.user.id.slice(0, 8)}...)` : '(no user)');
-      
-      if (event === 'INITIAL_SESSION') {
-        // First event on app load — restore session from localStorage
+    // 1. Explicitly check session on mount
+    const initializeAuth = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
         if (session?.user) {
           console.log('🔐 Session restored from storage');
           setUser(session.user);
@@ -109,7 +106,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setUser(null);
           }
         }
+      } catch (err) {
+        console.error('🔐 Initial session check failed:', err);
+        setUser(null);
+      } finally {
         setLoading(false);
+      }
+    };
+
+    initializeAuth();
+
+    // 2. Listen for subsequent changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log(`🔐 Auth event: ${event}`, session?.user?.id ? `(user: ${session.user.id.slice(0, 8)}...)` : '(no user)');
+      
+      if (event === 'INITIAL_SESSION') {
+        // Handled by explicit getSession above
         return;
       }
 
@@ -118,7 +130,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (session?.user) {
           loadProfile(session.user.id);
         }
-        setLoading(false);
         return;
       }
 
