@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRole } from '@/contexts/RoleContext';
@@ -22,6 +22,73 @@ import { toast } from 'sonner';
 import { initializeNotifications } from '@/lib/notifications';
 import { Card, CardContent } from '@/components/ui/card';
 import { getClearedTasks, clearTask } from '@/lib/clearStorage';
+
+/* ── Animated Typewriter Text with curved underline on "First" ── */
+function AnimatedPostTitle() {
+  const words = ['Post', 'Your', 'First', 'Task'];
+  const [visibleCount, setVisibleCount] = useState(0);
+  const [showUnderline, setShowUnderline] = useState(false);
+
+  useEffect(() => {
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    words.forEach((_, i) => {
+      timers.push(setTimeout(() => setVisibleCount(i + 1), 400 * (i + 1)));
+    });
+    // Show underline after "First" appears (3rd word, index 2)
+    timers.push(setTimeout(() => setShowUnderline(true), 400 * 3 + 250));
+    return () => timers.forEach(clearTimeout);
+  }, []);
+
+  return (
+    <span className="animated-post-title" style={{ display: 'inline-flex', flexWrap: 'wrap', gap: '0.35em', justifyContent: 'center' }}>
+      {words.map((word, i) => {
+        const isFirst = word === 'First';
+        return (
+          <span
+            key={i}
+            style={{
+              display: 'inline-block',
+              position: 'relative',
+              opacity: i < visibleCount ? 1 : 0,
+              transform: i < visibleCount ? 'translateY(0)' : 'translateY(12px)',
+              transition: 'opacity 0.35s ease, transform 0.35s ease',
+            }}
+          >
+            {word}
+            {isFirst && (
+              <svg
+                viewBox="0 0 70 12"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                style={{
+                  position: 'absolute',
+                  bottom: '-6px',
+                  left: '-4%',
+                  width: '108%',
+                  height: '12px',
+                  overflow: 'visible',
+                }}
+              >
+                <path
+                  d="M2 9 C 15 2, 55 2, 68 9"
+                  stroke="#641acc"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  fill="none"
+                  style={{
+                    strokeDasharray: 80,
+                    strokeDashoffset: showUnderline ? 0 : 80,
+                    transition: 'stroke-dashoffset 0.5s ease',
+                  }}
+                />
+              </svg>
+            )}
+          </span>
+        );
+      })}
+    </span>
+  );
+}
 
 export default function NeedBondhuDashboard() {
   const { user, profile } = useAuth();
@@ -298,10 +365,13 @@ export default function NeedBondhuDashboard() {
             </div>
           ) : tasks.length === 0 ? (
             <div className="text-center py-16">
-              <p className="text-muted-foreground mb-4">You haven't posted any tasks yet</p>
-              <Button onClick={() => setShowPostDialog(true)}>
+              <h2 className="text-2xl font-bold mb-4 text-slate-800 dark:text-slate-100">
+                <AnimatedPostTitle />
+              </h2>
+              <p className="text-muted-foreground mb-6">You haven't posted any tasks yet</p>
+              <Button onClick={() => setShowPostDialog(true)} size="lg">
                 <Plus className="mr-2 h-4 w-4" />
-                Post Your First Task
+                Post Now
               </Button>
             </div>
           ) : (
