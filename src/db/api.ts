@@ -798,6 +798,43 @@ export const messagesApi = {
       .single();
 
     if (error) throw error;
+    
+    // Asynchronously send notification to the other party
+    (async () => {
+      try {
+        const { data: taskData } = await supabase
+          .from('tasks')
+          .select('poster_id, title')
+          .eq('id', taskId)
+          .single();
+          
+        if (!taskData) return;
+        
+        const { data: assignmentData } = await supabase
+          .from('task_assignments')
+          .select('bondhu_id')
+          .eq('task_id', taskId)
+          .maybeSingle();
+          
+        if (assignmentData) {
+          const otherUserId = user.id === taskData.poster_id ? assignmentData.bondhu_id : taskData.poster_id;
+          
+          if (otherUserId) {
+            await supabase.from('notifications').insert({
+              user_id: otherUserId,
+              type: 'chat_message',
+              title: 'New Message',
+              message: `New message on task "${taskData.title}": ${message.length > 30 ? message.substring(0, 30) + '...' : message}`,
+              task_id: taskId,
+              read: false
+            });
+          }
+        }
+      } catch (err) {
+        console.error('Failed to send chat notification:', err);
+      }
+    })();
+
     return data;
   },
 
