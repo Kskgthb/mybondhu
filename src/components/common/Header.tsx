@@ -147,7 +147,6 @@ export default function Header() {
                 </div>
               )}
 
-              {/* Desktop install button */}
               <InstallAppButton variant="ghost" className="hidden md:flex text-primary hover:bg-primary/10 hover:text-primary" />
               <RoleSwitchButton variant="ghost" size="icon" showLabel={false} />
               
@@ -242,6 +241,17 @@ export default function Header() {
           ) : (
             <div className="flex items-center gap-1 sm:gap-2">
               <InstallAppButton variant="ghost" className="text-primary hover:bg-primary/10 hover:text-primary px-2" />
+              
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={toggleTheme}
+                className="text-2xl hover:scale-110 transition-transform flex"
+                title={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
+              >
+                {theme === 'light' ? '🐓' : '🦉'}
+              </Button>
+
               <Button variant="ghost" className="px-2 sm:px-4" onClick={() => navigate('/login')}>
                 Sign In
               </Button>
