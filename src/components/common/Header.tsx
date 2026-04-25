@@ -21,6 +21,9 @@ import { Label } from '@/components/ui/label';
 import { Power, MapPin } from 'lucide-react';
 import Logo from '@/components/common/Logo';
 import RoleSwitchButton from '@/components/common/RoleSwitchButton';
+import InstallAppButton from '@/components/common/InstallAppButton';
+import { usePWAInstall } from '@/hooks/usePWAInstall';
+import { Download } from 'lucide-react';
 
 export default function Header() {
   const { user, profile, signOut, loading, refreshProfile } = useAuth();
@@ -29,6 +32,7 @@ export default function Header() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [isAvailable, setIsAvailable] = useState(false);
   const [locationEnabled, setLocationEnabled] = useState(false);
+  const { isInstallable, promptInstall } = usePWAInstall();
 
   const loadUnreadCount = async () => {
     if (!user) return;
@@ -143,6 +147,8 @@ export default function Header() {
                 </div>
               )}
 
+              {/* Desktop install button */}
+              <InstallAppButton variant="outline" className="hidden md:flex border-primary text-primary hover:bg-primary/10" />
               <RoleSwitchButton variant="ghost" size="icon" showLabel={false} />
               
               <Button
@@ -193,6 +199,17 @@ export default function Header() {
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
+                  
+                  {isInstallable && (
+                    <>
+                      <DropdownMenuItem onClick={promptInstall} className="text-primary focus:text-primary">
+                        <Download className="mr-2 h-4 w-4" />
+                        Install App
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                    </>
+                  )}
+
                   <DropdownMenuItem onClick={() => navigate(getDashboardLink())}>
                     <LayoutDashboard className="mr-2 h-4 w-4" />
                     Dashboard
@@ -223,8 +240,9 @@ export default function Header() {
               </DropdownMenu>
             </>
           ) : (
-            <div className="flex items-center gap-2">
-              <Button variant="ghost" onClick={() => navigate('/login')}>
+            <div className="flex items-center gap-1 sm:gap-2">
+              <InstallAppButton variant="outline" className="border-primary text-primary hover:bg-primary/10" />
+              <Button variant="ghost" className="px-2 sm:px-4" onClick={() => navigate('/login')}>
                 Sign In
               </Button>
               <Button onClick={() => navigate('/signup')}>

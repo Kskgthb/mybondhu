@@ -6,6 +6,7 @@ import Logo from '@/components/common/Logo';
 import { Button } from '@/components/ui/button';
 import { useEffect, useState } from 'react';
 import { notificationsApi } from '@/db/api';
+import InstallAppButton from '@/components/common/InstallAppButton';
 
 export default function Sidebar() {
   const { user, profile } = useAuth();
@@ -92,6 +93,9 @@ export default function Sidebar() {
           <PlusCircle className="h-5 w-5" />
           Post Task
         </Button>
+        <div className="mt-4">
+          <InstallAppButton className="w-full" variant="outline" size="lg" />
+        </div>
       </div>
     </div>
   );
