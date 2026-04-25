@@ -4,7 +4,7 @@
   "description": "Task Done, Trust Delivered. Connect with nearby helpers for instant assistance.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0f172a",
+  "background_color": "#f1f5f9",
   "theme_color": "#3A8B24",
   "icons": [
     {
