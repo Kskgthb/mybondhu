@@ -1,5 +1,6 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTheme } from '@/contexts/ThemeContext';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -26,7 +27,9 @@ import { Download } from 'lucide-react';
 
 export default function Header() {
   const { user, profile, signOut, loading, refreshProfile } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
+  const location = useLocation();
   const [unreadCount, setUnreadCount] = useState(0);
   const [isAvailable, setIsAvailable] = useState(false);
   const [locationEnabled, setLocationEnabled] = useState(false);
@@ -148,6 +151,17 @@ export default function Header() {
               <InstallAppButton variant="ghost" className="hidden md:flex text-primary hover:bg-primary/10 hover:text-primary" />
               <RoleSwitchButton variant="ghost" size="icon" showLabel={false} />
               
+              {location.pathname !== '/' && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={toggleTheme}
+                  className="text-2xl hover:scale-110 transition-transform flex"
+                  title={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
+                >
+                  {theme === 'light' ? '🐓' : '🦉'}
+                </Button>
+              )}
 
               <Button
                 variant="ghost"
@@ -231,6 +245,17 @@ export default function Header() {
             <div className="flex items-center gap-1 sm:gap-2">
               <InstallAppButton variant="ghost" className="text-primary hover:bg-primary/10 hover:text-primary px-2" />
               
+              {location.pathname !== '/' && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={toggleTheme}
+                  className="text-2xl hover:scale-110 transition-transform flex"
+                  title={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
+                >
+                  {theme === 'light' ? '🐓' : '🦉'}
+                </Button>
+              )}
 
               <Button variant="ghost" className="px-2 sm:px-4" onClick={() => navigate('/login')}>
                 Sign In
