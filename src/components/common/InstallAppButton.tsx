@@ -1,4 +1,3 @@
-import { Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { usePWAInstall } from '@/hooks/usePWAInstall';
 
@@ -8,7 +7,7 @@ interface InstallAppButtonProps {
   size?: "default" | "sm" | "lg" | "icon";
 }
 
-export default function InstallAppButton({ className, variant = 'outline', size = 'sm' }: InstallAppButtonProps) {
+export default function InstallAppButton({ className, variant = 'ghost', size = 'sm' }: InstallAppButtonProps) {
   const { isInstallable, promptInstall } = usePWAInstall();
 
   if (!isInstallable) return null;
@@ -17,12 +16,12 @@ export default function InstallAppButton({ className, variant = 'outline', size 
     <Button 
       variant={variant} 
       size={size} 
-      className={`gap-2 ${className || ''}`}
+      className={`gap-1.5 sm:gap-2 px-2 sm:px-3 ${className || ''}`}
       onClick={promptInstall}
+      title="Install App"
     >
-      <Download className="h-4 w-4" />
+      <span className="text-xl sm:text-lg leading-none">🫆</span>
       <span className="hidden sm:inline">Install App</span>
-      <span className="inline sm:hidden">Install</span>
     </Button>
   );
 }

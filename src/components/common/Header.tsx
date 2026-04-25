@@ -148,7 +148,7 @@ export default function Header() {
               )}
 
               {/* Desktop install button */}
-              <InstallAppButton variant="outline" className="hidden md:flex border-primary text-primary hover:bg-primary/10" />
+              <InstallAppButton variant="ghost" className="hidden md:flex text-primary hover:bg-primary/10 hover:text-primary" />
               <RoleSwitchButton variant="ghost" size="icon" showLabel={false} />
               
               <Button
@@ -203,7 +203,7 @@ export default function Header() {
                   {isInstallable && (
                     <>
                       <DropdownMenuItem onClick={promptInstall} className="text-primary focus:text-primary">
-                        <Download className="mr-2 h-4 w-4" />
+                        <span className="mr-2 text-lg leading-none">🫆</span>
                         Install App
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
@@ -241,7 +241,7 @@ export default function Header() {
             </>
           ) : (
             <div className="flex items-center gap-1 sm:gap-2">
-              <InstallAppButton variant="outline" className="border-primary text-primary hover:bg-primary/10" />
+              <InstallAppButton variant="ghost" className="text-primary hover:bg-primary/10 hover:text-primary px-2" />
               <Button variant="ghost" className="px-2 sm:px-4" onClick={() => navigate('/login')}>
                 Sign In
               </Button>
