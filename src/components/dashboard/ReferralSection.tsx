@@ -11,7 +11,7 @@ interface ReferralSectionProps {
 
 export default function ReferralSection({ referralCode }: ReferralSectionProps) {
   const [copied, setCopied] = useState(false);
-  const shareUrl = `${window.location.origin}/signup?ref=${referralCode || ''}`;
+  const shareUrl = `https://bondhuapp.com/signup?ref=${referralCode || ''}`;
 
   const copyToClipboard = async () => {
     try {
