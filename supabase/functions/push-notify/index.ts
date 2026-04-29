@@ -4,7 +4,7 @@ import webpush from "npm:web-push@3.6.7";
 
 // CORS headers
 // App URL for absolute icon paths (push notifications need absolute URLs)
-const APP_URL = Deno.env.get("APP_URL") || "https://bondhuapp-sumit-kumars-projects-e108fb81.vercel.app";
+const APP_URL = Deno.env.get("APP_URL") || "https://bondhuapp.com";
 const ICON_URL = `${APP_URL}/logo.png`;
 const BADGE_URL = `${APP_URL}/logo.png`;
 
