@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { Home, ClipboardList, PlusCircle, Bell, User, Settings, Shield } from 'lucide-react';
+import { Home, ClipboardList, PlusCircle, Bell, User, Settings, Shield, BarChart2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Logo from '@/components/common/Logo';
 import { Button } from '@/components/ui/button';
@@ -50,7 +50,8 @@ export default function Sidebar() {
   ];
 
   if (profile.role === 'admin') {
-    navItems.push({ icon: Shield, label: 'Admin Panel', href: '/admin/dashboard' });
+    navItems.push({ icon: Shield, label: 'Admin Panel', href: '/admin/dashboard', badge: 0 });
+    navItems.push({ icon: BarChart2, label: 'Notif. Analytics', href: '/admin/notification-analytics', badge: 0 });
   }
 
   const handlePostTask = () => {

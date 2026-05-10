@@ -4,7 +4,7 @@
 // ============================================================
 
 const APP_URL = self.location.origin;
-const SW_VERSION = '3.1.0';
+const SW_VERSION = '4.0.0';
 const ICON_URL = `${APP_URL}/logo.png`;
 const BADGE_URL = `${APP_URL}/logo.png`;
 
@@ -70,10 +70,11 @@ self.addEventListener('push', (event) => {
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
 
-  let urlToOpen = event.notification.data?.url || APP_URL;
-  const logId = event.notification.data?.log_id;
+  const data = event.notification.data || {};
+  let urlToOpen = data.url || APP_URL;
+  const logId = data.log_id;
 
-  // Append log_id for A/B testing and click tracking by the main app
+  // Append log_id for URL-based click tracking (app was closed)
   if (logId) {
     urlToOpen += (urlToOpen.includes('?') ? '&' : '?') + 'click_log_id=' + logId;
   }
@@ -85,9 +86,20 @@ self.addEventListener('notificationclick', (event) => {
     self.clients
       .matchAll({ type: 'window', includeUncontrolled: true })
       .then((clientList) => {
-        // If a tab is already open, focus it and navigate
+        // If a tab is already open: post AI feedback message, then focus+navigate
         for (const client of clientList) {
           if (client.url.startsWith(APP_URL) && 'focus' in client) {
+            // ── AI FEEDBACK LOOP: post click data back to app ──
+            client.postMessage({
+              type: 'NOTIFICATION_CLICKED',
+              payload: {
+                log_id: data.log_id,
+                task_id: data.task_id,
+                category: data.category,
+                variant: data.variant,
+                trigger_type: data.trigger_type,
+              }
+            });
             client.focus();
             if (urlToOpen !== APP_URL) {
               client.navigate(urlToOpen);
@@ -95,7 +107,7 @@ self.addEventListener('notificationclick', (event) => {
             return;
           }
         }
-        // No tab open — open a new one
+        // No tab open — open a new one (URL carries the click_log_id)
         return self.clients.openWindow(urlToOpen);
       })
   );

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'sonner';
-import { AuthProvider } from '@/contexts/AuthContext';
+import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { RoleProvider } from '@/contexts/RoleContext';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { RequireAuth } from '@/components/common/RequireAuth';
@@ -10,6 +10,7 @@ import MainLayout from '@/components/layout/MainLayout';
 import SplashScreen from '@/components/common/SplashScreen';
 import { GoogleMapsProvider } from '@/components/maps';
 import GlobalTracker from '@/components/common/GlobalTracker';
+import { useNotificationFeedback } from '@/hooks/useNotificationFeedback';
 import routes from './routes';
 
 // Public paths that don't need authentication
@@ -26,6 +27,16 @@ const PUBLIC_PATHS = [
   '/privacy-policy',
   '/404',
 ];
+
+/**
+ * AINotificationLoop — sits inside AuthProvider so it can access the user.
+ * Runs the AI click-feedback hook globally for the entire app session.
+ */
+function AINotificationLoop() {
+  const { user } = useAuth();
+  useNotificationFeedback(user?.id ?? null);
+  return null;
+}
 
 const App = () => {
   const [showSplash, setShowSplash] = useState(true);
@@ -52,6 +63,8 @@ const App = () => {
         <AuthProvider>
           <RoleProvider>
             <GoogleMapsProvider>
+              {/* 🤖 AI Notification Feedback Loop (global) */}
+              <AINotificationLoop />
               <Toaster position="top-center" richColors closeButton />
 
               {/* Splash screen — shown only once per session */}
