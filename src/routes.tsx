@@ -16,7 +16,6 @@ import NotificationsPage from './pages/NotificationsPage';
 import ProfilePage from './pages/ProfilePage';
 import SettingsPage from './pages/SettingsPage';
 import AdminDashboard from './pages/admin/Dashboard';
-import NotificationAnalytics from './pages/admin/NotificationAnalytics';
 import BondhuRegistration from './pages/registration/BondhuRegistration';
 import NotFound from './pages/NotFound';
 import TermsOfServicePage from './pages/TermsOfServicePage';
@@ -48,7 +47,6 @@ const routes: RouteConfig[] = [
   { name: 'Profile',               path: '/profile',                   element: <ProfilePage /> },
   { name: 'Settings',              path: '/settings',                  element: <SettingsPage /> },
   { name: 'Admin Dashboard',       path: '/admin/dashboard',           element: <AdminDashboard /> },
-  { name: 'Notification Analytics',path: '/admin/notification-analytics', element: <NotificationAnalytics /> },
   { name: 'Terms of Service',      path: '/terms-of-service',          element: <TermsOfServicePage /> },
   { name: 'Privacy Policy',        path: '/privacy-policy',            element: <PrivacyPolicyPage /> },
   { name: 'Not Found',             path: '/404',                       element: <NotFound /> },

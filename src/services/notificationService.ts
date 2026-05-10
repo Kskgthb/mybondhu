@@ -91,7 +91,7 @@ let swRegistration: ServiceWorkerRegistration | null = null;
 
 // The VAPID Public Key generated for Web Push
 // In production, this MUST come from your environment variables
-const PUBLIC_VAPID_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY || 'BDJbZ4pLSVyOQwoYPEPdUVMrAlZnrRSH_KLgr8ZPDn8_RO6C8IkW204w3I0a-EFsL41XnVunSi-Qefm08JFdQSM';
+const PUBLIC_VAPID_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY || 'BDXhj031Lh_H3YUN5JzpRAZVgb3tukLc8TrG2nN0uQPJ8dYzFEzS5_Cd2m4gXbykdsLSg2BOmGumBHJQzrbAyU0';
 
 /**
  * Register the Service Worker for push notifications
