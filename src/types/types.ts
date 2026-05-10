@@ -210,5 +210,9 @@ export interface Message {
   task_id: string;
   sender_id: string;
   message: string;
+  attachment_url: string | null;
+  attachment_type: 'image' | 'video' | 'file' | null;
+  file_name: string | null;
+  file_size: number | null;
   created_at: string;
 }

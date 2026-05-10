@@ -856,6 +856,100 @@ export const messagesApi = {
       .subscribe();
   },
 
+  async uploadChatAttachment(taskId: string, file: File): Promise<string> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${taskId}/${user.id}/${Date.now()}.${fileExt}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('app-83dmv202aiv5_task_proofs')
+      .upload(`chat/${fileName}`, file, {
+        cacheControl: '3600',
+        upsert: false,
+      });
+
+    if (uploadError) throw uploadError;
+
+    const { data } = supabase.storage
+      .from('app-83dmv202aiv5_task_proofs')
+      .getPublicUrl(`chat/${fileName}`);
+
+    return data.publicUrl;
+  },
+
+  async sendMediaMessage(
+    taskId: string,
+    file: File,
+    attachmentType: 'image' | 'video' | 'file',
+    caption?: string
+  ): Promise<Message> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+
+    // Upload the file first
+    const attachmentUrl = await this.uploadChatAttachment(taskId, file);
+
+    const displayMessage = caption || (attachmentType === 'image' ? '📷 Photo'
+      : attachmentType === 'video' ? '🎥 Video'
+      : `📎 ${file.name}`);
+
+    const { data, error } = await supabase
+      .from('messages')
+      .insert({
+        task_id: taskId,
+        sender_id: user.id,
+        message: displayMessage,
+        attachment_url: attachmentUrl,
+        attachment_type: attachmentType,
+        file_name: file.name,
+        file_size: file.size,
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    // Send notification to the other party
+    (async () => {
+      try {
+        const { data: taskData } = await supabase
+          .from('tasks')
+          .select('poster_id, title')
+          .eq('id', taskId)
+          .single();
+
+        if (!taskData) return;
+
+        const { data: assignmentData } = await supabase
+          .from('task_assignments')
+          .select('bondhu_id')
+          .eq('task_id', taskId)
+          .maybeSingle();
+
+        if (assignmentData) {
+          const otherUserId = user.id === taskData.poster_id ? assignmentData.bondhu_id : taskData.poster_id;
+
+          if (otherUserId) {
+            await supabase.from('notifications').insert({
+              user_id: otherUserId,
+              type: 'chat_message',
+              title: 'New Message',
+              message: `${displayMessage} on task "${taskData.title}"`,
+              task_id: taskId,
+              read: false,
+            });
+          }
+        }
+      } catch (err) {
+        console.error('Failed to send chat notification:', err);
+      }
+    })();
+
+    return data;
+  },
+
   unsubscribe(channel: any) {
     return supabase.removeChannel(channel);
   },
