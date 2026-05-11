@@ -104,6 +104,11 @@ export default function TaskCard({
             {CategoryIcon && <CategoryIcon className="h-3 w-3" />}
             {categoryLabel}
           </Badge>
+          {['academic_help', 'creative_services', 'personal_task', 'event_planning', 'trending'].includes(task.category) && (
+            <Badge className="bg-red-500 text-white animate-pulse border-none text-[10px] h-5 px-1.5 font-bold uppercase tracking-wider">
+              Live
+            </Badge>
+          )}
           <Badge className={statusColors[task.status]} variant="secondary">
             {task.status.replace('_', ' ')}
           </Badge>

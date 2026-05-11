@@ -44,6 +44,11 @@ export default function CategoryExplorer() {
                     className={`w-6 h-6 sm:w-7 sm:h-7 transition-all duration-300 ${isSelected ? 'text-green-600 drop-shadow-sm' : 'text-slate-500 group-hover:text-slate-800'}`} 
                     strokeWidth={isSelected ? 2.5 : 2}
                   />
+                  {['academic_help', 'creative_services', 'personal_task', 'event_planning', 'trending'].includes(category.value) && (
+                    <div className="absolute -top-1 -right-1 bg-red-500 text-[8px] font-black text-white px-1.5 py-0.5 rounded-full uppercase tracking-tighter animate-pulse shadow-sm border border-white z-20">
+                      Live
+                    </div>
+                  )}
                 </div>
                 
                 {/* Category Text */}

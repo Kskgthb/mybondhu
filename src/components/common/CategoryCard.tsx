@@ -43,8 +43,13 @@ export default function CategoryCard({ category, onClick, className }: CategoryC
 
       {/* Enhanced Content with Better Contrast */}
       <div className="p-4 sm:p-5 flex-1 flex flex-col justify-center bg-white min-w-0">
-        <h3 className="font-bold text-lg sm:text-xl text-foreground group-hover:text-primary transition-colors drop-shadow-sm mb-1">
+        <h3 className="font-bold text-lg sm:text-xl text-foreground group-hover:text-primary transition-colors drop-shadow-sm mb-1 flex items-center gap-2">
           {category.label}
+          {['academic_help', 'creative_services', 'personal_task', 'event_planning', 'trending'].includes(category.value) && (
+            <span className="bg-red-500 text-white text-[9px] px-1.5 py-0.5 rounded-full animate-pulse uppercase tracking-wider font-black shadow-sm">
+              Live
+            </span>
+          )}
         </h3>
         <p className="text-sm text-muted-foreground font-medium leading-relaxed">
           {category.description}

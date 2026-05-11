@@ -425,7 +425,14 @@ export default function TaskDetailPage() {
               })()}
               <div>
                 <p className="text-sm font-medium">Category</p>
-                <p className="text-sm text-muted-foreground">{getCategoryLabel(task.category)}</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-sm text-muted-foreground">{getCategoryLabel(task.category)}</p>
+                  {['academic_help', 'creative_services', 'personal_task', 'event_planning', 'trending'].includes(task.category) && (
+                    <Badge className="bg-red-500 text-white animate-pulse border-none text-[9px] h-4 px-1 font-bold uppercase tracking-wider">
+                      Live
+                    </Badge>
+                  )}
+                </div>
               </div>
             </div>
           </div>

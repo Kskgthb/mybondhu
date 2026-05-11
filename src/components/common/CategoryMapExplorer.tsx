@@ -278,6 +278,11 @@ export default function CategoryMapExplorer() {
                        <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
                           {selectedCategory.emoji} Service
                        </span>
+                       {['academic_help', 'creative_services', 'personal_task', 'event_planning', 'trending'].includes(selectedCategory.value) && (
+                         <span className="bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-full animate-pulse uppercase tracking-wider font-black shadow-sm">
+                           Live
+                         </span>
+                       )}
                     </div>
                   </div>
                 </div>
