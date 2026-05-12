@@ -47,26 +47,21 @@ export default function Logo({ size = 'md', className, showBorder = false, showT
 
   const iconSize = iconSizeMap[size];
 
+  const logoHeight = {
+    sm: 'h-8',
+    md: 'h-12',
+    lg: 'h-16',
+    xl: 'h-24'
+  }[size];
+
   return (
     <div className={containerClass}>
       <div className={cn(textClass, 'flex items-center gap-1')}>
-        <span style={{ color: '#641acc' }}>Bondhu</span>
-        <span style={{ color: '#2fbe6b' }}>App</span>
-        <svg
-          width={iconSize}
-          height={iconSize}
-          viewBox="0 0 24 24"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-          className="inline-block"
-          style={{ marginLeft: '0.15em' }}
-        >
-          <path
-            d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"
-            fill="#641acc"
-            stroke="none"
-          />
-        </svg>
+        <img 
+          src="/logo.png" 
+          alt="BondhuApp" 
+          className={cn(logoHeight, "w-auto object-contain")}
+        />
       </div>
       {showTagline && (
         <div className="flex flex-col items-center mt-2 gap-0.5">
