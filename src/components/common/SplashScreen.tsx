@@ -42,9 +42,25 @@ export default function SplashScreen({ onComplete, duration = 3500 }: SplashScre
           exit={{ opacity: 0, scale: 1.05 }}
           transition={{ duration: 0.6, ease: 'easeInOut' }}
           className="fixed inset-0 z-[9999] flex items-center justify-center"
-          style={{ backgroundColor: '#000000' }}
+          style={{ backgroundColor: '#f1f5f9' }}
         >
-          <div className="flex flex-col items-center justify-center gap-6">
+          <div className="flex flex-col items-center justify-center gap-2">
+
+            {/* BondhuApp Logo — hero element */}
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.7, delay: 0.1, ease: [0.43, 0.13, 0.23, 0.96] }}
+              className="flex flex-col items-center"
+            >
+              <img
+                src="/logo.png"
+                alt="BondhuApp"
+                className="h-40 sm:h-56 w-auto object-contain"
+                style={{ mixBlendMode: 'multiply' }}
+              />
+            </motion.div>
+
             {/* Lottie Animation */}
             {animationData && (
               <motion.div
@@ -52,10 +68,10 @@ export default function SplashScreen({ onComplete, duration = 3500 }: SplashScre
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{
                   duration: 0.8,
-                  delay: 0.15,
+                  delay: 0.3,
                   ease: [0.43, 0.13, 0.23, 0.96],
                 }}
-                className="w-[200px] h-[200px] sm:w-[250px] sm:h-[250px]"
+                className="w-[220px] h-[220px] sm:w-[280px] sm:h-[280px]"
               >
                 <Lottie
                   animationData={animationData}
@@ -66,23 +82,16 @@ export default function SplashScreen({ onComplete, duration = 3500 }: SplashScre
               </motion.div>
             )}
 
-            {/* BondhuApp Logo Image */}
+            {/* Tagline */}
             <motion.div
-              initial={{ y: 20, opacity: 0 }}
+              initial={{ y: 16, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              transition={{ duration: 0.6, delay: 0.5 }}
-              className="flex flex-col items-center gap-4"
+              transition={{ duration: 0.5, delay: 0.6 }}
+              className="flex items-center gap-1 text-sm sm:text-base font-semibold tracking-widest mt-1"
             >
-              <img 
-                src="/logo.png" 
-                alt="BondhuApp Logo" 
-                className="h-20 sm:h-28 w-auto object-contain"
-              />
-              <div className="text-sm sm:text-base font-semibold tracking-wider mt-1">
-                <span style={{ color: '#641acc' }}>TASK DONE</span>
-                <span className="mx-1" style={{ color: '#94a3b8' }}>,</span>
-                <span style={{ color: '#2fbe6b' }}>TRUST DELIVERED</span>
-              </div>
+              <span style={{ color: '#641acc' }}>TASK DONE</span>
+              <span className="mx-1" style={{ color: '#94a3b8' }}>,</span>
+              <span style={{ color: '#2fbe6b' }}>TRUST DELIVERED</span>
             </motion.div>
           </div>
         </motion.div>

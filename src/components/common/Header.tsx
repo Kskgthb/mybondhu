@@ -124,7 +124,6 @@ export default function Header() {
         </Link>
 
         <div className="flex items-center gap-4">
-          <img src="/logo.png" alt="BondhuApp" className="h-6 w-auto hidden sm:block opacity-80" />
           {user && profile ? (
             <>
               {(profile.role === 'bondhu' || profile.active_role === 'bondhu') && (

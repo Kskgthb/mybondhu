@@ -61,6 +61,7 @@ export default function Logo({ size = 'md', className, showBorder = false, showT
           src="/logo.png" 
           alt="BondhuApp" 
           className={cn(logoHeight, "w-auto object-contain")}
+          style={{ mixBlendMode: 'multiply' }}
         />
       </div>
       {showTagline && (
