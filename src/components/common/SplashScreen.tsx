@@ -44,7 +44,7 @@ export default function SplashScreen({ onComplete, duration = 3500 }: SplashScre
           className="fixed inset-0 z-[9999] flex items-center justify-center"
           style={{ backgroundColor: '#000000' }}
         >
-          <div className="flex flex-col items-center justify-center gap-4">
+          <div className="flex flex-col items-center justify-center gap-6">
             {/* Lottie Animation */}
             {animationData && (
               <motion.div
@@ -55,7 +55,7 @@ export default function SplashScreen({ onComplete, duration = 3500 }: SplashScre
                   delay: 0.15,
                   ease: [0.43, 0.13, 0.23, 0.96],
                 }}
-                className="w-[280px] h-[280px] sm:w-[350px] sm:h-[350px]"
+                className="w-[200px] h-[200px] sm:w-[250px] sm:h-[250px]"
               >
                 <Lottie
                   animationData={animationData}
