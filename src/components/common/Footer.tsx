@@ -1,6 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { Mail, MapPin, MessageCircle, Linkedin, Youtube, Facebook, Twitter, Instagram } from 'lucide-react';
-import Logo from './Logo';
 
 const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear();
@@ -12,7 +11,22 @@ const Footer: React.FC = () => {
         {/* Top CTA Section */}
         <div className="flex flex-col md:flex-row items-center justify-between mb-10 pb-8 border-b border-white/20 gap-6">
           <div className="flex items-center">
-            <Logo size="md" className="text-white" />
+            <span className="text-3xl font-extrabold tracking-tight text-white">BondhuApp</span>
+            <svg
+              width="32"
+              height="32"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              className="inline-block"
+              style={{ marginLeft: '0.15em' }}
+            >
+              <path
+                d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"
+                fill="#ffffff"
+                stroke="none"
+              />
+            </svg>
           </div>
           
           <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
