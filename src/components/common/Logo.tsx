@@ -7,25 +7,18 @@ interface LogoProps {
   showTagline?: boolean;
 }
 
-const textSizeClasses = {
-  sm: 'text-xl',
-  md: 'text-3xl',
-  lg: 'text-4xl',
-  xl: 'text-6xl'
+const imgHeightMap = {
+  sm: 36,
+  md: 48,
+  lg: 64,
+  xl: 96,
 };
 
 const taglineSizeClasses = {
   sm: 'text-[0.65rem]',
   md: 'text-xs',
   lg: 'text-sm',
-  xl: 'text-lg'
-};
-
-const iconSizeMap = {
-  sm: 20,
-  md: 32,
-  lg: 40,
-  xl: 56
+  xl: 'text-lg',
 };
 
 export default function Logo({ size = 'md', className, showBorder = false, showTagline = false }: LogoProps) {
@@ -35,35 +28,19 @@ export default function Logo({ size = 'md', className, showBorder = false, showT
     className
   );
 
-  const textClass = cn(
-    'font-bold tracking-tight',
-    textSizeClasses[size]
-  );
+  const taglineClass = cn('font-semibold tracking-wider', taglineSizeClasses[size]);
 
-  const taglineClass = cn(
-    'font-semibold tracking-wider',
-    taglineSizeClasses[size]
-  );
-
-  const iconSize = iconSizeMap[size];
-
-  const logoHeight = {
-    sm: 'h-8',
-    md: 'h-12',
-    lg: 'h-16',
-    xl: 'h-24'
-  }[size];
+  const imgHeight = imgHeightMap[size];
 
   return (
     <div className={containerClass}>
-      <div className={cn(textClass, 'flex items-center gap-1')}>
-        <img 
-          src="/logo.png" 
-          alt="BondhuApp" 
-          className={cn(logoHeight, "w-auto object-contain")}
-          style={{ mixBlendMode: 'multiply' }}
-        />
-      </div>
+      <img
+        src="/logo.png"
+        alt="BondhuApp"
+        height={imgHeight}
+        style={{ height: imgHeight, width: 'auto', objectFit: 'contain' }}
+        draggable={false}
+      />
       {showTagline && (
         <div className="flex flex-col items-center mt-2 gap-0.5">
           <div className={taglineClass}>
