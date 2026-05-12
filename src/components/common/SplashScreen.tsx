@@ -42,9 +42,9 @@ export default function SplashScreen({ onComplete, duration = 3500 }: SplashScre
           exit={{ opacity: 0, scale: 1.05 }}
           transition={{ duration: 0.6, ease: 'easeInOut' }}
           className="fixed inset-0 z-[9999] flex items-center justify-center"
-          style={{ backgroundColor: '#f1f5f9' }}
+          style={{ backgroundColor: '#000000' }}
         >
-          <div className="flex flex-col items-center justify-center gap-4">
+          <div className="flex flex-col items-center justify-center gap-6">
             {/* Lottie Animation */}
             {animationData && (
               <motion.div
@@ -55,7 +55,7 @@ export default function SplashScreen({ onComplete, duration = 3500 }: SplashScre
                   delay: 0.15,
                   ease: [0.43, 0.13, 0.23, 0.96],
                 }}
-                className="w-[280px] h-[280px] sm:w-[350px] sm:h-[350px]"
+                className="w-[200px] h-[200px] sm:w-[250px] sm:h-[250px]"
               >
                 <Lottie
                   animationData={animationData}
@@ -66,32 +66,18 @@ export default function SplashScreen({ onComplete, duration = 3500 }: SplashScre
               </motion.div>
             )}
 
-            {/* BondhuApp text */}
+            {/* BondhuApp Logo Image */}
             <motion.div
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.6, delay: 0.5 }}
-              className="flex flex-col items-center gap-1"
+              className="flex flex-col items-center gap-4"
             >
-              <div className="text-4xl sm:text-5xl font-bold tracking-tight flex items-center gap-1">
-                <span style={{ color: '#641acc' }}>Bondhu</span>
-                <span style={{ color: '#2fbe6b' }}>App</span>
-                <svg
-                  width={36}
-                  height={36}
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="inline-block"
-                  style={{ marginLeft: '0.1em' }}
-                >
-                  <path
-                    d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"
-                    fill="#641acc"
-                    stroke="none"
-                  />
-                </svg>
-              </div>
+              <img 
+                src="/logo.png" 
+                alt="BondhuApp Logo" 
+                className="h-20 sm:h-28 w-auto object-contain"
+              />
               <div className="text-sm sm:text-base font-semibold tracking-wider mt-1">
                 <span style={{ color: '#641acc' }}>TASK DONE</span>
                 <span className="mx-1" style={{ color: '#94a3b8' }}>,</span>
