@@ -13,6 +13,7 @@ export type NotificationType =
   | 'task_completed'
   | 'payment_received'
   | 'new_task_nearby'
+  | 'new_task_broadcast'
   | 'message_received'
   | 'code_verified'
   | 'payment_confirmed';
@@ -66,6 +67,12 @@ const NOTIFICATION_CONFIGS: Record<NotificationType, NotificationConfig> = {
     body: 'A new task is available in your area. Be the first to accept!',
     icon: '/logo.png',
     tag: 'new-task',
+  },
+  new_task_broadcast: {
+    title: '📢 New Task Available!',
+    body: 'A new task has been posted! Tap to view details and accept.',
+    icon: '/logo.png',
+    tag: 'new-task-broadcast',
   },
   message_received: {
     title: '💬 New Message',
@@ -372,6 +379,7 @@ export function subscribeToUserNotifications(userId: string) {
           payment_confirmed: 'payment_confirmed',
           code_verified: 'code_verified',
           new_task_nearby: 'new_task_nearby',
+          new_task_broadcast: 'new_task_broadcast',
           message_received: 'message_received',
         };
 

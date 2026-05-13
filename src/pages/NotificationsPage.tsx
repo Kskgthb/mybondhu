@@ -111,6 +111,10 @@ export default function NotificationsPage() {
         return 'bg-success/20 text-success';
       case 'rating_received':
         return 'bg-accent/20 text-accent-foreground';
+      case 'new_task_broadcast':
+        return 'bg-primary/20 text-primary';
+      case 'chat_message':
+        return 'bg-blue-500/20 text-blue-600 dark:text-blue-400';
       default:
         return 'bg-muted text-muted-foreground';
     }

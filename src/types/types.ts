@@ -8,7 +8,7 @@ export type PaymentMethod = 'cash' | 'online';
 
 export type PaymentStatus = 'pending' | 'completed' | 'failed';
 
-export type NotificationType = 'task_posted' | 'task_accepted' | 'task_completed' | 'rating_received' | 'task_started';
+export type NotificationType = 'task_posted' | 'task_accepted' | 'task_completed' | 'rating_received' | 'task_started' | 'new_task_broadcast' | 'chat_message';
 
 export type VerificationStatus = 'pending' | 'verified' | 'rejected';
 

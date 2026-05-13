@@ -10,6 +10,7 @@ import MainLayout from '@/components/layout/MainLayout';
 import SplashScreen from '@/components/common/SplashScreen';
 import { GoogleMapsProvider } from '@/components/maps';
 import GlobalTracker from '@/components/common/GlobalTracker';
+import LiveTaskNotification from '@/components/common/LiveTaskNotification';
 import routes from './routes';
 
 // Public paths that don't need authentication
@@ -53,6 +54,7 @@ const App = () => {
           <RoleProvider>
             <GoogleMapsProvider>
               <Toaster position="top-center" richColors closeButton />
+              <LiveTaskNotification />
 
               {/* Splash screen — shown only once per session */}
               {showSplash && !hasShownSplash && (

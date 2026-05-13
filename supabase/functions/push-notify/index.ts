@@ -50,6 +50,7 @@ serve(async (req) => {
     let pushTag = "bondhu-notify";
     let targetUsersDetails: any[] = [];
     let isSmartTarget = false;
+    let isBroadcast = false;
     let pushVariant = 'formal';
 
     // ── NOTIFICATIONS TABLE (HANDLES ALL TYPES) ──────────────────────
@@ -88,40 +89,82 @@ serve(async (req) => {
       }
     }
     
-    // ── NEW TASK POSTED (SMART BONDHU PROXIMITY ALERTS) ────────────────
+    // ── NEW TASK POSTED — BROADCAST TO ALL USERS ────────────────────
     else if (table === "tasks" && type === "INSERT" && record.status === "pending") {
-      console.log(`[Push-Notify] New task posted: ${record.id} [${record.category}] at [${record.location_lat}, ${record.location_lng}]`);
+      console.log(`[Push-Notify] 🌍 New task posted: ${record.id} [${record.category}] — Broadcasting to ALL users`);
       
-      if (!record.location_lat || !record.location_lng || record.location_lat === 0) {
-        console.log("[Push-Notify] Task has no valid location, skipping proximity alerts");
-        return new Response("Task has no location", { headers: corsHeaders });
+      isBroadcast = true;
+
+      // Get ALL push subscriptions (excluding the poster themselves)
+      const { data: allSubscriptions, error: allSubError } = await supabaseClient
+        .from("push_subscriptions")
+        .select("*, profile:profiles(username)")
+        .neq("user_id", record.poster_id);
+
+      if (allSubError || !allSubscriptions || allSubscriptions.length === 0) {
+        console.log("[Push-Notify] No push subscriptions found for broadcast");
+        return new Response("No push subscriptions found", { headers: corsHeaders });
       }
 
-      // Query database using the new smart notification RPC
-      const { data: nearbyUsers, error } = await supabaseClient.rpc("get_smart_notification_targets", {
-        p_target_lat: record.location_lat,
-        p_target_lng: record.location_lng,
-        p_category: record.category,
-        p_limit: 10
+      console.log(`[Push-Notify] 🔔 Broadcasting to ${allSubscriptions.length} subscriptions`);
+
+      let successCount = 0;
+
+      // Send push notifications to ALL subscribers in parallel
+      await Promise.all(
+        allSubscriptions.map(async (sub) => {
+          try {
+            const profileData = Array.isArray(sub.profile) ? sub.profile[0] : sub.profile;
+            const userName = profileData?.username ? profileData.username.split(' ')[0] : 'Bondhu';
+            
+            // Personalized message
+            const finalTitle = `📢 New Task: ${record.title}`;
+            const finalBody = `Hey ${userName}! "${record.title}" (${record.category}) — ₹${record.amount}. Tap to view & accept!`;
+
+            const pushPayload = JSON.stringify({
+              title: finalTitle,
+              body: finalBody,
+              url: `/task/${record.id}`,
+              tag: `new-task-global-${record.id}-${Date.now()}`,
+              timestamp: Date.now(),
+              renotify: true,
+              requireInteraction: false,
+              icon: ICON_URL,
+              badge: BADGE_URL,
+              data: {
+                url: `/task/${record.id}`,
+                task_id: record.id,
+                trigger_type: 'broadcast',
+                variant: 'broadcast',
+                log_id: crypto.randomUUID(),
+              },
+            });
+
+            const pushConfig = {
+              endpoint: sub.endpoint,
+              keys: {
+                p256dh: sub.p256dh_key,
+                auth: sub.auth_key,
+              },
+            };
+
+            await webpush.sendNotification(pushConfig, pushPayload);
+            successCount++;
+          } catch (error: any) {
+            console.error(`Error sending push to ${sub.endpoint}:`, error);
+            if (error.statusCode === 410 || error.statusCode === 404) {
+              // Subscription expired or unsubscribed, delete it from DB
+              await supabaseClient.from("push_subscriptions").delete().eq("id", sub.id);
+            }
+          }
+        })
+      );
+
+      console.log(`✅ Broadcast complete: ${successCount}/${allSubscriptions.length} push notifications sent`);
+      return new Response(JSON.stringify({ success: true, sent: successCount, mode: 'broadcast' }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
       });
-
-      if (error) {
-        console.error("[Push-Notify] RPC Error getting smart targets:", error);
-        return new Response("RPC Error", { headers: corsHeaders, status: 500 });
-      }
-
-      if (!nearbyUsers || nearbyUsers.length === 0) {
-        console.log("[Push-Notify] No eligible Bondhus found via smart targets for task:", record.id);
-        return new Response("No eligible nearby users", { headers: corsHeaders });
-      }
-
-      console.log(`[Push-Notify] Found ${nearbyUsers.length} smart targeted Bondhus`);
-      
-      isSmartTarget = true;
-      targetUsersDetails = nearbyUsers;
-      targetUserIds = nearbyUsers.map((u: any) => u.user_id);
-      pushUrl = `/task/${record.id}`;
-      pushTag = `new-task-nearby-${record.id}-${Date.now()}`;
     }
     
     // ── UNHANDLED TABLE ──────────────────────────────────────────
@@ -129,7 +172,7 @@ serve(async (req) => {
       return new Response("Unhandled webhook event", { headers: corsHeaders });
     }
 
-    // ── FIRE WEB PUSH NOTIFICATIONS ──────────────────────────────
+    // ── FIRE WEB PUSH NOTIFICATIONS (for non-broadcast events) ──────────────────────────────
     if (targetUserIds.length === 0) {
       return new Response("No target users", { headers: corsHeaders });
     }
