@@ -5,13 +5,20 @@ import { AuthProvider } from '@/contexts/AuthContext';
 import { RoleProvider } from '@/contexts/RoleContext';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { RequireAuth } from '@/components/common/RequireAuth';
-import Header from '@/components/common/Header';
 import MainLayout from '@/components/layout/MainLayout';
 import SplashScreen from '@/components/common/SplashScreen';
 import { GoogleMapsProvider } from '@/components/maps';
 import GlobalTracker from '@/components/common/GlobalTracker';
 import LiveTaskNotification from '@/components/common/LiveTaskNotification';
 import routes from './routes';
+
+// Admin pages
+import AdminLayout from './pages/admin/AdminLayout';
+import AdminDashboard from './pages/admin/Dashboard';
+import AdminUsers from './pages/admin/Users';
+import AdminTasks from './pages/admin/Tasks';
+import AdminVerifications from './pages/admin/Verifications';
+import AdminAnalytics from './pages/admin/Analytics';
 
 // Public paths that don't need authentication
 const PUBLIC_PATHS = [
@@ -61,21 +68,39 @@ const App = () => {
                 <SplashScreen onComplete={handleSplashComplete} duration={3000} />
               )}
 
-              <MainLayout>
-                <RequireAuth whiteList={PUBLIC_PATHS}>
-                  <Routes>
-                    {routes.map((route) => (
-                      <Route
-                        key={route.path}
-                        path={route.path}
-                        element={route.element}
-                      />
-                    ))}
-                    {/* Catch-all: redirect unknown paths to home */}
-                    <Route path="*" element={<Navigate to="/" replace />} />
-                  </Routes>
-                </RequireAuth>
-              </MainLayout>
+              <Routes>
+                {/* ── Admin routes — own full-screen layout, no Header/Footer ── */}
+                <Route path="/admin" element={<AdminLayout />}>
+                  <Route path="dashboard"     element={<AdminDashboard />} />
+                  <Route path="users"         element={<AdminUsers />} />
+                  <Route path="tasks"         element={<AdminTasks />} />
+                  <Route path="verifications" element={<AdminVerifications />} />
+                  <Route path="analytics"     element={<AdminAnalytics />} />
+                  <Route index element={<Navigate to="dashboard" replace />} />
+                </Route>
+
+                {/* ── Regular app routes — MainLayout with Header/Footer ── */}
+                <Route
+                  path="/*"
+                  element={
+                    <MainLayout>
+                      <RequireAuth whiteList={PUBLIC_PATHS}>
+                        <Routes>
+                          {routes.map((route) => (
+                            <Route
+                              key={route.path}
+                              path={route.path}
+                              element={route.element}
+                            />
+                          ))}
+                          {/* Catch-all: redirect unknown paths to home */}
+                          <Route path="*" element={<Navigate to="/" replace />} />
+                        </Routes>
+                      </RequireAuth>
+                    </MainLayout>
+                  }
+                />
+              </Routes>
             </GoogleMapsProvider>
           </RoleProvider>
         </AuthProvider>

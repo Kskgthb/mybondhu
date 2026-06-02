@@ -15,7 +15,6 @@ import TaskTracking from './pages/tracking/TaskTracking';
 import NotificationsPage from './pages/NotificationsPage';
 import ProfilePage from './pages/ProfilePage';
 import SettingsPage from './pages/SettingsPage';
-import AdminDashboard from './pages/admin/Dashboard';
 import BondhuRegistration from './pages/registration/BondhuRegistration';
 import NotFound from './pages/NotFound';
 import TermsOfServicePage from './pages/TermsOfServicePage';
@@ -28,6 +27,7 @@ interface RouteConfig {
   visible?: boolean;
 }
 
+// Note: Admin routes (/admin/*) are handled as nested routes in App.tsx under AdminLayout
 const routes: RouteConfig[] = [
   { name: 'Home',                  path: '/',                          element: <LandingPage /> },
   { name: 'Login',                 path: '/login',                     element: <LoginPage /> },
@@ -46,7 +46,6 @@ const routes: RouteConfig[] = [
   { name: 'Notifications',         path: '/notifications',             element: <NotificationsPage /> },
   { name: 'Profile',               path: '/profile',                   element: <ProfilePage /> },
   { name: 'Settings',              path: '/settings',                  element: <SettingsPage /> },
-  { name: 'Admin Dashboard',       path: '/admin/dashboard',           element: <AdminDashboard /> },
   { name: 'Terms of Service',      path: '/terms-of-service',          element: <TermsOfServicePage /> },
   { name: 'Privacy Policy',        path: '/privacy-policy',            element: <PrivacyPolicyPage /> },
   { name: 'Not Found',             path: '/404',                       element: <NotFound /> },

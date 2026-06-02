@@ -24,12 +24,14 @@ import RoleSwitchButton from '@/components/common/RoleSwitchButton';
 import InstallAppButton from '@/components/common/InstallAppButton';
 import { usePWAInstall } from '@/hooks/usePWAInstall';
 import { Download } from 'lucide-react';
+import { isAdminEmail } from '@/config/adminConfig';
 
 export default function Header() {
   const { user, profile, signOut, loading, refreshProfile } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
+  const isAdmin = isAdminEmail(user?.email ?? profile?.email);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isAvailable, setIsAvailable] = useState(false);
   const [locationEnabled, setLocationEnabled] = useState(false);
@@ -150,6 +152,19 @@ export default function Header() {
 
               <InstallAppButton variant="ghost" className="hidden md:flex text-primary hover:bg-primary/10 hover:text-primary" />
               <RoleSwitchButton variant="ghost" size="icon" showLabel={false} />
+
+              {/* Admin Panel button — visible to admin emails on any view */}
+              {isAdmin && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => navigate('/admin/dashboard')}
+                  className="hidden sm:flex items-center gap-1.5 text-violet-500 hover:text-violet-400 hover:bg-violet-500/10 font-medium text-xs px-3"
+                >
+                  <Shield className="h-3.5 w-3.5" />
+                  Admin Panel
+                </Button>
+              )}
               
               {location.pathname !== '/' && (
                 <Button
@@ -224,10 +239,10 @@ export default function Header() {
                     <Settings className="mr-2 h-4 w-4" />
                     Settings
                   </DropdownMenuItem>
-                  {profile.role === 'admin' && (
+                  {isAdmin && (
                     <>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={() => navigate('/admin/dashboard')}>
+                      <DropdownMenuItem onClick={() => navigate('/admin/dashboard')} className="text-violet-500 focus:text-violet-400">
                         <Shield className="mr-2 h-4 w-4" />
                         Admin Panel
                       </DropdownMenuItem>
