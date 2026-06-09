@@ -1,32 +1,26 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { profilesApi, tasksApi, assignmentsApi } from '@/db/api';
+import { profilesApi } from '@/db/api';
 import { supabase } from '@/db/supabase';
 import { toast } from 'sonner';
-import type { Profile, Task } from '@/types/types';
+import type { Profile } from '@/types/types';
 import {
-  ArrowLeft, Star, CheckCircle, Clock, XCircle, Briefcase,
+  ArrowLeft, Star, CheckCircle, Clock, XCircle,
   Coins, CreditCard, TrendingUp, User, Wallet, AlertCircle,
-  BarChart2, RefreshCw, ThumbsDown, Send, Ban
+  RefreshCw, ThumbsDown, Send, Ban, Briefcase, IndianRupee,
+  ExternalLink, Info
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { format } from 'date-fns';
 
 /* ─────────────────────────────────────────────────────────────────
-   Helper: coloured stat card
+   Stat card
 ───────────────────────────────────────────────────────────────── */
 function StatCard({
-  icon: Icon,
-  label,
-  value,
-  sub,
-  accent,
+  icon: Icon, label, value, sub, accent,
 }: {
-  icon: React.ElementType;
-  label: string;
-  value: string | number;
-  sub?: string;
-  accent: string; // tailwind bg colour token, e.g. 'bg-violet-500'
+  icon: React.ElementType; label: string;
+  value: string | number; sub?: string; accent: string;
 }) {
   return (
     <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-800/80 to-slate-900/80 backdrop-blur p-4 flex flex-col gap-1">
@@ -42,7 +36,7 @@ function StatCard({
 }
 
 /* ─────────────────────────────────────────────────────────────────
-   Helper: info row
+   Info row
 ───────────────────────────────────────────────────────────────── */
 function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (
@@ -54,54 +48,90 @@ function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
 }
 
 /* ─────────────────────────────────────────────────────────────────
-   Main page
+   Status badge colour
 ───────────────────────────────────────────────────────────────── */
+const statusColor = (status: string) =>
+  ({
+    pending:     'bg-amber-500/20 text-amber-400',
+    accepted:    'bg-blue-500/20 text-blue-400',
+    in_progress: 'bg-cyan-500/20 text-cyan-400',
+    completed:   'bg-emerald-500/20 text-emerald-400',
+    cancelled:   'bg-red-500/20 text-red-400',
+    declined:    'bg-red-500/20 text-red-400',
+    approved:    'bg-emerald-500/20 text-emerald-400',
+    rejected:    'bg-red-500/20 text-red-400',
+  }[status] ?? 'bg-slate-500/20 text-slate-400');
+
+/* ═══════════════════════════════════════════════════════════════════
+   Main component
+═══════════════════════════════════════════════════════════════════ */
 export default function AdminUserProfile() {
   const { userId } = useParams<{ userId: string }>();
   const navigate = useNavigate();
 
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [postedTasks, setPostedTasks] = useState<Task[]>([]);
+  const [profile, setProfile]         = useState<Profile | null>(null);
+  const [postedTasks, setPostedTasks] = useState<any[]>([]);
   const [assignedTasks, setAssignedTasks] = useState<any[]>([]);
   const [withdrawals, setWithdrawals] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [activeTab, setActiveTab] = useState<'overview' | 'tasks' | 'financials'>('overview');
+  const [wdTableExists, setWdTableExists] = useState(true);
+  const [loading, setLoading]         = useState(true);
+  const [refreshing, setRefreshing]   = useState(false);
+  const [activeTab, setActiveTab]     = useState<'overview' | 'tasks' | 'financials'>('overview');
 
   const loadData = useCallback(async (showRefresh = false) => {
     if (!userId) return;
     if (showRefresh) setRefreshing(true);
+    else setLoading(true);
+
     try {
-      // Load profile
+      /* ── 1. Profile ── */
       const prof = await profilesApi.getProfile(userId);
       setProfile(prof);
 
-      // Load tasks this user posted
-      const { data: posted } = await supabase
+      /* ── 2. Tasks posted by this user ── */
+      const { data: posted, error: postedErr } = await supabase
         .from('tasks')
-        .select('*')
+        .select('id, title, category, amount, status, created_at, payment_method, urgency')
         .eq('poster_id', userId)
         .order('created_at', { ascending: false });
+      if (postedErr) console.warn('Tasks query error:', postedErr.message);
       setPostedTasks(Array.isArray(posted) ? posted : []);
 
-      // Load task assignments (if bondhu)
-      const { data: assigned } = await supabase
+      /* ── 3. Task assignments (bondhu side) ── */
+      const { data: assigned, error: assignErr } = await supabase
         .from('task_assignments')
-        .select('*, task:tasks(*)')
+        .select(`
+          id, status, accepted_at, completed_at, created_at,
+          task:tasks(id, title, category, amount, status)
+        `)
         .eq('bondhu_id', userId)
         .order('created_at', { ascending: false });
+      if (assignErr) console.warn('Assignments query error:', assignErr.message);
       setAssignedTasks(Array.isArray(assigned) ? assigned : []);
 
-      // Load withdrawal requests
-      const { data: wds } = await supabase
+      /* ── 4. Withdrawal requests ── */
+      const { data: wds, error: wdErr } = await supabase
         .from('withdrawal_requests')
-        .select('*')
+        .select('id, amount, upi_id, status, note, created_at, processed_at')
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
-      setWithdrawals(Array.isArray(wds) ? wds : []);
+
+      if (wdErr) {
+        // Table may not exist yet — show a notice instead of crashing
+        if (wdErr.code === '42P01' || wdErr.message?.includes('does not exist') || wdErr.message?.includes('relation')) {
+          setWdTableExists(false);
+          setWithdrawals([]);
+        } else {
+          console.warn('Withdrawal query error:', wdErr.message);
+          setWithdrawals([]);
+        }
+      } else {
+        setWdTableExists(true);
+        setWithdrawals(Array.isArray(wds) ? wds : []);
+      }
 
       if (showRefresh) toast.success('Profile refreshed');
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
       toast.error('Failed to load user profile');
     } finally {
@@ -112,34 +142,38 @@ export default function AdminUserProfile() {
 
   useEffect(() => { loadData(); }, [loadData]);
 
-  /* ── derived stats ── */
-  const isBondhu  = profile?.role === 'bondhu';
-  const isNeedBondhu = profile?.role === 'need_bondhu';
+  /* ─── derived ─── */
+  const isBondhu    = profile?.role === 'bondhu';
+  const isNBondhu   = profile?.role === 'need_bondhu';
 
-  // Need-Bondhu stats (task poster)
-  const nbStats = {
+  // Need-Bondhu stats
+  const nb = {
     posted:    postedTasks.length,
-    inProgress: postedTasks.filter(t => t.status === 'in_progress' || t.status === 'accepted').length,
+    inProgress: postedTasks.filter(t => ['accepted', 'in_progress'].includes(t.status)).length,
     cancelled:  postedTasks.filter(t => t.status === 'cancelled').length,
     completed:  postedTasks.filter(t => t.status === 'completed').length,
     avgRating:  profile?.rating_avg ?? 0,
   };
 
-  // Bondhu stats (service provider)
-  const bStats = {
-    completed:  assignedTasks.filter(a => a.task?.status === 'completed').length,
-    inProgress: assignedTasks.filter(a => ['accepted','in_progress'].includes(a.task?.status)).length,
-    declined:   assignedTasks.filter(a => a.status === 'declined').length,
-    avgRating:  profile?.rating_avg ?? 0,
-    totalEarning: profile?.total_earnings ?? 0,
-    coins:      profile?.bondhu_coins ?? 0,
-    upiId:      profile?.upi_id ?? null,
+  // Bondhu stats — use profile fields (populated by DB triggers)
+  const bn = {
+    completed:   assignedTasks.filter(a => a.task?.status === 'completed').length,
+    inProgress:  assignedTasks.filter(a => ['accepted', 'in_progress'].includes(a.task?.status ?? '')).length,
+    declined:    assignedTasks.filter(a => a.status === 'declined').length,
+    avgRating:   profile?.rating_avg   ?? 0,
+    // Use profile.total_earnings (set by DB trigger on task completion)
+    totalEarnings: profile?.total_earnings ?? 0,
+    coins:         profile?.bondhu_coins   ?? 0,
+    // UPI directly from profile
+    upiId:         profile?.upi_id         ?? null,
   };
 
-  const totalWithdrawPending  = withdrawals.filter(w => w.status === 'pending').reduce((s, w) => s + (w.amount ?? 0), 0);
-  const totalWithdrawApproved = withdrawals.filter(w => w.status === 'approved').reduce((s, w) => s + (w.amount ?? 0), 0);
+  // Withdrawal aggregates
+  const wdPending  = withdrawals.filter(w => w.status === 'pending').reduce((s, w) => s + Number(w.amount ?? 0), 0);
+  const wdApproved = withdrawals.filter(w => w.status === 'approved').reduce((s, w) => s + Number(w.amount ?? 0), 0);
+  // Amount still available = total earnings minus approved/pending withdrawals
+  const wdAvailable = Math.max(0, bn.totalEarnings - wdApproved - wdPending);
 
-  /* ── role badge ── */
   const roleBadge = {
     need_bondhu: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30',
     bondhu:      'bg-violet-500/20 text-violet-400 border-violet-500/30',
@@ -152,20 +186,12 @@ export default function AdminUserProfile() {
     rejected: 'bg-red-500/20 text-red-400',
   }[profile?.verification_status ?? 'pending'];
 
-  const statusColor = (status: string) => ({
-    pending:     'bg-amber-500/20 text-amber-400',
-    accepted:    'bg-blue-500/20 text-blue-400',
-    in_progress: 'bg-cyan-500/20 text-cyan-400',
-    completed:   'bg-emerald-500/20 text-emerald-400',
-    cancelled:   'bg-red-500/20 text-red-400',
-    declined:    'bg-red-500/20 text-red-400',
-  }[status] ?? 'bg-slate-500/20 text-slate-400');
-
+  /* ─── loading skeleton ─── */
   if (loading) {
     return (
       <div className="space-y-5 animate-pulse">
         <div className="h-8 w-40 bg-slate-800 rounded-xl" />
-        <div className="h-40 bg-slate-800/60 rounded-2xl" />
+        <div className="h-48 bg-slate-800/60 rounded-2xl" />
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {[1,2,3,4].map(i => <div key={i} className="h-28 bg-slate-800/60 rounded-2xl" />)}
         </div>
@@ -206,9 +232,8 @@ export default function AdminUserProfile() {
         </button>
       </div>
 
-      {/* ── Profile hero ── */}
+      {/* ── Profile hero card ── */}
       <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-800/80 to-slate-900/80 backdrop-blur p-6">
-        {/* Decorative gradient */}
         <div className="absolute -top-10 -right-10 w-56 h-56 bg-violet-600/20 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-cyan-600/10 rounded-full blur-3xl pointer-events-none" />
 
@@ -236,16 +261,17 @@ export default function AdminUserProfile() {
 
           <div className="flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/20 rounded-xl px-3 py-2">
             <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
-            <span className="text-amber-400 font-bold text-sm">{profile.rating_avg?.toFixed(1) ?? '—'}</span>
+            <span className="text-amber-400 font-bold text-sm">{(profile.rating_avg ?? 0).toFixed(1)}</span>
             <span className="text-slate-500 text-xs">/ 5</span>
           </div>
         </div>
 
+        {/* Quick info pills */}
         <div className="relative mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
           {[
-            { label: 'College', val: profile.college_name ?? profile.college ?? '—' },
-            { label: 'Joined', val: profile.created_at ? format(new Date(profile.created_at), 'dd MMM yyyy') : '—' },
-            { label: 'Phone', val: profile.phone ?? profile.contact_no ?? '—' },
+            { label: 'College',     val: profile.college_name ?? profile.college ?? '—' },
+            { label: 'Joined',      val: profile.created_at ? format(new Date(profile.created_at), 'dd MMM yyyy') : '—' },
+            { label: 'Phone',       val: profile.phone ?? profile.contact_no ?? '—' },
             { label: 'BondhuCoins', val: `🪙 ${profile.bondhu_coins ?? 0}` },
           ].map(({ label, val }) => (
             <div key={label} className="bg-white/5 rounded-xl p-2.5">
@@ -255,6 +281,28 @@ export default function AdminUserProfile() {
           ))}
         </div>
       </div>
+
+      {/* ── UPI ID highlight bar (always visible for bondhu) ── */}
+      {isBondhu && (
+        <div className={`rounded-2xl border ${bn.upiId ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-dashed border-slate-600 bg-slate-800/30'} px-5 py-3 flex items-center gap-3`}>
+          <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${bn.upiId ? 'bg-emerald-500/20' : 'bg-slate-700'}`}>
+            <CreditCard className={`w-4 h-4 ${bn.upiId ? 'text-emerald-400' : 'text-slate-500'}`} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs text-slate-400 uppercase tracking-wider font-medium">Bondhu UPI ID</p>
+            {bn.upiId ? (
+              <p className="text-emerald-300 font-mono text-sm font-semibold truncate">{bn.upiId}</p>
+            ) : (
+              <p className="text-slate-500 text-sm italic">Not registered yet</p>
+            )}
+          </div>
+          {bn.upiId && (
+            <span className="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full font-semibold border border-emerald-500/20">
+              ✓ SET
+            </span>
+          )}
+        </div>
+      )}
 
       {/* ── Tab nav ── */}
       <div className="flex gap-1 bg-slate-800/60 rounded-xl p-1 w-fit border border-white/10">
@@ -273,58 +321,56 @@ export default function AdminUserProfile() {
         ))}
       </div>
 
-      {/* ═══════════════════════════════════════════════════════════
-          TAB: OVERVIEW
-      ═══════════════════════════════════════════════════════════ */}
+      {/* ═══════════════════════════════════════════════════════
+          OVERVIEW TAB
+      ═══════════════════════════════════════════════════════ */}
       {activeTab === 'overview' && (
         <div className="space-y-6">
 
-          {/* ── Need Bondhu stats ── */}
-          {(isNeedBondhu || isBondhu) && (
-            <section>
-              <div className="flex items-center gap-2 mb-3">
-                <User className="w-4 h-4 text-cyan-400" />
-                <h2 className="text-white font-semibold">As Need-Bondhu (Task Poster)</h2>
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                <StatCard icon={Briefcase}   label="Tasks Posted"   value={nbStats.posted}    accent="bg-cyan-500" />
-                <StatCard icon={Clock}       label="In Progress"    value={nbStats.inProgress} accent="bg-blue-500" />
-                <StatCard icon={XCircle}     label="Cancelled"      value={nbStats.cancelled}  accent="bg-red-500" />
-                <StatCard icon={Star}        label="Avg Rating"     value={nbStats.avgRating.toFixed(1)} sub="out of 5" accent="bg-amber-500" />
-              </div>
-            </section>
-          )}
+          {/* Need-Bondhu section */}
+          <section>
+            <div className="flex items-center gap-2 mb-3">
+              <User className="w-4 h-4 text-cyan-400" />
+              <h2 className="text-white font-semibold text-sm uppercase tracking-wider">As Need-Bondhu (Task Poster)</h2>
+            </div>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+              <StatCard icon={Briefcase}  label="Tasks Posted"  value={nb.posted}     accent="bg-cyan-500" />
+              <StatCard icon={Clock}      label="In Progress"   value={nb.inProgress}  accent="bg-blue-500" />
+              <StatCard icon={XCircle}    label="Cancelled"     value={nb.cancelled}   accent="bg-red-500" />
+              <StatCard icon={Star}       label="Avg Rating"    value={nb.avgRating.toFixed(1)} sub="out of 5" accent="bg-amber-500" />
+            </div>
+          </section>
 
-          {/* ── Bondhu stats ── */}
+          {/* Bondhu section */}
           {isBondhu && (
             <section>
               <div className="flex items-center gap-2 mb-3">
                 <Briefcase className="w-4 h-4 text-violet-400" />
-                <h2 className="text-white font-semibold">As Bondhu (Service Provider)</h2>
+                <h2 className="text-white font-semibold text-sm uppercase tracking-wider">As Bondhu (Service Provider)</h2>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-                <StatCard icon={CheckCircle} label="Completed"     value={bStats.completed}   accent="bg-emerald-500" />
-                <StatCard icon={Clock}       label="In Progress"   value={bStats.inProgress}  accent="bg-blue-500" />
-                <StatCard icon={ThumbsDown}  label="Declined"      value={bStats.declined}    accent="bg-red-500" />
-                <StatCard icon={Star}        label="Avg Rating"    value={bStats.avgRating.toFixed(1)} sub="out of 5" accent="bg-amber-500" />
-                <StatCard icon={TrendingUp}  label="Total Earned"  value={`₹${bStats.totalEarning.toLocaleString()}`} accent="bg-violet-500" />
-                <StatCard icon={Coins}       label="BondhuCoins"   value={bStats.coins}       accent="bg-yellow-500" />
+                <StatCard icon={CheckCircle} label="Completed"     value={bn.completed}   accent="bg-emerald-500" />
+                <StatCard icon={Clock}       label="In Progress"   value={bn.inProgress}  accent="bg-blue-500" />
+                <StatCard icon={ThumbsDown}  label="Declined"      value={bn.declined}    accent="bg-red-500" />
+                <StatCard icon={Star}        label="Avg Rating"    value={bn.avgRating.toFixed(1)} sub="out of 5" accent="bg-amber-500" />
+                <StatCard icon={IndianRupee} label="Total Earned"  value={`₹${bn.totalEarnings.toLocaleString('en-IN')}`} accent="bg-violet-500" />
+                <StatCard icon={Coins}       label="BondhuCoins"   value={bn.coins}       accent="bg-yellow-500" />
               </div>
             </section>
           )}
 
-          {/* ── Personal info ── */}
+          {/* Personal info */}
           <section className="rounded-2xl border border-white/10 bg-slate-800/50 backdrop-blur p-5">
             <h2 className="text-white font-semibold mb-3">Personal Information</h2>
             <div className="divide-y divide-white/5">
-              <InfoRow label="Full Name"   value={profile.full_name ?? profile.username} />
-              <InfoRow label="Email"       value={profile.email} />
-              <InfoRow label="Phone"       value={profile.phone ?? profile.contact_no} />
-              <InfoRow label="College"     value={profile.college_name ?? profile.college} />
-              <InfoRow label="Campus"      value={profile.campus_location} />
-              <InfoRow label="About"       value={profile.about} />
+              <InfoRow label="Full Name"    value={profile.full_name ?? profile.username} />
+              <InfoRow label="Email"        value={profile.email} />
+              <InfoRow label="Phone"        value={profile.phone ?? profile.contact_no} />
+              <InfoRow label="College"      value={profile.college_name ?? profile.college} />
+              <InfoRow label="Campus"       value={profile.campus_location} />
+              <InfoRow label="About"        value={profile.about} />
               {profile.expertise_categories && profile.expertise_categories.length > 0 && (
-                <InfoRow label="Expertise"   value={
+                <InfoRow label="Expertise" value={
                   <div className="flex flex-wrap gap-1 justify-end">
                     {profile.expertise_categories.map(e => (
                       <span key={e} className="text-[10px] bg-violet-500/20 text-violet-300 rounded-full px-2 py-0.5">{e}</span>
@@ -333,47 +379,50 @@ export default function AdminUserProfile() {
                 } />
               )}
               <InfoRow label="Referral Code" value={profile.referral_code} />
-              <InfoRow label="Referred By"   value={profile.referred_by} />
             </div>
           </section>
 
-          {/* ── Bondhu financial info ── */}
+          {/* Financial summary for bondhu */}
           {isBondhu && (
             <section className="rounded-2xl border border-white/10 bg-slate-800/50 backdrop-blur p-5">
               <div className="flex items-center gap-2 mb-3">
                 <Wallet className="w-4 h-4 text-emerald-400" />
-                <h2 className="text-white font-semibold">Financial Details</h2>
+                <h2 className="text-white font-semibold">Financial Summary</h2>
               </div>
               <div className="divide-y divide-white/5">
-                <InfoRow label="UPI ID"       value={
-                  bStats.upiId
-                    ? <span className="font-mono bg-slate-700 px-2 py-0.5 rounded-lg text-emerald-300">{bStats.upiId}</span>
-                    : <span className="text-slate-500 italic">Not set</span>
+                <InfoRow label="UPI ID" value={
+                  bn.upiId
+                    ? <span className="font-mono text-emerald-300 bg-emerald-500/10 px-2 py-0.5 rounded-lg">{bn.upiId}</span>
+                    : <span className="text-slate-500 italic text-xs">Not registered</span>
                 } />
-                <InfoRow label="Total Earnings" value={`₹ ${bStats.totalEarning.toLocaleString()}`} />
-                <InfoRow label="BondhuCoins"    value={`🪙 ${bStats.coins}`} />
-                <InfoRow label="Pending Withdrawal"  value={`₹ ${totalWithdrawPending.toLocaleString()}`} />
-                <InfoRow label="Approved Withdrawal" value={`₹ ${totalWithdrawApproved.toLocaleString()}`} />
+                <InfoRow label="Total Earnings"      value={<span className="text-emerald-400 font-bold">₹ {bn.totalEarnings.toLocaleString('en-IN')}</span>} />
+                <InfoRow label="Withdrawal Pending"  value={<span className="text-amber-400 font-semibold">₹ {wdPending.toLocaleString('en-IN')}</span>} />
+                <InfoRow label="Withdrawal Paid Out" value={<span className="text-violet-400 font-semibold">₹ {wdApproved.toLocaleString('en-IN')}</span>} />
+                <InfoRow label="Available Balance"   value={<span className="text-cyan-400 font-bold">₹ {wdAvailable.toLocaleString('en-IN')}</span>} />
+                <InfoRow label="BondhuCoins"         value={`🪙 ${bn.coins}`} />
               </div>
             </section>
           )}
         </div>
       )}
 
-      {/* ═══════════════════════════════════════════════════════════
-          TAB: TASKS
-      ═══════════════════════════════════════════════════════════ */}
+      {/* ═══════════════════════════════════════════════════════
+          TASKS TAB
+      ═══════════════════════════════════════════════════════ */}
       {activeTab === 'tasks' && (
         <div className="space-y-6">
 
           {/* Tasks posted */}
           <section className="rounded-2xl border border-white/10 bg-slate-800/50 backdrop-blur overflow-hidden">
             <div className="px-5 py-4 border-b border-white/10 flex items-center justify-between">
-              <h2 className="text-white font-semibold">Tasks Posted ({postedTasks.length})</h2>
+              <div>
+                <h2 className="text-white font-semibold">Tasks Posted</h2>
+                <p className="text-slate-500 text-xs mt-0.5">{nb.posted} total · {nb.completed} completed · {nb.cancelled} cancelled</p>
+              </div>
               <User className="w-4 h-4 text-cyan-400" />
             </div>
             {postedTasks.length === 0 ? (
-              <p className="text-center py-10 text-slate-500 text-sm">No tasks posted</p>
+              <p className="text-center py-10 text-slate-500 text-sm">No tasks posted yet</p>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
@@ -389,12 +438,12 @@ export default function AdminUserProfile() {
                   <tbody className="divide-y divide-white/5">
                     {postedTasks.map(task => (
                       <tr key={task.id} className="hover:bg-white/5 transition-colors">
-                        <td className="px-5 py-3 text-white font-medium max-w-[180px] truncate">{task.title}</td>
+                        <td className="px-5 py-3 text-white font-medium max-w-[160px] truncate" title={task.title}>{task.title}</td>
                         <td className="px-4 py-3 text-slate-400 hidden sm:table-cell">{task.category}</td>
                         <td className="px-4 py-3 text-emerald-400 font-semibold">₹{task.amount}</td>
                         <td className="px-4 py-3">
                           <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${statusColor(task.status)}`}>
-                            {task.status.replace('_', ' ')}
+                            {task.status.replace(/_/g, ' ')}
                           </span>
                         </td>
                         <td className="px-4 py-3 text-slate-500 text-xs hidden md:table-cell">
@@ -408,11 +457,14 @@ export default function AdminUserProfile() {
             )}
           </section>
 
-          {/* Tasks assigned (bondhu) */}
+          {/* Assignments (bondhu side) */}
           {isBondhu && (
             <section className="rounded-2xl border border-white/10 bg-slate-800/50 backdrop-blur overflow-hidden">
               <div className="px-5 py-4 border-b border-white/10 flex items-center justify-between">
-                <h2 className="text-white font-semibold">Tasks Assigned ({assignedTasks.length})</h2>
+                <div>
+                  <h2 className="text-white font-semibold">Task Assignments (as Bondhu)</h2>
+                  <p className="text-slate-500 text-xs mt-0.5">{assignedTasks.length} total · {bn.completed} completed · {bn.declined} declined</p>
+                </div>
                 <Briefcase className="w-4 h-4 text-violet-400" />
               </div>
               {assignedTasks.length === 0 ? (
@@ -432,20 +484,20 @@ export default function AdminUserProfile() {
                     </thead>
                     <tbody className="divide-y divide-white/5">
                       {assignedTasks.map(a => {
-                        const task = a.task ?? {};
+                        const task = Array.isArray(a.task) ? a.task[0] : a.task;
                         return (
                           <tr key={a.id} className="hover:bg-white/5 transition-colors">
-                            <td className="px-5 py-3 text-white font-medium max-w-[160px] truncate">{task.title ?? '—'}</td>
-                            <td className="px-4 py-3 text-slate-400 hidden sm:table-cell">{task.category ?? '—'}</td>
-                            <td className="px-4 py-3 text-emerald-400 font-semibold">₹{task.amount ?? 0}</td>
+                            <td className="px-5 py-3 text-white font-medium max-w-[160px] truncate" title={task?.title ?? ''}>{task?.title ?? '—'}</td>
+                            <td className="px-4 py-3 text-slate-400 hidden sm:table-cell">{task?.category ?? '—'}</td>
+                            <td className="px-4 py-3 text-emerald-400 font-semibold">₹{task?.amount ?? 0}</td>
                             <td className="px-4 py-3">
-                              <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${statusColor(a.status)}`}>
-                                {a.status}
+                              <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${statusColor(a.status ?? '')}`}>
+                                {(a.status ?? '').replace(/_/g, ' ')}
                               </span>
                             </td>
                             <td className="px-4 py-3">
-                              <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${statusColor(task.status ?? '')}`}>
-                                {(task.status ?? '').replace('_', ' ')}
+                              <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${statusColor(task?.status ?? '')}`}>
+                                {(task?.status ?? '').replace(/_/g, ' ')}
                               </span>
                             </td>
                             <td className="px-4 py-3 text-slate-500 text-xs hidden md:table-cell">
@@ -463,37 +515,59 @@ export default function AdminUserProfile() {
         </div>
       )}
 
-      {/* ═══════════════════════════════════════════════════════════
-          TAB: FINANCIALS
-      ═══════════════════════════════════════════════════════════ */}
+      {/* ═══════════════════════════════════════════════════════
+          FINANCIALS TAB
+      ═══════════════════════════════════════════════════════ */}
       {activeTab === 'financials' && (
         <div className="space-y-6">
 
-          {/* Summary cards */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-            <StatCard icon={TrendingUp} label="Total Earnings" value={`₹${(profile.total_earnings ?? 0).toLocaleString()}`} accent="bg-emerald-500" />
-            <StatCard icon={Coins}      label="BondhuCoins"   value={profile.bondhu_coins ?? 0}  accent="bg-yellow-500" />
-            <StatCard icon={Send}       label="Pending Withdrawal" value={`₹${totalWithdrawPending.toLocaleString()}`} accent="bg-blue-500" />
-            <StatCard icon={CheckCircle} label="Paid Out"     value={`₹${totalWithdrawApproved.toLocaleString()}`} accent="bg-violet-500" />
+          {/* ── Earnings + wallet summary ── */}
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <StatCard icon={IndianRupee} label="Total Earnings"     value={`₹${bn.totalEarnings.toLocaleString('en-IN')}`} sub="from completed tasks" accent="bg-emerald-500" />
+            <StatCard icon={Coins}       label="BondhuCoins"        value={bn.coins}                                         sub="reward points"        accent="bg-yellow-500" />
+            <StatCard icon={Send}        label="Pending Withdrawal"  value={`₹${wdPending.toLocaleString('en-IN')}`}         sub="awaiting approval"   accent="bg-blue-500" />
+            <StatCard icon={CheckCircle} label="Total Paid Out"     value={`₹${wdApproved.toLocaleString('en-IN')}`}        sub="approved withdrawals" accent="bg-violet-500" />
           </div>
 
-          {/* UPI block */}
+          {/* Available balance highlight */}
+          <div className="rounded-2xl border border-cyan-500/30 bg-cyan-500/5 px-5 py-4 flex items-center gap-4">
+            <div className="w-10 h-10 rounded-xl bg-cyan-500/20 flex items-center justify-center flex-shrink-0">
+              <Wallet className="w-5 h-5 text-cyan-400" />
+            </div>
+            <div>
+              <p className="text-slate-400 text-xs uppercase tracking-wider font-medium">Available Balance</p>
+              <p className="text-cyan-300 text-2xl font-bold">₹ {wdAvailable.toLocaleString('en-IN')}</p>
+              <p className="text-slate-500 text-xs">Total Earnings − Pending − Paid Out</p>
+            </div>
+          </div>
+
+          {/* UPI ID card */}
           {isBondhu && (
             <div className="rounded-2xl border border-white/10 bg-slate-800/50 backdrop-blur p-5">
               <div className="flex items-center gap-2 mb-4">
                 <CreditCard className="w-4 h-4 text-emerald-400" />
                 <h2 className="text-white font-semibold">Bondhu UPI ID</h2>
               </div>
-              {profile.upi_id ? (
+              {bn.upiId ? (
                 <div className="flex items-center gap-3 bg-slate-700/60 border border-emerald-500/20 rounded-xl px-4 py-3">
-                  <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
+                  <div className="w-9 h-9 rounded-lg bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
                     <CreditCard className="w-4 h-4 text-emerald-400" />
                   </div>
-                  <span className="font-mono text-emerald-300 text-sm">{profile.upi_id}</span>
+                  <div>
+                    <p className="text-slate-400 text-xs mb-0.5">Registered UPI</p>
+                    <p className="font-mono text-emerald-300 text-sm font-semibold">{bn.upiId}</p>
+                  </div>
+                  <span className="ml-auto text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full font-semibold border border-emerald-500/20">
+                    ACTIVE
+                  </span>
                 </div>
               ) : (
-                <div className="flex items-center gap-3 bg-slate-700/40 border border-dashed border-slate-600 rounded-xl px-4 py-3 text-slate-500 text-sm">
-                  <Ban className="w-4 h-4" /> No UPI ID registered
+                <div className="flex items-center gap-3 bg-slate-700/40 border border-dashed border-slate-600 rounded-xl px-4 py-3">
+                  <Ban className="w-4 h-4 text-slate-500" />
+                  <div>
+                    <p className="text-slate-400 text-sm">No UPI ID registered</p>
+                    <p className="text-slate-600 text-xs">User must add it from their profile → wallet section</p>
+                  </div>
                 </div>
               )}
             </div>
@@ -502,11 +576,34 @@ export default function AdminUserProfile() {
           {/* Withdrawal requests table */}
           <section className="rounded-2xl border border-white/10 bg-slate-800/50 backdrop-blur overflow-hidden">
             <div className="px-5 py-4 border-b border-white/10 flex items-center justify-between">
-              <h2 className="text-white font-semibold">Withdrawal Requests ({withdrawals.length})</h2>
+              <div>
+                <h2 className="text-white font-semibold">Withdrawal Requests</h2>
+                <p className="text-slate-500 text-xs mt-0.5">{withdrawals.length} total · {withdrawals.filter(w => w.status === 'pending').length} pending</p>
+              </div>
               <Wallet className="w-4 h-4 text-violet-400" />
             </div>
-            {withdrawals.length === 0 ? (
-              <p className="text-center py-10 text-slate-500 text-sm">No withdrawal requests</p>
+
+            {/* Table not created yet notice */}
+            {!wdTableExists ? (
+              <div className="px-5 py-8 flex flex-col items-center gap-3 text-center">
+                <div className="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center">
+                  <Info className="w-5 h-5 text-amber-400" />
+                </div>
+                <p className="text-white font-medium">Withdrawal table not set up yet</p>
+                <p className="text-slate-500 text-sm max-w-xs">
+                  Run <code className="bg-slate-700 px-1 rounded text-amber-300">withdrawal_system_setup.sql</code> in your Supabase SQL Editor to enable withdrawal tracking.
+                </p>
+                <a
+                  href="https://supabase.com/dashboard"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-1.5 text-violet-400 text-sm hover:underline"
+                >
+                  Open Supabase Dashboard <ExternalLink className="w-3 h-3" />
+                </a>
+              </div>
+            ) : withdrawals.length === 0 ? (
+              <p className="text-center py-10 text-slate-500 text-sm">No withdrawal requests yet</p>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
@@ -516,29 +613,38 @@ export default function AdminUserProfile() {
                       <th className="px-4 py-3 text-left">UPI ID</th>
                       <th className="px-4 py-3 text-left">Status</th>
                       <th className="px-4 py-3 text-left hidden md:table-cell">Requested</th>
+                      <th className="px-4 py-3 text-left hidden lg:table-cell">Processed</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/5">
                     {withdrawals.map(w => (
                       <tr key={w.id} className="hover:bg-white/5 transition-colors">
-                        <td className="px-5 py-3 text-emerald-400 font-bold">₹{(w.amount ?? 0).toLocaleString()}</td>
+                        <td className="px-5 py-3 text-emerald-400 font-bold text-base">
+                          ₹{Number(w.amount ?? 0).toLocaleString('en-IN')}
+                        </td>
                         <td className="px-4 py-3 text-slate-300 font-mono text-xs">{w.upi_id ?? '—'}</td>
                         <td className="px-4 py-3">
-                          <span className={`text-[10px] font-semibold px-2.5 py-0.5 rounded-full ${
-                            w.status === 'approved' ? 'bg-emerald-500/20 text-emerald-400' :
-                            w.status === 'rejected' ? 'bg-red-500/20 text-red-400' :
-                            'bg-amber-500/20 text-amber-400'
-                          }`}>
+                          <span className={`text-[10px] font-semibold px-2.5 py-0.5 rounded-full ${statusColor(w.status ?? 'pending')}`}>
                             {w.status ?? 'pending'}
                           </span>
                         </td>
                         <td className="px-4 py-3 text-slate-500 text-xs hidden md:table-cell">
                           {w.created_at ? format(new Date(w.created_at), 'dd MMM yyyy, hh:mm a') : '—'}
                         </td>
+                        <td className="px-4 py-3 text-slate-500 text-xs hidden lg:table-cell">
+                          {w.processed_at ? format(new Date(w.processed_at), 'dd MMM yyyy, hh:mm a') : '—'}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
+
+                {/* Summary footer */}
+                <div className="px-5 py-3 border-t border-white/5 flex items-center justify-between bg-slate-900/40 text-xs text-slate-400">
+                  <span>Pending: <strong className="text-amber-400">₹{wdPending.toLocaleString('en-IN')}</strong></span>
+                  <span>Paid Out: <strong className="text-violet-400">₹{wdApproved.toLocaleString('en-IN')}</strong></span>
+                  <span>Available: <strong className="text-cyan-400">₹{wdAvailable.toLocaleString('en-IN')}</strong></span>
+                </div>
               </div>
             )}
           </section>
