@@ -95,6 +95,22 @@ export const profilesApi = {
     return data;
   },
 
+  async getWithdrawals(userId: string): Promise<any[]> {
+    const { data, error } = await supabase
+      .from('withdrawal_requests')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      if (error.code === '42P01' || error.message?.includes('does not exist') || error.message?.includes('relation')) {
+        return [];
+      }
+      throw error;
+    }
+    return Array.isArray(data) ? data : [];
+  },
+
   async getUserPreferences(userId: string) {
     const { data, error } = await supabase
       .from('user_preferences')

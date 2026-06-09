@@ -142,6 +142,33 @@ export default function AdminUserProfile() {
 
   useEffect(() => { loadData(); }, [loadData]);
 
+  const handleUpdateStatus = async (id: string, newStatus: 'approved' | 'rejected') => {
+    try {
+      const { data: { user: adminUser } } = await supabase.auth.getUser();
+      if (!adminUser) {
+        toast.error('Not authenticated');
+        return;
+      }
+
+      const { error } = await supabase
+        .from('withdrawal_requests')
+        .update({
+          status: newStatus,
+          processed_by: adminUser.id,
+          processed_at: new Date().toISOString()
+        })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast.success(`Withdrawal request marked as ${newStatus}`);
+      loadData();
+    } catch (err: any) {
+      console.error(err);
+      toast.error(`Failed to update withdrawal: ${err.message}`);
+    }
+  };
+
   /* ─── derived ─── */
   const isBondhu    = profile?.role === 'bondhu';
   const isNBondhu   = profile?.role === 'need_bondhu';
@@ -614,6 +641,7 @@ export default function AdminUserProfile() {
                       <th className="px-4 py-3 text-left">Status</th>
                       <th className="px-4 py-3 text-left hidden md:table-cell">Requested</th>
                       <th className="px-4 py-3 text-left hidden lg:table-cell">Processed</th>
+                      <th className="px-4 py-3 text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/5">
@@ -633,6 +661,26 @@ export default function AdminUserProfile() {
                         </td>
                         <td className="px-4 py-3 text-slate-500 text-xs hidden lg:table-cell">
                           {w.processed_at ? format(new Date(w.processed_at), 'dd MMM yyyy, hh:mm a') : '—'}
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          {w.status === 'pending' ? (
+                            <div className="flex items-center justify-end gap-1.5">
+                              <button
+                                onClick={() => handleUpdateStatus(w.id, 'approved')}
+                                className="text-xs bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 border border-emerald-500/30 px-2 py-1 rounded transition-colors"
+                              >
+                                Approve
+                              </button>
+                              <button
+                                onClick={() => handleUpdateStatus(w.id, 'rejected')}
+                                className="text-xs bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/30 px-2 py-1 rounded transition-colors"
+                              >
+                                Reject
+                              </button>
+                            </div>
+                          ) : (
+                            <span className="text-slate-600 text-xs">—</span>
+                          )}
                         </td>
                       </tr>
                     ))}
