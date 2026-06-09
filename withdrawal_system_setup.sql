@@ -106,5 +106,5 @@ $$;
 GRANT EXECUTE ON FUNCTION withdraw_request(NUMERIC, TEXT) TO authenticated;
 
 -- 9. Grant table access
-GRANT SELECT, INSERT ON withdrawal_requests TO authenticated;
+GRANT SELECT, INSERT, UPDATE ON withdrawal_requests TO authenticated;
 GRANT ALL ON withdrawal_requests TO service_role;

@@ -654,7 +654,7 @@ export default function AdminUserProfile() {
                         <td className="px-4 py-3 text-slate-300 font-mono text-xs">{w.upi_id ?? '—'}</td>
                         <td className="px-4 py-3">
                           <span className={`text-[10px] font-semibold px-2.5 py-0.5 rounded-full ${statusColor(w.status ?? 'pending')}`}>
-                            {w.status ?? 'pending'}
+                            {w.status === 'approved' ? 'Approved & Paid' : (w.status ?? 'pending')}
                           </span>
                         </td>
                         <td className="px-4 py-3 text-slate-500 text-xs hidden md:table-cell">
@@ -670,7 +670,7 @@ export default function AdminUserProfile() {
                                 onClick={() => handleUpdateStatus(w.id, 'approved')}
                                 className="text-xs bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 border border-emerald-500/30 px-2 py-1 rounded transition-colors"
                               >
-                                Approve
+                                Approve Payment
                               </button>
                               <button
                                 onClick={() => handleUpdateStatus(w.id, 'rejected')}
