@@ -19,6 +19,7 @@ import AdminUsers from './pages/admin/Users';
 import AdminTasks from './pages/admin/Tasks';
 import AdminVerifications from './pages/admin/Verifications';
 import AdminAnalytics from './pages/admin/Analytics';
+import AdminUserProfile from './pages/admin/UserProfile';
 
 // Public paths that don't need authentication
 const PUBLIC_PATHS = [
@@ -76,6 +77,7 @@ const App = () => {
                   <Route path="tasks"         element={<AdminTasks />} />
                   <Route path="verifications" element={<AdminVerifications />} />
                   <Route path="analytics"     element={<AdminAnalytics />} />
+                  <Route path="users/:userId" element={<AdminUserProfile />} />
                   <Route index element={<Navigate to="dashboard" replace />} />
                 </Route>
 

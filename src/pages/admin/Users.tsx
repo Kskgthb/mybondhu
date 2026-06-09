@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { profilesApi } from '@/db/api';
 import { toast } from 'sonner';
 import type { Profile, UserRole } from '@/types/types';
-import { Search, ChevronLeft, ChevronRight, Shield, User, Briefcase, CheckCircle, Clock, XCircle } from 'lucide-react';
+import { Search, ChevronLeft, ChevronRight, Shield, User, Briefcase, CheckCircle, Clock, XCircle, ExternalLink } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { format } from 'date-fns';
 
@@ -35,6 +36,7 @@ export default function AdminUsers() {
   const [page, setPage] = useState(0);
   const [selectedUser, setSelectedUser] = useState<Profile | null>(null);
   const [updatingRole, setUpdatingRole] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   const PAGE_SIZE = 10;
 
@@ -177,16 +179,25 @@ export default function AdminUsers() {
                         </span>
                       </td>
                       <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
-                        <select
-                          value={user.role}
-                          onChange={e => handleRoleChange(user.id, e.target.value as UserRole)}
-                          disabled={updatingRole === user.id}
-                          className="text-xs bg-slate-700 border border-white/10 text-white rounded-lg px-2 py-1 focus:outline-none focus:border-violet-500 disabled:opacity-50"
-                        >
-                          {ROLE_OPTIONS.map(r => (
-                            <option key={r} value={r}>{roleLabel[r]}</option>
-                          ))}
-                        </select>
+                        <div className="flex items-center gap-2">
+                          <select
+                            value={user.role}
+                            onChange={e => handleRoleChange(user.id, e.target.value as UserRole)}
+                            disabled={updatingRole === user.id}
+                            className="text-xs bg-slate-700 border border-white/10 text-white rounded-lg px-2 py-1 focus:outline-none focus:border-violet-500 disabled:opacity-50"
+                          >
+                            {ROLE_OPTIONS.map(r => (
+                              <option key={r} value={r}>{roleLabel[r]}</option>
+                            ))}
+                          </select>
+                          <button
+                            onClick={() => navigate(`/admin/users/${user.id}`)}
+                            title="View full profile"
+                            className="p-1.5 rounded-lg bg-violet-500/20 hover:bg-violet-500/40 text-violet-400 transition-colors flex-shrink-0"
+                          >
+                            <ExternalLink className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -259,12 +270,20 @@ export default function AdminUsers() {
                 </div>
               ))}
             </div>
-            <button
-              onClick={() => setSelectedUser(null)}
-              className="mt-5 w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-sm font-medium transition-colors"
-            >
-              Close
-            </button>
+            <div className="mt-5 flex gap-2">
+              <button
+                onClick={() => { setSelectedUser(null); navigate(`/admin/users/${selectedUser.id}`); }}
+                className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white text-sm font-medium transition-all flex items-center justify-center gap-2 shadow-lg shadow-violet-900/30"
+              >
+                <ExternalLink className="w-4 h-4" /> View Full Profile
+              </button>
+              <button
+                onClick={() => setSelectedUser(null)}
+                className="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-sm font-medium transition-colors"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}
