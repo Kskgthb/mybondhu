@@ -197,7 +197,9 @@ export default function AdminUserProfile() {
 
   // Withdrawal aggregates
   const wdPending  = withdrawals.filter(w => w.status === 'pending').reduce((s, w) => s + Number(w.amount ?? 0), 0);
-  const wdApproved = withdrawals.filter(w => w.status === 'approved').reduce((s, w) => s + Number(w.amount ?? 0), 0);
+  const wdApproved = withdrawals.filter(w => ['approved', 'completed'].includes(w.status)).reduce((s, w) => s + Number(w.amount ?? 0), 0);
+  const wdApprovedNet = wdApproved * 0.85;
+  const wdPendingNet = wdPending * 0.85;
   // Amount still available = total earnings minus approved/pending withdrawals
   const wdAvailable = Math.max(0, bn.totalEarnings - wdApproved - wdPending);
 
@@ -309,27 +311,25 @@ export default function AdminUserProfile() {
         </div>
       </div>
 
-      {/* ── UPI ID highlight bar (always visible for bondhu) ── */}
-      {isBondhu && (
-        <div className={`rounded-2xl border ${bn.upiId ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-dashed border-slate-600 bg-slate-800/30'} px-5 py-3 flex items-center gap-3`}>
-          <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${bn.upiId ? 'bg-emerald-500/20' : 'bg-slate-700'}`}>
-            <CreditCard className={`w-4 h-4 ${bn.upiId ? 'text-emerald-400' : 'text-slate-500'}`} />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-xs text-slate-400 uppercase tracking-wider font-medium">Bondhu UPI ID</p>
-            {bn.upiId ? (
-              <p className="text-emerald-300 font-mono text-sm font-semibold truncate">{bn.upiId}</p>
-            ) : (
-              <p className="text-slate-500 text-sm italic">Not registered yet</p>
-            )}
-          </div>
-          {bn.upiId && (
-            <span className="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full font-semibold border border-emerald-500/20">
-              ✓ SET
-            </span>
+      {/* ── UPI ID highlight bar (always visible) ── */}
+      <div className={`rounded-2xl border ${bn.upiId ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-dashed border-slate-600 bg-slate-800/30'} px-5 py-3 flex items-center gap-3`}>
+        <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${bn.upiId ? 'bg-emerald-500/20' : 'bg-slate-700'}`}>
+          <CreditCard className={`w-4 h-4 ${bn.upiId ? 'text-emerald-400' : 'text-slate-500'}`} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-xs text-slate-400 uppercase tracking-wider font-medium">Bondhu UPI ID</p>
+          {bn.upiId ? (
+            <p className="text-emerald-300 font-mono text-sm font-semibold truncate">{bn.upiId}</p>
+          ) : (
+            <p className="text-slate-500 text-sm italic">Not registered yet</p>
           )}
         </div>
-      )}
+        {bn.upiId && (
+          <span className="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full font-semibold border border-emerald-500/20">
+            ✓ SET
+          </span>
+        )}
+      </div>
 
       {/* ── Tab nav ── */}
       <div className="flex gap-1 bg-slate-800/60 rounded-xl p-1 w-fit border border-white/10">
@@ -369,22 +369,20 @@ export default function AdminUserProfile() {
           </section>
 
           {/* Bondhu section */}
-          {isBondhu && (
-            <section>
-              <div className="flex items-center gap-2 mb-3">
-                <Briefcase className="w-4 h-4 text-violet-400" />
-                <h2 className="text-white font-semibold text-sm uppercase tracking-wider">As Bondhu (Service Provider)</h2>
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-                <StatCard icon={CheckCircle} label="Completed"     value={bn.completed}   accent="bg-emerald-500" />
-                <StatCard icon={Clock}       label="In Progress"   value={bn.inProgress}  accent="bg-blue-500" />
-                <StatCard icon={ThumbsDown}  label="Declined"      value={bn.declined}    accent="bg-red-500" />
-                <StatCard icon={Star}        label="Avg Rating"    value={bn.avgRating.toFixed(1)} sub="out of 5" accent="bg-amber-500" />
-                <StatCard icon={IndianRupee} label="Total Earned"  value={`₹${bn.totalEarnings.toLocaleString('en-IN')}`} accent="bg-violet-500" />
-                <StatCard icon={Coins}       label="BondhuCoins"   value={bn.coins}       accent="bg-yellow-500" />
-              </div>
-            </section>
-          )}
+          <section>
+            <div className="flex items-center gap-2 mb-3">
+              <Briefcase className="w-4 h-4 text-violet-400" />
+              <h2 className="text-white font-semibold text-sm uppercase tracking-wider">As Bondhu (Service Provider)</h2>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+              <StatCard icon={CheckCircle} label="Completed"     value={bn.completed}   accent="bg-emerald-500" />
+              <StatCard icon={Clock}       label="In Progress"   value={bn.inProgress}  accent="bg-blue-500" />
+              <StatCard icon={ThumbsDown}  label="Declined"      value={bn.declined}    accent="bg-red-500" />
+              <StatCard icon={Star}        label="Avg Rating"    value={bn.avgRating.toFixed(1)} sub="out of 5" accent="bg-amber-500" />
+              <StatCard icon={IndianRupee} label="Total Earned"  value={`₹${bn.totalEarnings.toLocaleString('en-IN')}`} accent="bg-violet-500" />
+              <StatCard icon={Coins}       label="BondhuCoins"   value={bn.coins}       accent="bg-yellow-500" />
+            </div>
+          </section>
 
           {/* Personal info */}
           <section className="rounded-2xl border border-white/10 bg-slate-800/50 backdrop-blur p-5">
@@ -409,27 +407,25 @@ export default function AdminUserProfile() {
             </div>
           </section>
 
-          {/* Financial summary for bondhu */}
-          {isBondhu && (
-            <section className="rounded-2xl border border-white/10 bg-slate-800/50 backdrop-blur p-5">
-              <div className="flex items-center gap-2 mb-3">
-                <Wallet className="w-4 h-4 text-emerald-400" />
-                <h2 className="text-white font-semibold">Financial Summary</h2>
-              </div>
-              <div className="divide-y divide-white/5">
-                <InfoRow label="UPI ID" value={
-                  bn.upiId
-                    ? <span className="font-mono text-emerald-300 bg-emerald-500/10 px-2 py-0.5 rounded-lg">{bn.upiId}</span>
-                    : <span className="text-slate-500 italic text-xs">Not registered</span>
-                } />
-                <InfoRow label="Total Earnings"      value={<span className="text-emerald-400 font-bold">₹ {bn.totalEarnings.toLocaleString('en-IN')}</span>} />
-                <InfoRow label="Withdrawal Pending"  value={<span className="text-amber-400 font-semibold">₹ {wdPending.toLocaleString('en-IN')}</span>} />
-                <InfoRow label="Withdrawal Paid Out" value={<span className="text-violet-400 font-semibold">₹ {wdApproved.toLocaleString('en-IN')}</span>} />
-                <InfoRow label="Available Balance"   value={<span className="text-cyan-400 font-bold">₹ {wdAvailable.toLocaleString('en-IN')}</span>} />
-                <InfoRow label="BondhuCoins"         value={`🪙 ${bn.coins}`} />
-              </div>
-            </section>
-          )}
+          {/* Financial summary */}
+          <section className="rounded-2xl border border-white/10 bg-slate-800/50 backdrop-blur p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <Wallet className="w-4 h-4 text-emerald-400" />
+              <h2 className="text-white font-semibold">Financial Summary</h2>
+            </div>
+            <div className="divide-y divide-white/5">
+              <InfoRow label="UPI ID" value={
+                bn.upiId
+                  ? <span className="font-mono text-emerald-300 bg-emerald-500/10 px-2 py-0.5 rounded-lg">{bn.upiId}</span>
+                  : <span className="text-slate-500 italic text-xs">Not registered</span>
+              } />
+              <InfoRow label="Total Earnings"      value={<span className="text-emerald-400 font-bold">₹ {bn.totalEarnings.toLocaleString('en-IN')}</span>} />
+              <InfoRow label="Withdrawal Pending"  value={<span className="text-amber-400 font-semibold">₹ {wdPending.toLocaleString('en-IN')} (Net Payout: ₹{wdPendingNet.toLocaleString('en-IN')})</span>} />
+              <InfoRow label="Withdrawal Paid Out" value={<span className="text-violet-400 font-semibold">₹ {wdApprovedNet.toLocaleString('en-IN')} (Gross: ₹{wdApproved.toLocaleString('en-IN')})</span>} />
+              <InfoRow label="Available Balance"   value={<span className="text-cyan-400 font-bold">₹ {wdAvailable.toLocaleString('en-IN')}</span>} />
+              <InfoRow label="BondhuCoins"         value={`🪙 ${bn.coins}`} />
+            </div>
+          </section>
         </div>
       )}
 
@@ -484,9 +480,8 @@ export default function AdminUserProfile() {
             )}
           </section>
 
-          {/* Assignments (bondhu side) */}
-          {isBondhu && (
-            <section className="rounded-2xl border border-white/10 bg-slate-800/50 backdrop-blur overflow-hidden">
+          {/* Assignments */}
+          <section className="rounded-2xl border border-white/10 bg-slate-800/50 backdrop-blur overflow-hidden">
               <div className="px-5 py-4 border-b border-white/10 flex items-center justify-between">
                 <div>
                   <h2 className="text-white font-semibold">Task Assignments (as Bondhu)</h2>
@@ -538,7 +533,7 @@ export default function AdminUserProfile() {
                 </div>
               )}
             </section>
-          )}
+          );
         </div>
       )}
 
@@ -552,8 +547,8 @@ export default function AdminUserProfile() {
           <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             <StatCard icon={IndianRupee} label="Total Earnings"     value={`₹${bn.totalEarnings.toLocaleString('en-IN')}`} sub="from completed tasks" accent="bg-emerald-500" />
             <StatCard icon={Coins}       label="BondhuCoins"        value={bn.coins}                                         sub="reward points"        accent="bg-yellow-500" />
-            <StatCard icon={Send}        label="Pending Withdrawal"  value={`₹${wdPending.toLocaleString('en-IN')}`}         sub="awaiting approval"   accent="bg-blue-500" />
-            <StatCard icon={CheckCircle} label="Total Paid Out"     value={`₹${wdApproved.toLocaleString('en-IN')}`}        sub="approved withdrawals" accent="bg-violet-500" />
+            <StatCard icon={Send}        label="Pending Withdrawal"  value={`₹${wdPending.toLocaleString('en-IN')}`}         sub={`Est. Payout: ₹${wdPendingNet.toLocaleString('en-IN')} (15% fee)`}   accent="bg-blue-500" />
+            <StatCard icon={CheckCircle} label="Total Paid Out"     value={`₹${wdApprovedNet.toLocaleString('en-IN')}`}        sub={`Net paid after 15% platform fee`} accent="bg-violet-500" />
           </div>
 
           {/* Available balance highlight */}
@@ -569,36 +564,34 @@ export default function AdminUserProfile() {
           </div>
 
           {/* UPI ID card */}
-          {isBondhu && (
-            <div className="rounded-2xl border border-white/10 bg-slate-800/50 backdrop-blur p-5">
-              <div className="flex items-center gap-2 mb-4">
-                <CreditCard className="w-4 h-4 text-emerald-400" />
-                <h2 className="text-white font-semibold">Bondhu UPI ID</h2>
-              </div>
-              {bn.upiId ? (
-                <div className="flex items-center gap-3 bg-slate-700/60 border border-emerald-500/20 rounded-xl px-4 py-3">
-                  <div className="w-9 h-9 rounded-lg bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
-                    <CreditCard className="w-4 h-4 text-emerald-400" />
-                  </div>
-                  <div>
-                    <p className="text-slate-400 text-xs mb-0.5">Registered UPI</p>
-                    <p className="font-mono text-emerald-300 text-sm font-semibold">{bn.upiId}</p>
-                  </div>
-                  <span className="ml-auto text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full font-semibold border border-emerald-500/20">
-                    ACTIVE
-                  </span>
-                </div>
-              ) : (
-                <div className="flex items-center gap-3 bg-slate-700/40 border border-dashed border-slate-600 rounded-xl px-4 py-3">
-                  <Ban className="w-4 h-4 text-slate-500" />
-                  <div>
-                    <p className="text-slate-400 text-sm">No UPI ID registered</p>
-                    <p className="text-slate-600 text-xs">User must add it from their profile → wallet section</p>
-                  </div>
-                </div>
-              )}
+          <div className="rounded-2xl border border-white/10 bg-slate-800/50 backdrop-blur p-5">
+            <div className="flex items-center gap-2 mb-4">
+              <CreditCard className="w-4 h-4 text-emerald-400" />
+              <h2 className="text-white font-semibold">Bondhu UPI ID</h2>
             </div>
-          )}
+            {bn.upiId ? (
+              <div className="flex items-center gap-3 bg-slate-700/60 border border-emerald-500/20 rounded-xl px-4 py-3">
+                <div className="w-9 h-9 rounded-lg bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
+                  <CreditCard className="w-4 h-4 text-emerald-400" />
+                </div>
+                <div>
+                  <p className="text-slate-400 text-xs mb-0.5">Registered UPI</p>
+                  <p className="font-mono text-emerald-300 text-sm font-semibold">{bn.upiId}</p>
+                </div>
+                <span className="ml-auto text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full font-semibold border border-emerald-500/20">
+                  ACTIVE
+                </span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-3 bg-slate-700/40 border border-dashed border-slate-600 rounded-xl px-4 py-3">
+                <Ban className="w-4 h-4 text-slate-500" />
+                <div>
+                  <p className="text-slate-400 text-sm">No UPI ID registered</p>
+                  <p className="text-slate-600 text-xs">User must add it from their profile → wallet section</p>
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* Withdrawal requests table */}
           <section className="rounded-2xl border border-white/10 bg-slate-800/50 backdrop-blur overflow-hidden">
@@ -636,19 +629,27 @@ export default function AdminUserProfile() {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="text-slate-400 text-xs uppercase tracking-wider border-b border-white/5">
-                      <th className="px-5 py-3 text-left">Amount</th>
+                      <th className="px-5 py-3 text-left">Requested (Gross)</th>
+                      <th className="px-4 py-3 text-left">Fee (15%)</th>
+                      <th className="px-4 py-3 text-left">Payout (Net)</th>
                       <th className="px-4 py-3 text-left">UPI ID</th>
                       <th className="px-4 py-3 text-left">Status</th>
-                      <th className="px-4 py-3 text-left hidden md:table-cell">Requested</th>
-                      <th className="px-4 py-3 text-left hidden lg:table-cell">Processed</th>
+                      <th className="px-4 py-3 text-left hidden md:table-cell">Requested Date</th>
+                      <th className="px-4 py-3 text-left hidden lg:table-cell">Processed Date</th>
                       <th className="px-4 py-3 text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/5">
                     {withdrawals.map(w => (
                       <tr key={w.id} className="hover:bg-white/5 transition-colors">
-                        <td className="px-5 py-3 text-emerald-400 font-bold text-base">
+                        <td className="px-5 py-3 text-slate-300 font-bold text-sm">
                           ₹{Number(w.amount ?? 0).toLocaleString('en-IN')}
+                        </td>
+                        <td className="px-4 py-3 text-amber-500/80 text-sm">
+                          ₹{Number((w.amount ?? 0) * 0.15).toLocaleString('en-IN')}
+                        </td>
+                        <td className="px-4 py-3 text-emerald-400 font-bold text-base">
+                          ₹{Number((w.amount ?? 0) * 0.85).toLocaleString('en-IN')}
                         </td>
                         <td className="px-4 py-3 text-slate-300 font-mono text-xs">{w.upi_id ?? '—'}</td>
                         <td className="px-4 py-3">
@@ -689,9 +690,9 @@ export default function AdminUserProfile() {
 
                 {/* Summary footer */}
                 <div className="px-5 py-3 border-t border-white/5 flex items-center justify-between bg-slate-900/40 text-xs text-slate-400">
-                  <span>Pending: <strong className="text-amber-400">₹{wdPending.toLocaleString('en-IN')}</strong></span>
-                  <span>Paid Out: <strong className="text-violet-400">₹{wdApproved.toLocaleString('en-IN')}</strong></span>
-                  <span>Available: <strong className="text-cyan-400">₹{wdAvailable.toLocaleString('en-IN')}</strong></span>
+                  <span>Pending (Gross): <strong className="text-amber-400">₹{wdPending.toLocaleString('en-IN')}</strong> <span className="opacity-60">(Net Payout: ₹{wdPendingNet.toLocaleString('en-IN')})</span></span>
+                  <span>Paid Out (Net): <strong className="text-violet-400">₹{wdApprovedNet.toLocaleString('en-IN')}</strong> <span className="opacity-60">(Gross: ₹{wdApproved.toLocaleString('en-IN')})</span></span>
+                  <span>Available Balance: <strong className="text-cyan-400">₹{wdAvailable.toLocaleString('en-IN')}</strong></span>
                 </div>
               </div>
             )}

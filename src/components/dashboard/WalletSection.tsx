@@ -180,7 +180,7 @@ export default function WalletSection({ userId, totalTasks, totalEarnings, upiId
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-gray-900">₹{wdPending.toLocaleString('en-IN')}</div>
-            <p className="text-[10px] text-gray-500 mt-1">Awaiting admin processing</p>
+            <p className="text-[10px] text-gray-500 mt-1">Est. Payout: ₹{(wdPending * 0.85).toLocaleString('en-IN')} (15% fee)</p>
           </CardContent>
         </Card>
 
@@ -194,8 +194,8 @@ export default function WalletSection({ userId, totalTasks, totalEarnings, upiId
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-gray-900">₹{wdApproved.toLocaleString('en-IN')}</div>
-            <p className="text-[10px] text-gray-500 mt-1">Successfully sent to your UPI</p>
+            <div className="text-2xl font-bold text-gray-900">₹{(wdApproved * 0.85).toLocaleString('en-IN')}</div>
+            <p className="text-[10px] text-gray-500 mt-1">Net paid after 15% platform fee (Gross: ₹{wdApproved.toLocaleString('en-IN')})</p>
           </CardContent>
         </Card>
       </div>
@@ -304,12 +304,18 @@ export default function WalletSection({ userId, totalTasks, totalEarnings, upiId
                 {withdrawals.map((w) => (
                   <div key={w.id} className="p-3.5 flex items-center justify-between hover:bg-slate-50 transition-colors">
                     <div>
-                      <div className="flex items-center gap-1 text-sm font-bold text-gray-900">
+                      <div className="flex items-center gap-1.5 text-sm font-bold text-gray-900">
                         <IndianRupee className="h-3.5 w-3.5 text-gray-600" />
                         <span>{Number(w.amount).toLocaleString('en-IN')}</span>
+                        <span className="text-xs font-normal text-gray-500">Requested</span>
                       </div>
-                      <div className="text-[10px] text-gray-400 mt-0.5">
-                        UPI: <span className="font-mono">{w.upi_id}</span> • {new Date(w.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                      <div className="text-[10px] text-gray-500 mt-1 space-y-0.5">
+                        <div>
+                          Payout (Net): <strong className="text-emerald-600">₹{(w.amount * 0.85).toLocaleString('en-IN')}</strong> • Fee (15%): ₹{(w.amount * 0.15).toLocaleString('en-IN')}
+                        </div>
+                        <div className="text-gray-400">
+                          UPI: <span className="font-mono">{w.upi_id}</span> • {new Date(w.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                        </div>
                       </div>
                     </div>
                     <div>{getStatusBadge(w.status)}</div>
