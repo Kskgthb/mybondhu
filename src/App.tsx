@@ -57,9 +57,9 @@ const App = () => {
 
   return (
     <Router>
-      <GlobalTracker />
       <ThemeProvider>
         <AuthProvider>
+          <GlobalTracker />
           <RoleProvider>
             <GoogleMapsProvider>
               <Toaster position="top-center" richColors closeButton />
