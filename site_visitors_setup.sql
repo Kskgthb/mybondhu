@@ -39,6 +39,9 @@ create policy "Service role can update session_end"
   on public.site_visitors for update
   using (auth.role() = 'service_role');
 
+-- Enable Realtime
+alter publication supabase_realtime add table public.site_visitors;
+
 -- ─────────────────────────────────────────────────────────────────────────────
 -- Optional: seed a few demo rows so the chart is not empty immediately
 -- ─────────────────────────────────────────────────────────────────────────────

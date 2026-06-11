@@ -175,6 +175,38 @@ export default function SiteVisitors() {
 
   useEffect(() => { loadVisitors(); }, [loadVisitors]);
 
+  // ── Realtime Subscription ────────────────────────────────────────────────
+  useEffect(() => {
+    const channel = supabase
+      .channel('site_visitors_changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'site_visitors' },
+        (payload) => {
+          if (payload.eventType === 'INSERT') {
+            const newRow = payload.new as VisitorRow;
+            // Only add if it falls within the current span (to be safe, we just append it
+            // since real-time events are happening 'now' which is always in any span)
+            setRows((current) => [...current, newRow]);
+            toast.success('New visitor detected!', {
+              description: `${newRow.country || 'Unknown Location'} • ${guessDevice(newRow.user_agent)}`,
+              duration: 2000,
+            });
+          } else if (payload.eventType === 'UPDATE') {
+            const updatedRow = payload.new as VisitorRow;
+            setRows((current) =>
+              current.map((row) => (row.id === updatedRow.id ? updatedRow : row))
+            );
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
   // ── Derived stats ────────────────────────────────────────────────────────
 
   const pageViews   = rows.length;
