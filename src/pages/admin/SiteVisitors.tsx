@@ -290,37 +290,15 @@ export default function SiteVisitors() {
     .sort((a, b) => b[1] - a[1])
     .slice(0, 6);
 
-  // ── Demo fallback (so the UI looks great even without real data) ──────────
-
-  const isDemoMode = rows.length === 0;
-  const demoTimeline = Array.from({ length: 30 }, (_, i) => ({
-    date: format(subDays(new Date(), 29 - i), 'MM/dd'),
-    pv: Math.floor(Math.random() * 30 + 5),
-    uv: Math.floor(Math.random() * 12 + 2),
-    signins: Math.floor(Math.random() * 5),
-  }));
-  const demoDevice = [
-    { name: 'Mobile',  value: 168 },
-    { name: 'Desktop', value: 98  },
-    { name: 'Tablet',  value: 39  },
-  ];
-  const demoBrand = [
-    { name: 'Samsung', value: 110 },
-    { name: 'Apple',   value: 98  },
-    { name: 'Tecno',   value: 47  },
-    { name: 'Unknown', value: 33  },
-    { name: 'Xiaomi',  value: 12  },
-  ];
-
-  const chartData  = isDemoMode ? demoTimeline : timelineData;
-  const donutData  = isDemoMode ? demoDevice   : (deviceData.length ? deviceData : demoDevice);
-  const brandChart = isDemoMode ? demoBrand    : (brandData.length  ? brandData  : demoBrand);
+  const chartData  = timelineData;
+  const donutData  = deviceData;
+  const brandChart = brandData;
   const totalDonut = donutData.reduce((s, d) => s + d.value, 0);
 
-  const displayPV   = isDemoMode ? 305  : pageViews;
-  const displayUV   = isDemoMode ? 75   : uniqueVisitors;
-  const displaySI   = isDemoMode ? 42   : signIns;
-  const displayDwell= isDemoMode ? 26.3 : avgDwell;
+  const displayPV   = pageViews;
+  const displayUV   = uniqueVisitors;
+  const displaySI   = signIns;
+  const displayDwell= avgDwell;
 
   const SPANS: { key: Span; label: string }[] = [
     { key: 'today',     label: 'Today' },
@@ -388,13 +366,7 @@ export default function SiteVisitors() {
         </div>
       </div>
 
-      {isDemoMode && (
-        <div className="flex items-center gap-2 text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 px-4 py-2.5 rounded-xl">
-          <span className="font-semibold">Demo Mode —</span>
-          Run the SQL migration to enable real visitor tracking.
-          <code className="ml-1 bg-amber-500/10 px-1.5 py-0.5 rounded font-mono">site_visitors</code>
-        </div>
-      )}
+
 
       {/* Stat Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -584,30 +556,8 @@ export default function SiteVisitors() {
               })}
             </div>
           ) : (
-            // Demo geographic data
-            <div className="space-y-3">
-              {[
-                { country: 'India', pct: 68, count: 207 },
-                { country: 'Bangladesh', pct: 12, count: 37 },
-                { country: 'United States', pct: 8, count: 24 },
-                { country: 'United Kingdom', pct: 5, count: 15 },
-                { country: 'Others', pct: 7, count: 22 },
-              ].map(({ country, pct, count }, i) => (
-                <div key={country} className="flex items-center gap-3">
-                  <span className="text-slate-400 text-xs w-4">{i + 1}</span>
-                  <span className="text-white text-sm flex-1 truncate">{country}</span>
-                  <div className="flex-1 h-1.5 bg-slate-700 rounded-full overflow-hidden mx-2">
-                    <div
-                      className="h-full rounded-full transition-all duration-700"
-                      style={{
-                        width: `${pct}%`,
-                        background: BRAND_COLORS[i % BRAND_COLORS.length],
-                      }}
-                    />
-                  </div>
-                  <span className="text-slate-400 text-xs w-8 text-right">{count}</span>
-                </div>
-              ))}
+            <div className="flex flex-col items-center justify-center py-6 text-slate-500 text-sm">
+              No data available yet.
             </div>
           )}
         </div>
@@ -628,16 +578,14 @@ export default function SiteVisitors() {
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
-              {(isDemoMode
-                ? Array.from({ length: 8 }, (_, i) => ({
-                    id: `demo-${i}`,
-                    created_at: subDays(new Date(), i).toISOString(),
-                    user_agent: ['Mozilla/5.0 (iPhone)', 'Samsung SM-S911B', 'Tecno Mobile', 'Mozilla/5.0 (Windows NT)', 'iPad', 'Xiaomi MI 11', 'Huawei P40', 'OPPO Find X3'][i],
-                    country: ['India', 'Bangladesh', 'India', 'India', 'United States', 'India', 'Bangladesh', 'United Kingdom'][i],
-                    is_signed_in: [true, false, true, true, false, false, true, false][i],
-                  }))
-                : rows.slice(-10).reverse()
-              ).map(r => (
+              {rows.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="py-8 text-center text-slate-500 text-sm">
+                    No visitors recorded yet.
+                  </td>
+                </tr>
+              ) : (
+                rows.slice(-10).reverse().map(r => (
                 <tr key={r.id} className="text-slate-300 hover:bg-white/5 transition-colors">
                   <td className="py-2.5 pr-4 text-xs text-slate-400">
                     {format(new Date(r.created_at), 'MMM dd, HH:mm')}
@@ -662,7 +610,7 @@ export default function SiteVisitors() {
                     </span>
                   </td>
                 </tr>
-              ))}
+              )))}
             </tbody>
           </table>
         </div>
