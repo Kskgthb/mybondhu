@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { isAdminEmail } from '@/config/adminConfig';
 import {
   LayoutDashboard, Users, ClipboardList, ShieldCheck,
-  BarChart3, Menu, X, LogOut, ArrowLeft, ChevronRight
+  BarChart3, Menu, X, LogOut, ArrowLeft, ChevronRight, Globe
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -16,6 +16,7 @@ const navItems = [
   { label: 'Tasks',         path: '/admin/tasks',          icon: ClipboardList },
   { label: 'Verifications', path: '/admin/verifications',  icon: ShieldCheck },
   { label: 'Analytics',     path: '/admin/analytics',      icon: BarChart3 },
+  { label: 'Site Visitors', path: '/admin/site-visitors',  icon: Globe },
 ];
 
 export default function AdminLayout() {
