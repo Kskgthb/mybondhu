@@ -2,11 +2,11 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/db/supabase';
 import { toast } from 'sonner';
 import {
-  AreaChart, Area, LineChart, Line, XAxis, YAxis, CartesianGrid,
+  AreaChart, Area, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend,
 } from 'recharts';
 import {
-  format, subDays, subMonths, eachDayOfInterval, startOfDay, endOfDay,
+  format, subDays, eachDayOfInterval, startOfDay, endOfDay,
   parseISO, differenceInSeconds,
 } from 'date-fns';
 import {
@@ -23,6 +23,11 @@ interface VisitorRow {
   user_agent?: string | null;
   country?: string | null;
   city?: string | null;
+  is_signed_in?: boolean;
+}
+
+interface PrevVisitorRow {
+  id: string;
   is_signed_in?: boolean;
 }
 
@@ -116,27 +121,12 @@ function StatCard({
   );
 }
 
-// ── Custom DonutLabel ────────────────────────────────────────────────────────
-
-function DonutCenter({ total, cx, cy }: { total: number; cx?: number; cy?: number }) {
-  return (
-    <g>
-      <text x={cx} y={(cy ?? 0) - 8} textAnchor="middle" fill="#f1f5f9" fontSize={26} fontWeight={700}>
-        {total}
-      </text>
-      <text x={cx} y={(cy ?? 0) + 14} textAnchor="middle" fill="#94a3b8" fontSize={11}>
-        Total
-      </text>
-    </g>
-  );
-}
-
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
 export default function SiteVisitors() {
   const [span, setSpan] = useState<Span>('30d');
   const [rows, setRows] = useState<VisitorRow[]>([]);
-  const [prevRows, setPrevRows] = useState<VisitorRow[]>([]);
+  const [prevRows, setPrevRows] = useState<PrevVisitorRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -447,7 +437,7 @@ export default function SiteVisitors() {
               <Tooltip {...tooltipStyle} />
               <Area type="monotone" dataKey="pv"      stroke="#8b5cf6" strokeWidth={2} fill="url(#pvGrad)" name="Page Views" dot={{ r: 2, fill: '#8b5cf6' }} />
               <Area type="monotone" dataKey="uv"      stroke="#06b6d4" strokeWidth={2} fill="url(#uvGrad)" name="Unique Visitors" dot={{ r: 2, fill: '#06b6d4' }} />
-              <Line  type="monotone" dataKey="signins" stroke="#10b981" strokeWidth={2} dot={{ r: 2, fill: '#10b981' }} name="Sign-ins" />
+              <Area type="monotone" dataKey="signins" stroke="#10b981" strokeWidth={2} fill="none" dot={{ r: 2, fill: '#10b981' }} name="Sign-ins" />
             </AreaChart>
           </ResponsiveContainer>
         </div>
@@ -480,10 +470,29 @@ export default function SiteVisitors() {
                 {donutData.map((entry, i) => (
                   <Cell key={i} fill={DEVICE_COLORS[entry.name] ?? BRAND_COLORS[i % BRAND_COLORS.length]} />
                 ))}
-                {/* @ts-expect-error recharts label prop */}
-                <DonutCenter total={totalDonut} />
               </Pie>
               <Tooltip {...tooltipStyle} />
+              <text
+                x="50%"
+                y="46%"
+                textAnchor="middle"
+                dominantBaseline="middle"
+                fill="#f1f5f9"
+                fontSize={26}
+                fontWeight={700}
+              >
+                {totalDonut}
+              </text>
+              <text
+                x="50%"
+                y="56%"
+                textAnchor="middle"
+                dominantBaseline="middle"
+                fill="#94a3b8"
+                fontSize={11}
+              >
+                Total
+              </text>
             </PieChart>
           </ResponsiveContainer>
         </div>
