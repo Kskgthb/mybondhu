@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { Toaster } from 'sonner';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { RoleProvider } from '@/contexts/RoleContext';
+import { CampusProvider } from '@/contexts/CampusContext';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { RequireAuth } from '@/components/common/RequireAuth';
 import MainLayout from '@/components/layout/MainLayout';
@@ -61,6 +62,7 @@ const App = () => {
         <AuthProvider>
           <GlobalTracker />
           <RoleProvider>
+            <CampusProvider>
             <GoogleMapsProvider>
               <Toaster position="top-center" richColors closeButton />
               <LiveTaskNotification />
@@ -106,6 +108,7 @@ const App = () => {
                 />
               </Routes>
             </GoogleMapsProvider>
+            </CampusProvider>
           </RoleProvider>
         </AuthProvider>
       </ThemeProvider>

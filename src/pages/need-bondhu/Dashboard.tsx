@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRole } from '@/contexts/RoleContext';
 import { tasksApi, realtimeApi } from '@/db/api';
+import { useCampus } from '@/contexts/CampusContext';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, ClipboardList, CheckCircle } from 'lucide-react';
@@ -30,6 +31,7 @@ export default function NeedBondhuDashboard() {
   const { user, profile } = useAuth();
   const { currentRole, switchRole } = useRole();
   const navigate = useNavigate();
+  const { isCampusMode, selectedCampus } = useCampus();
   const [tasks, setTasks] = useState<TaskWithFullInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('all');
@@ -243,6 +245,19 @@ export default function NeedBondhuDashboard() {
             <p className="text-muted-foreground text-sm sm:text-base mb-6">
               Manage your posted tasks and track their progress
             </p>
+
+            {/* LIVE Campus Badge */}
+            {isCampusMode && selectedCampus && (
+              <div className="mb-6 flex items-center">
+                <span className="flex items-center gap-2 text-xs font-bold bg-[#2fbe6b]/10 text-[#2fbe6b] px-3 py-1.5 rounded-full border border-[#2fbe6b]/20">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#2fbe6b] opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-[#2fbe6b]"></span>
+                  </span>
+                  LIVE @ {selectedCampus}
+                </span>
+              </div>
+            )}
 
             {/* Toggles Row */}
             <div className="flex items-center justify-between">
