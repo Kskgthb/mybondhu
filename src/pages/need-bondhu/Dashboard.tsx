@@ -5,7 +5,7 @@ import { useRole } from '@/contexts/RoleContext';
 import { tasksApi, realtimeApi } from '@/db/api';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus } from 'lucide-react';
+import { Plus, ClipboardList, CheckCircle } from 'lucide-react';
 import TaskCard from '@/components/task/TaskCard';
 import TaskPostDialog from '@/components/task/TaskPostDialog';
 import TaskEditDialog from '@/components/task/TaskEditDialog';
@@ -17,7 +17,7 @@ import CompactBanner from '@/components/common/CompactBanner';
 import AnimatedPostTitle from '@/components/common/AnimatedPostTitle';
 
 import NotificationDialog from '@/components/common/NotificationDialog';
-import RoleSwitchButton from '@/components/common/RoleSwitchButton';
+
 import type { Task, TaskWithFullInfo } from '@/types/types';
 import { toast } from 'sonner';
 import { initializeNotifications } from '@/lib/notifications';
@@ -27,7 +27,7 @@ import { getClearedTasks, clearTask } from '@/lib/clearStorage';
 
 export default function NeedBondhuDashboard() {
   const { user, profile } = useAuth();
-  const { currentRole } = useRole();
+  const { currentRole, switchRole } = useRole();
   const navigate = useNavigate();
   const [tasks, setTasks] = useState<TaskWithFullInfo[]>([]);
   const [loading, setLoading] = useState(true);
@@ -244,8 +244,46 @@ export default function NeedBondhuDashboard() {
                 Manage your posted tasks and track their progress
               </p>
             </div>
-            <div className="flex items-center gap-2">
-              <RoleSwitchButton variant="outline" size="default" />
+            {/* Segmented Task Toggle */}
+            <div
+              className="flex items-center rounded-full p-1.5 shadow-xl border border-white/10"
+              style={{
+                background: 'linear-gradient(135deg, #12121c, #1a1a2c)',
+                minWidth: '220px',
+              }}
+            >
+              {/* Task Post option — active state */}
+              <button
+                className="flex-1 flex flex-col items-center justify-center gap-1 py-2 px-3 rounded-full transition-all duration-200"
+                style={{
+                  background: 'rgba(100, 26, 204, 0.22)',
+                  color: '#641acc',
+                  boxShadow: '0 2px 8px rgba(100, 26, 204, 0.2)',
+                }}
+              >
+                <ClipboardList className="h-4 w-4" strokeWidth={2.5} />
+                <span className="text-[11px] font-semibold whitespace-nowrap">Task Post</span>
+              </button>
+              {/* Task Solve option — inactive state */}
+              <button
+                onClick={async () => {
+                  try {
+                    await switchRole();
+                  } catch (e) {
+                    console.error(e);
+                  }
+                  navigate('/bondhu/dashboard');
+                }}
+                className="flex-1 flex flex-col items-center justify-center gap-1 py-2 px-3 rounded-full transition-all duration-200 hover:opacity-80"
+                style={{
+                  background: 'transparent',
+                  color: '#2fbe6b',
+                  opacity: 0.75,
+                }}
+              >
+                <CheckCircle className="h-4 w-4" strokeWidth={2} />
+                <span className="text-[11px] font-semibold whitespace-nowrap">Task Solve</span>
+              </button>
             </div>
           </div>
         </div>

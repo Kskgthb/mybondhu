@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Power, MapPin, Loader2, Navigation } from 'lucide-react';
+import { Power, MapPin, Loader2, Navigation, ClipboardList, CheckCircle } from 'lucide-react';
 import TaskCard from '@/components/task/TaskCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import TaskCardSkeleton from '@/components/common/TaskCardSkeleton';
@@ -451,8 +451,46 @@ export default function BondhuDashboard() {
                 Find nearby tasks and manage your assignments
               </p>
             </div>
-            <div className="flex items-center gap-3">
-              {/* Availability and Role Switch are now in the Top Header */}
+            {/* Segmented Task Toggle */}
+            <div
+              className="flex items-center rounded-full p-1.5 shadow-xl border border-white/10"
+              style={{
+                background: 'linear-gradient(135deg, #12121c, #1a1a2c)',
+                minWidth: '220px',
+              }}
+            >
+              {/* Task Post option — inactive state */}
+              <button
+                onClick={async () => {
+                  try {
+                    await switchRole();
+                  } catch (e) {
+                    console.error(e);
+                  }
+                  navigate('/need-bondhu/dashboard');
+                }}
+                className="flex-1 flex flex-col items-center justify-center gap-1 py-2 px-3 rounded-full transition-all duration-200 hover:opacity-80"
+                style={{
+                  background: 'transparent',
+                  color: '#641acc',
+                  opacity: 0.75,
+                }}
+              >
+                <ClipboardList className="h-4 w-4" strokeWidth={2} />
+                <span className="text-[11px] font-semibold whitespace-nowrap">Task Post</span>
+              </button>
+              {/* Task Solve option — active state */}
+              <button
+                className="flex-1 flex flex-col items-center justify-center gap-1 py-2 px-3 rounded-full transition-all duration-200"
+                style={{
+                  background: 'rgba(47, 190, 107, 0.22)',
+                  color: '#2fbe6b',
+                  boxShadow: '0 2px 8px rgba(47, 190, 107, 0.2)',
+                }}
+              >
+                <CheckCircle className="h-4 w-4" strokeWidth={2.5} />
+                <span className="text-[11px] font-semibold whitespace-nowrap">Task Solve</span>
+              </button>
             </div>
           </div>
         </div>

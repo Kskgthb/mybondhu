@@ -79,9 +79,11 @@ export default function AnimatedPostTitle({
     <span
       style={{
         display: 'inline-flex',
-        flexWrap: 'wrap',
+        flexWrap: 'nowrap',
         gap: '0.35em',
-        justifyContent: 'center',
+        justifyContent: 'flex-start',
+        color: '#641acc',
+        whiteSpace: 'nowrap',
       }}
     >
       {words.map((word, i) => {
