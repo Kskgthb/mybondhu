@@ -444,53 +444,57 @@ export default function BondhuDashboard() {
 
       <div className="container mx-auto px-4 py-8 max-w-7xl relative z-10">
         <div className="mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h1 className="text-3xl font-bold mb-2">Bondhu Dashboard</h1>
-              <p className="text-muted-foreground">
-                Find nearby tasks and manage your assignments
-              </p>
-            </div>
-            {/* Segmented Task Toggle */}
-            <div
-              className="flex items-center rounded-full p-1.5 shadow-xl border border-white/10"
-              style={{
-                background: 'linear-gradient(135deg, #12121c, #1a1a2c)',
-                minWidth: '220px',
-              }}
+          <div className="flex flex-col mb-6">
+            <h1 
+              className="text-[1.75rem] sm:text-3xl font-bold mb-2 whitespace-nowrap overflow-hidden text-ellipsis" 
+              style={{ color: '#2fbe6b' }}
             >
-              {/* Task Post option — inactive state */}
-              <button
-                onClick={async () => {
-                  try {
-                    await switchRole();
-                  } catch (e) {
-                    console.error(e);
-                  }
-                  navigate('/need-bondhu/dashboard');
-                }}
-                className="flex-1 flex flex-col items-center justify-center gap-1 py-2 px-3 rounded-full transition-all duration-200 hover:opacity-80"
+              Bondhu Dashboard
+            </h1>
+            <p className="text-muted-foreground text-sm sm:text-base mb-6">
+              Find nearby tasks and manage your assignments
+            </p>
+
+            {/* Segmented Task Toggle */}
+            <div className="flex">
+              <div
+                className="flex items-center rounded-full p-1"
                 style={{
-                  background: 'transparent',
-                  color: '#641acc',
-                  opacity: 0.75,
+                  background: '#f1f5f9',
+                  display: 'inline-flex',
                 }}
               >
-                <ClipboardList className="h-4 w-4" strokeWidth={2} />
-                <span className="text-[11px] font-semibold whitespace-nowrap">Task Post</span>
-              </button>
-              {/* Task Solve option — active state */}
-              <button
-                className="flex-1 flex flex-col items-center justify-center gap-1 py-2 px-3 rounded-full transition-all duration-200"
-                style={{
-                  background: 'rgba(47, 190, 107, 0.22)',
-                  color: '#2fbe6b',
-                  boxShadow: '0 2px 8px rgba(47, 190, 107, 0.2)',
-                }}
-              >
-                <CheckCircle className="h-4 w-4" strokeWidth={2.5} />
-                <span className="text-[11px] font-semibold whitespace-nowrap">Task Solve</span>
-              </button>
+                {/* Task Post option — inactive state */}
+                <button
+                  onClick={async () => {
+                    try {
+                      await switchRole();
+                    } catch (e) {
+                      console.error(e);
+                    }
+                    navigate('/need-bondhu/dashboard');
+                  }}
+                  className="flex flex-col items-center justify-center gap-1 py-1.5 px-6 rounded-full transition-all duration-200"
+                  style={{
+                    background: 'transparent',
+                    color: '#641acc',
+                  }}
+                >
+                  <ClipboardList className="h-[18px] w-[18px]" strokeWidth={2} />
+                  <span className="text-[11px] font-semibold whitespace-nowrap">Task Post</span>
+                </button>
+                {/* Task Solve option — active state */}
+                <button
+                  className="flex flex-col items-center justify-center gap-1 py-1.5 px-6 rounded-full transition-all duration-200 shadow-sm border border-black/5"
+                  style={{
+                    background: 'white',
+                    color: '#2fbe6b',
+                  }}
+                >
+                  <CheckCircle className="h-[18px] w-[18px]" strokeWidth={2.5} />
+                  <span className="text-[11px] font-semibold whitespace-nowrap">Task Solve</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
