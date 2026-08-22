@@ -1,6 +1,5 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
@@ -19,15 +18,19 @@ const CAMPUSES = [
 export default function CampusToggle({ onModeChange, className }: CampusToggleProps) {
   const [isCampusMode, setIsCampusMode] = useState(false);
   const [selectedCampus, setSelectedCampus] = useState<string | null>(null);
-  const [tempCampus, setTempCampus]     = useState<string | null>(null);
-  const [showModal, setShowModal]       = useState(false);
+  const [tempCampus, setTempCampus] = useState<string | null>(null);
+  const [showPopup, setShowPopup] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  const handleSegmentClick = (campus: boolean) => {
-    if (campus && !isCampusMode) {
+  const handleToggle = () => {
+    if (!isCampusMode) {
+      // Turning ON — show campus picker popup
       setTempCampus(selectedCampus);
-      setShowModal(true);
-    } else if (!campus && isCampusMode) {
+      setShowPopup(true);
+    } else {
+      // Turning OFF — go back to Outside
       setIsCampusMode(false);
+      setShowPopup(false);
       onModeChange?.(false, null);
     }
   };
@@ -36,160 +39,131 @@ export default function CampusToggle({ onModeChange, className }: CampusTogglePr
     if (tempCampus) {
       setSelectedCampus(tempCampus);
       setIsCampusMode(true);
-      setShowModal(false);
+      setShowPopup(false);
       onModeChange?.(true, tempCampus);
     }
   };
 
   const handleClose = () => {
-    setShowModal(false);
+    setShowPopup(false);
+    // If user closes without selecting, keep toggle off
+    if (!isCampusMode) {
+      setIsCampusMode(false);
+    }
   };
 
   return (
-    <div className={cn('flex flex-col items-center gap-1', className)}>
+    <div ref={containerRef} className={cn('relative flex flex-col items-end', className)}>
 
-      {/* Floating label above toggle */}
-      <span
-        className="text-[10px] font-bold tracking-widest uppercase transition-colors duration-300"
-        style={{ color: isCampusMode ? '#2fbe6b' : '#641acc' }}
+      {/* ── CAMPUS label + toggle pill ── */}
+      <button
+        type="button"
+        onClick={handleToggle}
+        className="flex flex-col items-center gap-0.5 focus:outline-none"
+        aria-label="Campus mode toggle"
       >
-        {isCampusMode ? 'Campus' : 'Outside'}
-      </span>
-
-      {/* Segmented pill control */}
-      <div
-        className="flex rounded-full p-[3px] shadow-sm"
-        style={{ background: '#f1f5f9', border: '1.5px solid #e2e8f0' }}
-      >
-        {/* OUTSIDE segment */}
-        <button
-          type="button"
-          onClick={() => handleSegmentClick(false)}
-          className="relative flex items-center gap-1.5 px-4 py-1.5 rounded-full text-[11px] font-bold tracking-wide transition-all duration-250 focus:outline-none"
-          style={
-            !isCampusMode
-              ? {
-                  background: 'white',
-                  color: '#641acc',
-                  boxShadow: '0 1px 6px rgba(100,26,204,0.15)',
-                }
-              : {
-                  background: 'transparent',
-                  color: '#94a3b8',
-                }
-          }
-        >
-          {/* active indicator dot */}
-          {!isCampusMode && (
-            <span className="h-1.5 w-1.5 rounded-full" style={{ background: '#641acc' }} />
-          )}
-          Outside
-        </button>
-
-        {/* CAMPUS segment */}
-        <button
-          type="button"
-          onClick={() => handleSegmentClick(true)}
-          className="relative flex items-center gap-1.5 px-4 py-1.5 rounded-full text-[11px] font-bold tracking-wide transition-all duration-250 focus:outline-none"
-          style={
-            isCampusMode
-              ? {
-                  background: 'white',
-                  color: '#2fbe6b',
-                  boxShadow: '0 1px 6px rgba(47,190,107,0.18)',
-                }
-              : {
-                  background: 'transparent',
-                  color: '#94a3b8',
-                }
-          }
-        >
-          {isCampusMode && (
-            <span className="relative flex h-1.5 w-1.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#2fbe6b] opacity-60" />
-              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[#2fbe6b]" />
-            </span>
-          )}
-          Campus
-        </button>
-      </div>
-
-      {/* Selected campus LIVE label */}
-      {isCampusMode && selectedCampus && (
+        {/* "CAMPUS" label — exactly like "VEG" in reference */}
         <span
-          className="text-[9px] font-semibold tracking-wider text-center leading-tight px-2 py-0.5 rounded-full"
+          className="text-[11px] font-extrabold tracking-widest"
+          style={{ color: isCampusMode ? '#2fbe6b' : '#64748b' }}
+        >
+          CAMPUS
+        </span>
+
+        {/* Pill toggle switch */}
+        <div
+          className="relative w-12 h-6 rounded-full transition-colors duration-300 flex items-center"
           style={{
-            color: '#2fbe6b',
-            background: 'rgba(47,190,107,0.08)',
-            border: '1px solid rgba(47,190,107,0.2)',
-            maxWidth: '180px',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
+            background: isCampusMode
+              ? '#2fbe6b'
+              : '#94a3b8',
           }}
         >
-          {selectedCampus}
-        </span>
-      )}
+          {/* Thumb */}
+          <div
+            className="absolute w-5 h-5 bg-white rounded-full shadow-md transition-all duration-300"
+            style={{
+              left: isCampusMode ? 'calc(100% - 22px)' : '2px',
+            }}
+          />
+        </div>
+      </button>
 
-      {/* Campus selection modal */}
-      <Dialog open={showModal} onOpenChange={(open) => !open && handleClose()}>
-        <DialogContent className="sm:max-w-sm rounded-2xl p-0 overflow-hidden border-none shadow-2xl bg-[#1c1c1e] text-white">
-          <div className="p-6">
-            <DialogHeader className="mb-5">
-              <DialogTitle className="text-xl font-bold text-white text-center">
-                Select your campus
-              </DialogTitle>
-            </DialogHeader>
+      {/* ── Popup card (appears below toggle) ── */}
+      {showPopup && (
+        <>
+          {/* Backdrop to close on outside click */}
+          <div
+            className="fixed inset-0 z-40"
+            onClick={handleClose}
+          />
 
-            <RadioGroup
-              value={tempCampus || ''}
-              onValueChange={setTempCampus}
-              className="space-y-2.5"
-            >
-              {CAMPUSES.map((campus) => (
-                <div
-                  key={campus.id}
-                  className={cn(
-                    'flex items-center gap-3 rounded-xl border p-3.5 transition-all cursor-pointer',
-                    tempCampus === campus.label
-                      ? 'border-[#2fbe6b] bg-[#2fbe6b]/10'
-                      : 'border-white/10 hover:bg-white/5',
-                  )}
-                  onClick={() => setTempCampus(campus.label)}
-                >
-                  <RadioGroupItem
-                    value={campus.label}
-                    id={campus.id}
-                    className="border-white/30 text-[#2fbe6b] data-[state=checked]:border-[#2fbe6b]"
-                  />
-                  <Label
-                    htmlFor={campus.id}
-                    className="text-sm font-medium cursor-pointer text-white leading-snug"
+          {/* The dark popup card */}
+          <div
+            className="absolute top-[calc(100%+10px)] right-0 z-50 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200"
+            style={{
+              background: '#1c1c1e',
+              width: 'min(320px, calc(100vw - 32px))',
+              border: '1px solid rgba(255,255,255,0.08)',
+            }}
+          >
+            {/* Header */}
+            <div className="px-5 pt-5 pb-3">
+              <p className="text-white text-[17px] font-bold">Select your campus</p>
+            </div>
+
+            {/* Campus options */}
+            <div className="px-5 pb-3">
+              <RadioGroup
+                value={tempCampus || ''}
+                onValueChange={setTempCampus}
+                className="space-y-2"
+              >
+                {CAMPUSES.map((campus) => (
+                  <div
+                    key={campus.id}
+                    className={cn(
+                      'flex items-center gap-3 rounded-xl border px-4 py-3 cursor-pointer transition-all duration-150',
+                      tempCampus === campus.label
+                        ? 'border-[#2fbe6b] bg-[#2fbe6b]/10'
+                        : 'border-white/10 hover:bg-white/5',
+                    )}
+                    onClick={() => setTempCampus(campus.label)}
                   >
-                    {campus.label}
-                  </Label>
-                </div>
-              ))}
-            </RadioGroup>
-          </div>
+                    <RadioGroupItem
+                      value={campus.label}
+                      id={campus.id}
+                      className="border-white/30 text-[#2fbe6b] data-[state=checked]:border-[#2fbe6b]"
+                    />
+                    <Label
+                      htmlFor={campus.id}
+                      className="text-[13px] font-medium text-white cursor-pointer leading-snug"
+                    >
+                      {campus.label}
+                    </Label>
+                  </div>
+                ))}
+              </RadioGroup>
+            </div>
 
-          <div className="px-6 pb-6">
-            <Button
-              className="w-full font-semibold rounded-xl text-white text-base py-6 transition-all"
-              style={{
-                background: tempCampus ? '#2fbe6b' : '#3a3a3c',
-                opacity: tempCampus ? 1 : 0.5,
-                cursor: tempCampus ? 'pointer' : 'not-allowed',
-              }}
-              disabled={!tempCampus}
-              onClick={handleApply}
-            >
-              Apply
-            </Button>
+            {/* Apply button */}
+            <div className="px-5 pb-5 pt-2">
+              <Button
+                className="w-full rounded-xl py-5 text-[15px] font-bold text-white transition-opacity"
+                style={{
+                  background: '#2fbe6b',
+                  opacity: tempCampus ? 1 : 0.45,
+                  cursor: tempCampus ? 'pointer' : 'not-allowed',
+                }}
+                disabled={!tempCampus}
+                onClick={handleApply}
+              >
+                Apply
+              </Button>
+            </div>
           </div>
-        </DialogContent>
-      </Dialog>
+        </>
+      )}
     </div>
   );
 }
