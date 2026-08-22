@@ -76,13 +76,13 @@ const BRAND_COLORS = ['#ec4899','#6366f1','#06b6d4','#10b981','#f59e0b','#ef4444
 
 const tooltipStyle = {
   contentStyle: {
-    background: '#0f172a',
-    border: '1px solid #ffffff18',
+    background: '#ffffff',
+    border: '1px solid #e2e8f0',
     borderRadius: 12,
-    color: '#f1f5f9',
+    color: '#1e293b',
     fontSize: 12,
   },
-  cursor: { stroke: '#8b5cf6', strokeWidth: 1 },
+  cursor: { stroke: '#641ACC', strokeWidth: 1 },
 };
 
 // ── Sub-components ────────────────────────────────────────────────────────────
@@ -99,20 +99,20 @@ function StatCard({
   trendLabel?: string;
 }) {
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-800/80 to-slate-900/80 backdrop-blur p-5">
+    <div className="relative overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm hover:border-[#641ACC] transition-colors p-5">
       <div className={`absolute top-0 right-0 w-28 h-28 rounded-full blur-3xl opacity-10 ${iconColor}`} />
       <div className="flex items-start justify-between mb-3">
-        <p className="text-slate-400 text-sm font-medium">{label}</p>
+        <p className="text-gray-500 text-sm font-medium">{label}</p>
         <div className={`p-2 rounded-xl ${iconColor} bg-opacity-20`}>
           <Icon className="w-4 h-4 text-white" />
         </div>
       </div>
-      <p className="text-3xl font-bold text-white mb-1">{value}</p>
+      <p className="text-3xl font-bold text-gray-900 mb-1">{value}</p>
       {(sub || trendLabel) && (
         <div className="flex items-center gap-1.5">
-          {trend === 'up'   && <TrendingUp  className="w-3 h-3 text-emerald-400" />}
-          {trend === 'down' && <TrendingDown className="w-3 h-3 text-red-400" />}
-          <p className={`text-xs ${trend === 'up' ? 'text-emerald-400' : trend === 'down' ? 'text-red-400' : 'text-slate-400'}`}>
+          {trend === 'up'   && <TrendingUp  className="w-3 h-3 text-emerald-500" />}
+          {trend === 'down' && <TrendingDown className="w-3 h-3 text-red-500" />}
+          <p className={`text-xs ${trend === 'up' ? 'text-emerald-600' : trend === 'down' ? 'text-red-600' : 'text-gray-400'}`}>
             {trendLabel ?? sub}
           </p>
         </div>
@@ -313,13 +313,13 @@ export default function SiteVisitors() {
   if (loading && !refreshing) {
     return (
       <div className="space-y-6 animate-pulse">
-        <div className="h-10 bg-slate-800/60 rounded-xl w-1/3" />
+        <div className="h-10 bg-gray-200 rounded-xl w-1/3" />
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {[1,2,3,4].map(i => <div key={i} className="h-32 bg-slate-800/60 rounded-2xl" />)}
+          {[1,2,3,4].map(i => <div key={i} className="h-32 bg-gray-200 rounded-2xl" />)}
         </div>
         <div className="grid lg:grid-cols-5 gap-6">
-          <div className="lg:col-span-3 h-64 bg-slate-800/60 rounded-2xl" />
-          <div className="lg:col-span-2 h-64 bg-slate-800/60 rounded-2xl" />
+          <div className="lg:col-span-3 h-64 bg-gray-200 rounded-2xl" />
+          <div className="lg:col-span-2 h-64 bg-gray-200 rounded-2xl" />
         </div>
       </div>
     );
@@ -330,11 +330,11 @@ export default function SiteVisitors() {
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-            <Globe className="w-6 h-6 text-violet-400" />
+          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+            <Globe className="w-6 h-6 text-[#641ACC]" />
             Site Visitors
           </h1>
-          <p className="text-slate-400 text-sm mt-1">Track traffic, engagement & sign-ins</p>
+          <p className="text-gray-500 text-sm mt-1">Track traffic, engagement & sign-ins</p>
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
@@ -405,15 +405,15 @@ export default function SiteVisitors() {
       {/* Timeline + Device Donut */}
       <div className="grid lg:grid-cols-5 gap-6">
         {/* Timeline chart */}
-        <div className="lg:col-span-3 rounded-2xl border border-white/10 bg-slate-800/50 backdrop-blur p-5">
+        <div className="lg:col-span-3 rounded-2xl border border-gray-200 bg-white shadow-sm hover:border-[#641ACC] transition-colors p-5">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h2 className="text-white font-semibold">Traffic Over Time</h2>
-              <p className="text-slate-400 text-xs mt-0.5">Page Views · Unique Visitors · Sign-ins</p>
+              <h2 className="text-gray-900 font-semibold">Traffic Over Time</h2>
+              <p className="text-gray-400 text-xs mt-0.5">Page Views · Unique Visitors · Sign-ins</p>
             </div>
             {/* Legend */}
-            <div className="flex items-center gap-3 text-[11px] text-slate-400">
-              <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-violet-500 inline-block" /> PV</span>
+            <div className="flex items-center gap-3 text-[11px] text-gray-400">
+              <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-[#641ACC] inline-block" /> PV</span>
               <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-cyan-500 inline-block" /> UV</span>
               <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block" /> Sign-ins</span>
             </div>
@@ -422,15 +422,15 @@ export default function SiteVisitors() {
             <AreaChart data={chartData}>
               <defs>
                 <linearGradient id="pvGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%"  stopColor="#8b5cf6" stopOpacity={0.35} />
-                  <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
+                  <stop offset="5%"  stopColor="#641ACC" stopOpacity={0.25} />
+                  <stop offset="95%" stopColor="#641ACC" stopOpacity={0} />
                 </linearGradient>
                 <linearGradient id="uvGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%"  stopColor="#06b6d4" stopOpacity={0.25} />
+                  <stop offset="5%"  stopColor="#06b6d4" stopOpacity={0.20} />
                   <stop offset="95%" stopColor="#06b6d4" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
               <XAxis
                 dataKey="date"
                 tick={{ fill: '#94a3b8', fontSize: 10 }}
@@ -439,7 +439,7 @@ export default function SiteVisitors() {
               />
               <YAxis tick={{ fill: '#94a3b8', fontSize: 10 }} axisLine={false} tickLine={false} />
               <Tooltip {...tooltipStyle} />
-              <Area type="monotone" dataKey="pv"      stroke="#8b5cf6" strokeWidth={2} fill="url(#pvGrad)" name="Page Views" dot={{ r: 2, fill: '#8b5cf6' }} />
+              <Area type="monotone" dataKey="pv"      stroke="#641ACC" strokeWidth={2} fill="url(#pvGrad)" name="Page Views" dot={{ r: 2, fill: '#641ACC' }} />
               <Area type="monotone" dataKey="uv"      stroke="#06b6d4" strokeWidth={2} fill="url(#uvGrad)" name="Unique Visitors" dot={{ r: 2, fill: '#06b6d4' }} />
               <Area type="monotone" dataKey="signins" stroke="#10b981" strokeWidth={2} fill="none" dot={{ r: 2, fill: '#10b981' }} name="Sign-ins" />
             </AreaChart>
@@ -447,11 +447,11 @@ export default function SiteVisitors() {
         </div>
 
         {/* Device donut */}
-        <div className="lg:col-span-2 rounded-2xl border border-white/10 bg-slate-800/50 backdrop-blur p-5">
-          <h2 className="text-white font-semibold mb-1">Device Analysis</h2>
-          <p className="text-slate-400 text-xs mb-3">Breakdown by device type</p>
+        <div className="lg:col-span-2 rounded-2xl border border-gray-200 bg-white shadow-sm hover:border-[#641ACC] transition-colors p-5">
+          <h2 className="text-gray-900 font-semibold mb-1">Device Analysis</h2>
+          <p className="text-gray-400 text-xs mb-3">Breakdown by device type</p>
 
-          <div className="flex items-center justify-end gap-3 flex-wrap text-[11px] text-slate-400 mb-2">
+          <div className="flex items-center justify-end gap-3 flex-wrap text-[11px] text-gray-400 mb-2">
             {donutData.map(d => (
               <span key={d.name} className="flex items-center gap-1">
                 <span className="w-2 h-2 rounded-full inline-block" style={{ background: DEVICE_COLORS[d.name] ?? '#94a3b8' }} />
@@ -481,7 +481,7 @@ export default function SiteVisitors() {
                 y="46%"
                 textAnchor="middle"
                 dominantBaseline="middle"
-                fill="#f1f5f9"
+                fill="#1e293b"
                 fontSize={26}
                 fontWeight={700}
               >
@@ -505,9 +505,9 @@ export default function SiteVisitors() {
       {/* Brand breakdown + Geography */}
       <div className="grid lg:grid-cols-2 gap-6">
         {/* Brand / device model */}
-        <div className="rounded-2xl border border-white/10 bg-slate-800/50 backdrop-blur p-5">
-          <h2 className="text-white font-semibold mb-1">Device Brands</h2>
-          <p className="text-slate-400 text-xs mb-4">Visitor distribution by device brand</p>
+        <div className="rounded-2xl border border-gray-200 bg-white shadow-sm hover:border-[#641ACC] transition-colors p-5">
+          <h2 className="text-gray-900 font-semibold mb-1">Device Brands</h2>
+          <p className="text-gray-400 text-xs mb-4">Visitor distribution by device brand</p>
           <ResponsiveContainer width="100%" height={200}>
             <PieChart>
               <Pie
@@ -524,24 +524,24 @@ export default function SiteVisitors() {
                 ))}
               </Pie>
               <Tooltip {...tooltipStyle} />
-              <Legend wrapperStyle={{ fontSize: 11, color: '#94a3b8' }} />
+              <Legend wrapperStyle={{ fontSize: 11, color: '#64748b' }} />
             </PieChart>
           </ResponsiveContainer>
         </div>
 
         {/* Geographic */}
-        <div className="rounded-2xl border border-white/10 bg-slate-800/50 backdrop-blur p-5">
-          <h2 className="text-white font-semibold mb-1">Geographic Distribution</h2>
-          <p className="text-slate-400 text-xs mb-4">Top countries by visits</p>
+        <div className="rounded-2xl border border-gray-200 bg-white shadow-sm hover:border-[#641ACC] transition-colors p-5">
+          <h2 className="text-gray-900 font-semibold mb-1">Geographic Distribution</h2>
+          <p className="text-gray-400 text-xs mb-4">Top countries by visits</p>
           {countryData.length > 0 ? (
             <div className="space-y-3">
               {countryData.map(([country, count], i) => {
                 const pct = Math.round((count / pageViews) * 100);
                 return (
                   <div key={country} className="flex items-center gap-3">
-                    <span className="text-slate-400 text-xs w-4">{i + 1}</span>
-                    <span className="text-white text-sm flex-1 truncate">{country}</span>
-                    <div className="flex-1 h-1.5 bg-slate-700 rounded-full overflow-hidden mx-2">
+                    <span className="text-gray-400 text-xs w-4">{i + 1}</span>
+                    <span className="text-gray-800 text-sm flex-1 truncate">{country}</span>
+                    <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden mx-2">
                       <div
                         className="h-full rounded-full"
                         style={{
@@ -550,13 +550,13 @@ export default function SiteVisitors() {
                         }}
                       />
                     </div>
-                    <span className="text-slate-400 text-xs w-8 text-right">{count}</span>
+                    <span className="text-gray-400 text-xs w-8 text-right">{count}</span>
                   </div>
                 );
               })}
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center py-6 text-slate-500 text-sm">
+            <div className="flex flex-col items-center justify-center py-6 text-gray-400 text-sm">
               No data available yet.
             </div>
           )}
@@ -564,12 +564,12 @@ export default function SiteVisitors() {
       </div>
 
       {/* Recent sessions table */}
-      <div className="rounded-2xl border border-white/10 bg-slate-800/50 backdrop-blur p-5">
-        <h2 className="text-white font-semibold mb-4">Recent Sessions</h2>
+      <div className="rounded-2xl border border-gray-200 bg-white shadow-sm p-5">
+        <h2 className="text-gray-900 font-semibold mb-4">Recent Sessions</h2>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-slate-400 text-xs border-b border-white/10">
+              <tr className="text-left text-gray-400 text-xs border-b border-gray-100">
                 <th className="pb-3 pr-4 font-medium">Time</th>
                 <th className="pb-3 pr-4 font-medium">Device</th>
                 <th className="pb-3 pr-4 font-medium">Brand</th>
@@ -577,24 +577,24 @@ export default function SiteVisitors() {
                 <th className="pb-3 font-medium">Status</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/5">
+            <tbody className="divide-y divide-gray-50">
               {rows.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="py-8 text-center text-slate-500 text-sm">
+                  <td colSpan={5} className="py-8 text-center text-gray-400 text-sm">
                     No visitors recorded yet.
                   </td>
                 </tr>
               ) : (
                 rows.slice(-10).reverse().map(r => (
-                <tr key={r.id} className="text-slate-300 hover:bg-white/5 transition-colors">
-                  <td className="py-2.5 pr-4 text-xs text-slate-400">
+                <tr key={r.id} className="text-gray-600 hover:bg-[#641ACC]/5 transition-colors">
+                  <td className="py-2.5 pr-4 text-xs text-gray-400">
                     {format(new Date(r.created_at), 'MMM dd, HH:mm')}
                   </td>
                   <td className="py-2.5 pr-4">
                     <div className="flex items-center gap-1.5">
-                      {guessDevice(r.user_agent) === 'Mobile'  && <Smartphone className="w-3.5 h-3.5 text-violet-400" />}
-                      {guessDevice(r.user_agent) === 'Tablet'  && <Tablet      className="w-3.5 h-3.5 text-cyan-400" />}
-                      {guessDevice(r.user_agent) === 'Desktop' && <Monitor     className="w-3.5 h-3.5 text-emerald-400" />}
+                      {guessDevice(r.user_agent) === 'Mobile'  && <Smartphone className="w-3.5 h-3.5 text-[#641ACC]" />}
+                      {guessDevice(r.user_agent) === 'Tablet'  && <Tablet      className="w-3.5 h-3.5 text-cyan-500" />}
+                      {guessDevice(r.user_agent) === 'Desktop' && <Monitor     className="w-3.5 h-3.5 text-emerald-500" />}
                       <span className="text-xs">{guessDevice(r.user_agent)}</span>
                     </div>
                   </td>
@@ -603,8 +603,8 @@ export default function SiteVisitors() {
                   <td className="py-2.5">
                     <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
                       r.is_signed_in
-                        ? 'bg-emerald-500/20 text-emerald-400'
-                        : 'bg-slate-500/20 text-slate-400'
+                        ? 'bg-emerald-100 text-emerald-700'
+                        : 'bg-gray-100 text-gray-500'
                     }`}>
                       {r.is_signed_in ? 'Signed In' : 'Anonymous'}
                     </span>

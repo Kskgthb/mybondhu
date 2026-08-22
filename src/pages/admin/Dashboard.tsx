@@ -21,16 +21,16 @@ function StatCard({
   color: string;
 }) {
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-800/80 to-slate-900/80 backdrop-blur p-5">
+    <div className="relative overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm hover:border-[#641ACC] transition-colors p-5">
       <div className={`absolute top-0 right-0 w-24 h-24 rounded-full blur-2xl opacity-20 ${color}`} />
       <div className="flex items-start justify-between mb-3">
-        <p className="text-slate-400 text-sm font-medium">{title}</p>
+        <p className="text-gray-500 text-sm font-medium">{title}</p>
         <div className={`p-2 rounded-xl ${color} bg-opacity-20`}>
           <Icon className="w-4 h-4 text-white" />
         </div>
       </div>
-      <p className="text-3xl font-bold text-white mb-1">{value}</p>
-      <p className="text-slate-400 text-xs">{sub}</p>
+      <p className="text-3xl font-bold text-gray-900 mb-1">{value}</p>
+      <p className="text-gray-400 text-xs">{sub}</p>
     </div>
   );
 }
@@ -96,12 +96,12 @@ export default function AdminDashboard() {
       <div className="space-y-6">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {[1,2,3,4].map(i => (
-            <div key={i} className="h-32 rounded-2xl bg-slate-800/60 animate-pulse" />
+            <div key={i} className="h-32 rounded-2xl bg-gray-200 animate-pulse" />
           ))}
         </div>
         <div className="grid lg:grid-cols-2 gap-6">
-          <div className="h-64 rounded-2xl bg-slate-800/60 animate-pulse" />
-          <div className="h-64 rounded-2xl bg-slate-800/60 animate-pulse" />
+          <div className="h-64 rounded-2xl bg-gray-200 animate-pulse" />
+          <div className="h-64 rounded-2xl bg-gray-200 animate-pulse" />
         </div>
       </div>
     );
@@ -112,13 +112,13 @@ export default function AdminDashboard() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">Overview</h1>
-          <p className="text-slate-400 text-sm mt-1">Welcome back, here's what's happening</p>
+          <h1 className="text-2xl font-bold text-gray-900">Overview</h1>
+          <p className="text-gray-500 text-sm mt-1">Welcome back, here's what's happening</p>
         </div>
         <button
           onClick={() => loadData(true)}
           disabled={refreshing}
-          className="flex items-center gap-2 text-sm text-slate-300 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 px-3 py-2 rounded-xl transition-all"
+          className="flex items-center gap-2 text-sm text-gray-600 hover:text-[#641ACC] bg-white hover:bg-[#641ACC]/5 border border-gray-200 hover:border-[#641ACC] px-3 py-2 rounded-xl transition-all"
         >
           <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
           Refresh
@@ -136,33 +136,33 @@ export default function AdminDashboard() {
       {/* Charts */}
       <div className="grid lg:grid-cols-5 gap-6">
         {/* Area Chart */}
-        <div className="lg:col-span-3 rounded-2xl border border-white/10 bg-slate-800/50 backdrop-blur p-5">
-          <h2 className="text-white font-semibold mb-1">Tasks This Week</h2>
-          <p className="text-slate-400 text-xs mb-4">Tasks posted in the last 7 days</p>
+        <div className="lg:col-span-3 rounded-2xl border border-gray-200 bg-white shadow-sm hover:border-[#641ACC] transition-colors p-5">
+          <h2 className="text-gray-900 font-semibold mb-1">Tasks This Week</h2>
+          <p className="text-gray-400 text-xs mb-4">Tasks posted in the last 7 days</p>
           <ResponsiveContainer width="100%" height={200}>
             <AreaChart data={chartData}>
               <defs>
                 <linearGradient id="taskGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%"  stopColor="#8b5cf6" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
+                  <stop offset="5%"  stopColor="#641ACC" stopOpacity={0.25} />
+                  <stop offset="95%" stopColor="#641ACC" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
               <XAxis dataKey="date" tick={{ fill: '#94a3b8', fontSize: 11 }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fill: '#94a3b8', fontSize: 11 }} axisLine={false} tickLine={false} />
               <Tooltip
-                contentStyle={{ background: '#1e293b', border: '1px solid #ffffff15', borderRadius: 12, color: '#f1f5f9' }}
-                cursor={{ stroke: '#8b5cf6', strokeWidth: 1 }}
+                contentStyle={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 12, color: '#1e293b' }}
+                cursor={{ stroke: '#641ACC', strokeWidth: 1 }}
               />
-              <Area type="monotone" dataKey="tasks" stroke="#8b5cf6" strokeWidth={2} fill="url(#taskGrad)" />
+              <Area type="monotone" dataKey="tasks" stroke="#641ACC" strokeWidth={2} fill="url(#taskGrad)" />
             </AreaChart>
           </ResponsiveContainer>
         </div>
 
         {/* Pie Chart */}
-        <div className="lg:col-span-2 rounded-2xl border border-white/10 bg-slate-800/50 backdrop-blur p-5">
-          <h2 className="text-white font-semibold mb-1">Task Status</h2>
-          <p className="text-slate-400 text-xs mb-4">Current distribution</p>
+        <div className="lg:col-span-2 rounded-2xl border border-gray-200 bg-white shadow-sm hover:border-[#641ACC] transition-colors p-5">
+          <h2 className="text-gray-900 font-semibold mb-1">Task Status</h2>
+          <p className="text-gray-400 text-xs mb-4">Current distribution</p>
           {pieData.length > 0 ? (
             <ResponsiveContainer width="100%" height={200}>
               <PieChart>
@@ -171,12 +171,12 @@ export default function AdminDashboard() {
                     <Cell key={index} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip contentStyle={{ background: '#1e293b', border: '1px solid #ffffff15', borderRadius: 12, color: '#f1f5f9' }} />
-                <Legend wrapperStyle={{ fontSize: 11, color: '#94a3b8' }} />
+                <Tooltip contentStyle={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 12, color: '#1e293b' }} />
+                <Legend wrapperStyle={{ fontSize: 11, color: '#64748b' }} />
               </PieChart>
             </ResponsiveContainer>
           ) : (
-            <div className="h-48 flex items-center justify-center text-slate-500 text-sm">No task data</div>
+            <div className="h-48 flex items-center justify-center text-gray-400 text-sm">No task data</div>
           )}
         </div>
       </div>
@@ -184,19 +184,19 @@ export default function AdminDashboard() {
       {/* Recent tables */}
       <div className="grid lg:grid-cols-2 gap-6">
         {/* Recent Users */}
-        <div className="rounded-2xl border border-white/10 bg-slate-800/50 backdrop-blur p-5">
-          <h2 className="text-white font-semibold mb-4">Recent Users</h2>
+        <div className="rounded-2xl border border-gray-200 bg-white shadow-sm hover:border-[#641ACC] transition-colors p-5">
+          <h2 className="text-gray-900 font-semibold mb-4">Recent Users</h2>
           <div className="space-y-3">
             {users.slice(0, 6).map(user => (
-              <div key={user.id} className="flex items-center justify-between py-2 border-b border-white/5 last:border-0">
+              <div key={user.id} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
                 <div>
-                  <p className="text-white text-sm font-medium">{user.username}</p>
-                  <p className="text-slate-400 text-xs capitalize">{user.role.replace('_', ' ')} · {user.verification_status}</p>
+                  <p className="text-gray-900 text-sm font-medium">{user.username}</p>
+                  <p className="text-gray-400 text-xs capitalize">{user.role.replace('_', ' ')} · {user.verification_status}</p>
                 </div>
                 {user.role === 'bondhu' && (
                   <div className="text-right">
-                    <p className="text-amber-400 text-sm font-medium">⭐ {user.rating_avg.toFixed(1)}</p>
-                    <p className="text-slate-400 text-xs">{user.total_tasks} tasks</p>
+                    <p className="text-amber-500 text-sm font-medium">⭐ {user.rating_avg.toFixed(1)}</p>
+                    <p className="text-gray-400 text-xs">{user.total_tasks} tasks</p>
                   </div>
                 )}
               </div>
@@ -205,20 +205,20 @@ export default function AdminDashboard() {
         </div>
 
         {/* Recent Tasks */}
-        <div className="rounded-2xl border border-white/10 bg-slate-800/50 backdrop-blur p-5">
-          <h2 className="text-white font-semibold mb-4">Recent Tasks</h2>
+        <div className="rounded-2xl border border-gray-200 bg-white shadow-sm hover:border-[#641ACC] transition-colors p-5">
+          <h2 className="text-gray-900 font-semibold mb-4">Recent Tasks</h2>
           <div className="space-y-3">
             {tasks.slice(0, 6).map(task => (
-              <div key={task.id} className="flex items-center justify-between py-2 border-b border-white/5 last:border-0">
+              <div key={task.id} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
                 <div className="flex-1 min-w-0 mr-3">
-                  <p className="text-white text-sm font-medium truncate">{task.title}</p>
-                  <p className="text-slate-400 text-xs">{task.category} · ₹{task.amount}</p>
+                  <p className="text-gray-900 text-sm font-medium truncate">{task.title}</p>
+                  <p className="text-gray-400 text-xs">{task.category} · ₹{task.amount}</p>
                 </div>
                 <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${
-                  task.status === 'completed'  ? 'bg-emerald-500/20 text-emerald-400' :
-                  task.status === 'pending'    ? 'bg-amber-500/20 text-amber-400' :
-                  task.status === 'cancelled'  ? 'bg-red-500/20 text-red-400' :
-                  'bg-cyan-500/20 text-cyan-400'
+                  task.status === 'completed'  ? 'bg-emerald-100 text-emerald-700' :
+                  task.status === 'pending'    ? 'bg-amber-100 text-amber-700' :
+                  task.status === 'cancelled'  ? 'bg-red-100 text-red-700' :
+                  'bg-cyan-100 text-cyan-700'
                 }`}>
                   {task.status.replace('_', ' ')}
                 </span>

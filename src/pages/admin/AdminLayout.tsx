@@ -45,14 +45,14 @@ export default function AdminLayout() {
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
       {/* Brand */}
-      <div className="px-6 py-5 border-b border-white/10">
+      <div className="px-6 py-5 border-b border-gray-200">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shadow-lg">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#641ACC] to-indigo-600 flex items-center justify-center shadow-lg">
             <ShieldCheck className="w-4 h-4 text-white" />
           </div>
           <div>
-            <p className="text-white font-bold text-sm leading-none">MyBondhu</p>
-            <p className="text-violet-300 text-xs mt-0.5">Admin Panel</p>
+            <p className="text-gray-900 font-bold text-sm leading-none">MyBondhu</p>
+            <p className="text-[#641ACC] text-xs mt-0.5">Admin Panel</p>
           </div>
         </div>
       </div>
@@ -67,8 +67,8 @@ export default function AdminLayout() {
             className={({ isActive }) =>
               `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group ${
                 isActive
-                  ? 'bg-gradient-to-r from-violet-600/80 to-indigo-600/80 text-white shadow-lg shadow-violet-900/30'
-                  : 'text-slate-300 hover:bg-white/10 hover:text-white'
+                  ? 'bg-[#641ACC] text-white shadow-lg shadow-[#641ACC]/30'
+                  : 'text-gray-600 hover:bg-[#641ACC]/10 hover:text-[#641ACC]'
               }`
             }
           >
@@ -80,29 +80,29 @@ export default function AdminLayout() {
       </nav>
 
       {/* User section */}
-      <div className="px-3 py-4 border-t border-white/10 space-y-2">
+      <div className="px-3 py-4 border-t border-gray-200 space-y-2">
         <Button
           variant="ghost"
-          className="w-full justify-start gap-3 text-slate-300 hover:text-white hover:bg-white/10 text-sm h-9"
+          className="w-full justify-start gap-3 text-gray-600 hover:text-[#641ACC] hover:bg-[#641ACC]/10 text-sm h-9"
           onClick={() => navigate('/need-bondhu/dashboard')}
         >
           <ArrowLeft className="w-4 h-4" />
           User View
         </Button>
 
-        <div className="flex items-center gap-3 px-3 py-2 rounded-xl bg-white/5">
+        <div className="flex items-center gap-3 px-3 py-2 rounded-xl bg-gray-100">
           <Avatar className="h-7 w-7">
             <AvatarImage src={profile?.avatar_url ?? undefined} />
-            <AvatarFallback className="bg-violet-600 text-white text-xs">{initials}</AvatarFallback>
+            <AvatarFallback className="bg-[#641ACC] text-white text-xs">{initials}</AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
-            <p className="text-white text-xs font-medium truncate">{profile?.username ?? 'Admin'}</p>
-            <p className="text-violet-300 text-[10px] truncate">{userEmail}</p>
+            <p className="text-gray-900 text-xs font-medium truncate">{profile?.username ?? 'Admin'}</p>
+            <p className="text-[#641ACC] text-[10px] truncate">{userEmail}</p>
           </div>
           <Button
             variant="ghost"
             size="icon"
-            className="h-6 w-6 text-slate-400 hover:text-red-400 hover:bg-transparent flex-shrink-0"
+            className="h-6 w-6 text-gray-400 hover:text-red-500 hover:bg-transparent flex-shrink-0"
             onClick={handleSignOut}
           >
             <LogOut className="w-3.5 h-3.5" />
@@ -113,23 +113,23 @@ export default function AdminLayout() {
   );
 
   return (
-    <div className="flex h-screen bg-slate-950 overflow-hidden">
+    <div className="flex h-screen bg-[#F1F5F9] overflow-hidden">
       {/* Desktop sidebar */}
-      <aside className="hidden lg:flex w-60 flex-col bg-gradient-to-b from-slate-900 to-slate-950 border-r border-white/10 flex-shrink-0">
+      <aside className="hidden lg:flex w-60 flex-col bg-white border-r border-gray-200 flex-shrink-0 shadow-sm">
         <SidebarContent />
       </aside>
 
       {/* Mobile overlay */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       {/* Mobile sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-60 flex flex-col bg-gradient-to-b from-slate-900 to-slate-950 border-r border-white/10 transform transition-transform duration-300 lg:hidden ${
+        className={`fixed inset-y-0 left-0 z-50 w-60 flex flex-col bg-white border-r border-gray-200 shadow-lg transform transition-transform duration-300 lg:hidden ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
@@ -139,17 +139,17 @@ export default function AdminLayout() {
       {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Top bar */}
-        <header className="flex items-center gap-4 px-4 lg:px-6 h-14 border-b border-white/10 bg-slate-900/60 backdrop-blur flex-shrink-0">
+        <header className="flex items-center gap-4 px-4 lg:px-6 h-14 border-b border-gray-200 bg-white flex-shrink-0 shadow-sm">
           <Button
             variant="ghost"
             size="icon"
-            className="lg:hidden text-slate-400 hover:text-white hover:bg-white/10"
+            className="lg:hidden text-gray-500 hover:text-[#641ACC] hover:bg-[#641ACC]/10"
             onClick={() => setSidebarOpen(true)}
           >
             <Menu className="w-5 h-5" />
           </Button>
           <div className="flex-1" />
-          <span className="text-xs text-violet-400 font-medium bg-violet-500/10 border border-violet-500/20 px-2.5 py-1 rounded-full">
+          <span className="text-xs text-[#641ACC] font-medium bg-[#641ACC]/10 border border-[#641ACC]/20 px-2.5 py-1 rounded-full">
             Admin Mode
           </span>
         </header>
