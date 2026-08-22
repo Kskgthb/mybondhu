@@ -15,6 +15,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import TaskCardSkeleton from '@/components/common/TaskCardSkeleton';
 import CompactBanner from '@/components/common/CompactBanner';
 import AnimatedPostTitle from '@/components/common/AnimatedPostTitle';
+import CampusToggle from '@/components/common/CampusToggle';
 
 import NotificationDialog from '@/components/common/NotificationDialog';
 
@@ -243,8 +244,9 @@ export default function NeedBondhuDashboard() {
               Manage your posted tasks and track their progress
             </p>
 
-            {/* Segmented Task Toggle */}
-            <div className="flex">
+            {/* Toggles Row */}
+            <div className="flex items-center justify-between">
+              {/* Segmented Task Toggle */}
               <div
                 className="flex items-center rounded-full p-1"
                 style={{
@@ -283,6 +285,8 @@ export default function NeedBondhuDashboard() {
                   <span className="text-[11px] font-semibold whitespace-nowrap">Task Solve</span>
                 </button>
               </div>
+              
+              <CampusToggle />
             </div>
           </div>
         </div>

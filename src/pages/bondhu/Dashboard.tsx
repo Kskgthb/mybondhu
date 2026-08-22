@@ -14,6 +14,7 @@ import TaskCard from '@/components/task/TaskCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import TaskCardSkeleton from '@/components/common/TaskCardSkeleton';
 import CompactBanner from '@/components/common/CompactBanner';
+import CampusToggle from '@/components/common/CampusToggle';
 
 import NotificationDialog from '@/components/common/NotificationDialog';
 import RoleSwitchButton from '@/components/common/RoleSwitchButton';
@@ -455,8 +456,9 @@ export default function BondhuDashboard() {
               Find nearby tasks and manage your assignments
             </p>
 
-            {/* Segmented Task Toggle */}
-            <div className="flex">
+            {/* Toggles Row */}
+            <div className="flex items-center justify-between">
+              {/* Segmented Task Toggle */}
               <div
                 className="flex items-center rounded-full p-1"
                 style={{
@@ -495,6 +497,8 @@ export default function BondhuDashboard() {
                   <span className="text-[11px] font-semibold whitespace-nowrap">Task Solve</span>
                 </button>
               </div>
+              
+              <CampusToggle />
             </div>
           </div>
         </div>
