@@ -13,6 +13,7 @@ import type { TaskUrgency } from '@/types/types';
 import { categories } from '@/lib/categories';
 import { reverseGeocode } from '@/lib/googleMaps';
 import { generateUPIQRData } from '@/services/paymentService';
+import { useCampus } from '@/contexts/CampusContext';
 
 interface TaskPostDialogProps {
   open: boolean;
@@ -22,6 +23,7 @@ interface TaskPostDialogProps {
 
 export default function TaskPostDialog({ open, onOpenChange, onSuccess }: TaskPostDialogProps) {
   const { user } = useAuth();
+  const { isCampusMode, selectedCampus } = useCampus();
   const [loading, setLoading] = useState(false);
   const [fetchingLocation, setFetchingLocation] = useState(false);
   const [locationFromGPS, setLocationFromGPS] = useState(false);
@@ -309,12 +311,15 @@ export default function TaskPostDialog({ open, onOpenChange, onSuccess }: TaskPo
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="location">Location Address *</Label>
+            <Label htmlFor="location">
+              Location Address * {isCampusMode && selectedCampus && <span className="text-[#ef4444] text-xs font-bold ml-1">(LIVE @ {selectedCampus})</span>}
+            </Label>
             <div className="flex gap-2">
               <div className="relative flex-1">
                 <Input
                   id="location"
-                  placeholder={locationFromGPS ? "GPS location captured" : "Click 'Use Current Location' to get GPS address"}
+                  list={isCampusMode ? "campus-landmarks" : undefined}
+                  placeholder={isCampusMode ? "e.g. Near Library, or select a landmark" : (locationFromGPS ? "GPS location captured" : "Click 'Use Current Location' to get GPS address")}
                   value={formData.location_address}
                   onChange={(e) => {
                     setFormData({ ...formData, location_address: e.target.value });
@@ -323,7 +328,20 @@ export default function TaskPostDialog({ open, onOpenChange, onSuccess }: TaskPo
                   disabled={loading || fetchingLocation}
                   className={locationFromGPS ? "pr-10" : ""}
                 />
-                {locationFromGPS && (
+                
+                {/* Datalist for predefined campus landmarks */}
+                {isCampusMode && (
+                  <datalist id="campus-landmarks">
+                    <option value="Near BCA Building" />
+                    <option value="Near Biryani Canteen" />
+                    <option value="Football Ground" />
+                    <option value="Parking Area" />
+                    <option value="Near G-Series" />
+                    <option value="University Entrance Gate" />
+                  </datalist>
+                )}
+
+                {locationFromGPS && !isCampusMode && (
                   <button
                     type="button"
                     onClick={clearLocation}
@@ -334,39 +352,48 @@ export default function TaskPostDialog({ open, onOpenChange, onSuccess }: TaskPo
                   </button>
                 )}
               </div>
-              <Button
-                type="button"
-                variant={locationFromGPS ? "secondary" : "default"}
-                onClick={getCurrentLocation}
-                disabled={loading || fetchingLocation}
-                className="flex-shrink-0"
-              >
-                {fetchingLocation ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Getting...
-                  </>
-                ) : (
-                  <>
-                    <MapPin className="mr-2 h-4 w-4" />
-                    Use Current
-                  </>
-                )}
-              </Button>
+              
+              {!isCampusMode && (
+                <Button
+                  type="button"
+                  variant={locationFromGPS ? "secondary" : "default"}
+                  onClick={getCurrentLocation}
+                  disabled={loading || fetchingLocation}
+                  className="flex-shrink-0"
+                >
+                  {fetchingLocation ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Getting...
+                    </>
+                  ) : (
+                    <>
+                      <MapPin className="mr-2 h-4 w-4" />
+                      Use Current
+                    </>
+                  )}
+                </Button>
+              )}
             </div>
-            {locationFromGPS && (
+            
+            {locationFromGPS && !isCampusMode && (
               <div className="flex items-center gap-2 text-xs text-success">
                 <MapPin className="h-3 w-3" />
                 <span>Real GPS location verified ✓</span>
               </div>
             )}
-            {!locationFromGPS && formData.location_address && (
+            
+            {!locationFromGPS && formData.location_address && !isCampusMode && (
               <p className="text-xs text-warning">
                 ⚠️ Manual address entry - Please use GPS for accurate location
               </p>
             )}
+            
             <p className="text-xs text-muted-foreground">
-              Click "Use Current Location" to automatically get your real GPS address
+              {isCampusMode 
+                ? 'Type manually or select a predefined landmark within the campus'
+                : 'Click "Use Current Location" to automatically get your real GPS address'
+              }
             </p>
           </div>
 
