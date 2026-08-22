@@ -24,7 +24,6 @@ export default function AdminLayout() {
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Guard: only admin emails allowed
   const userEmail = user?.email ?? profile?.email ?? '';
   if (!isAdminEmail(userEmail)) {
     navigate('/');
@@ -45,13 +44,13 @@ export default function AdminLayout() {
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
       {/* Brand */}
-      <div className="px-6 py-5 border-b border-gray-200">
+      <div className="px-6 py-5 border-b border-gray-200 dark:border-white/10">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#641ACC] to-indigo-600 flex items-center justify-center shadow-lg">
             <ShieldCheck className="w-4 h-4 text-white" />
           </div>
           <div>
-            <p className="text-gray-900 font-bold text-sm leading-none">MyBondhu</p>
+            <p className="text-gray-900 dark:text-white font-bold text-sm leading-none">MyBondhu</p>
             <p className="text-[#641ACC] text-xs mt-0.5">Admin Panel</p>
           </div>
         </div>
@@ -68,7 +67,7 @@ export default function AdminLayout() {
               `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group ${
                 isActive
                   ? 'bg-[#641ACC] text-white shadow-lg shadow-[#641ACC]/30'
-                  : 'text-gray-600 hover:bg-[#641ACC]/10 hover:text-[#641ACC]'
+                  : 'text-gray-600 dark:text-slate-300 hover:bg-[#641ACC]/10 hover:text-[#641ACC]'
               }`
             }
           >
@@ -80,23 +79,23 @@ export default function AdminLayout() {
       </nav>
 
       {/* User section */}
-      <div className="px-3 py-4 border-t border-gray-200 space-y-2">
+      <div className="px-3 py-4 border-t border-gray-200 dark:border-white/10 space-y-2">
         <Button
           variant="ghost"
-          className="w-full justify-start gap-3 text-gray-600 hover:text-[#641ACC] hover:bg-[#641ACC]/10 text-sm h-9"
+          className="w-full justify-start gap-3 text-gray-600 dark:text-slate-300 hover:text-[#641ACC] hover:bg-[#641ACC]/10 text-sm h-9"
           onClick={() => navigate('/need-bondhu/dashboard')}
         >
           <ArrowLeft className="w-4 h-4" />
           User View
         </Button>
 
-        <div className="flex items-center gap-3 px-3 py-2 rounded-xl bg-gray-100">
+        <div className="flex items-center gap-3 px-3 py-2 rounded-xl bg-gray-100 dark:bg-white/5">
           <Avatar className="h-7 w-7">
             <AvatarImage src={profile?.avatar_url ?? undefined} />
             <AvatarFallback className="bg-[#641ACC] text-white text-xs">{initials}</AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
-            <p className="text-gray-900 text-xs font-medium truncate">{profile?.username ?? 'Admin'}</p>
+            <p className="text-gray-900 dark:text-white text-xs font-medium truncate">{profile?.username ?? 'Admin'}</p>
             <p className="text-[#641ACC] text-[10px] truncate">{userEmail}</p>
           </div>
           <Button
@@ -113,9 +112,9 @@ export default function AdminLayout() {
   );
 
   return (
-    <div className="flex h-screen bg-[#F1F5F9] overflow-hidden">
+    <div className="flex h-screen bg-[#F1F5F9] dark:bg-slate-950 overflow-hidden">
       {/* Desktop sidebar */}
-      <aside className="hidden lg:flex w-60 flex-col bg-white border-r border-gray-200 flex-shrink-0 shadow-sm">
+      <aside className="hidden lg:flex w-60 flex-col bg-white dark:bg-slate-900 border-r border-gray-200 dark:border-white/10 flex-shrink-0 shadow-sm">
         <SidebarContent />
       </aside>
 
@@ -129,7 +128,7 @@ export default function AdminLayout() {
 
       {/* Mobile sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-60 flex flex-col bg-white border-r border-gray-200 shadow-lg transform transition-transform duration-300 lg:hidden ${
+        className={`fixed inset-y-0 left-0 z-50 w-60 flex flex-col bg-white dark:bg-slate-900 border-r border-gray-200 dark:border-white/10 shadow-lg transform transition-transform duration-300 lg:hidden ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
@@ -139,11 +138,11 @@ export default function AdminLayout() {
       {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Top bar */}
-        <header className="flex items-center gap-4 px-4 lg:px-6 h-14 border-b border-gray-200 bg-white flex-shrink-0 shadow-sm">
+        <header className="flex items-center gap-4 px-4 lg:px-6 h-14 border-b border-gray-200 dark:border-white/10 bg-white dark:bg-slate-900/80 backdrop-blur flex-shrink-0 shadow-sm">
           <Button
             variant="ghost"
             size="icon"
-            className="lg:hidden text-gray-500 hover:text-[#641ACC] hover:bg-[#641ACC]/10"
+            className="lg:hidden text-gray-500 dark:text-slate-400 hover:text-[#641ACC] hover:bg-[#641ACC]/10"
             onClick={() => setSidebarOpen(true)}
           >
             <Menu className="w-5 h-5" />

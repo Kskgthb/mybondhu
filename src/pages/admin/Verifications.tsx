@@ -10,9 +10,9 @@ import { format } from 'date-fns';
 type FilterStatus = 'pending' | 'verified' | 'rejected' | 'all';
 
 const statusColor: Record<string, string> = {
-  pending:  'bg-amber-100 text-amber-700 border-amber-200',
-  verified: 'bg-emerald-100 text-emerald-700 border-emerald-200',
-  rejected: 'bg-red-100 text-red-700 border-red-200',
+  pending:  'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-500/20 dark:text-amber-400 dark:border-amber-500/30',
+  verified: 'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-500/20 dark:text-emerald-400 dark:border-emerald-500/30',
+  rejected: 'bg-red-100 text-red-700 border-red-200 dark:bg-red-500/20 dark:text-red-400 dark:border-red-500/30',
 };
 
 const StatusIcon = ({ status }: { status: string }) => {
@@ -74,11 +74,11 @@ export default function AdminVerifications() {
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Verifications</h1>
-          <p className="text-gray-500 text-sm mt-1">Review Bondhu identity documents</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Verifications</h1>
+          <p className="text-gray-500 dark:text-slate-400 text-sm mt-1">Review Bondhu identity documents</p>
         </div>
         <button onClick={loadBondhus}
-          className="flex items-center gap-2 text-sm text-gray-600 hover:text-[#641ACC] bg-white hover:bg-[#641ACC]/5 border border-gray-200 hover:border-[#641ACC] px-3 py-2 rounded-xl transition-all">
+          className="flex items-center gap-2 text-sm text-gray-600 dark:text-slate-300 hover:text-[#641ACC] bg-white dark:bg-white/5 hover:bg-[#641ACC]/5 border border-gray-200 dark:border-white/10 hover:border-[#641ACC] px-3 py-2 rounded-xl transition-all">
           <RefreshCw className="w-4 h-4" /> Refresh
         </button>
       </div>
@@ -92,7 +92,7 @@ export default function AdminVerifications() {
             className={`px-4 py-2 rounded-xl text-sm font-medium transition-all border ${
               filter === s
                 ? 'bg-[#641ACC] text-white border-[#641ACC]'
-                : 'bg-white text-gray-600 border-gray-200 hover:text-[#641ACC] hover:border-[#641ACC]'
+                : 'bg-white dark:bg-white/5 text-gray-600 dark:text-slate-400 border-gray-200 dark:border-white/10 hover:text-[#641ACC] hover:border-[#641ACC]'
             }`}
           >
             <span className="capitalize">{s}</span>
@@ -104,16 +104,16 @@ export default function AdminVerifications() {
       {/* Cards */}
       {loading ? (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[1,2,3].map(i => <div key={i} className="h-48 rounded-2xl bg-gray-200 animate-pulse" />)}
+          {[1,2,3].map(i => <div key={i} className="h-48 rounded-2xl bg-gray-200 dark:bg-slate-800/60 animate-pulse" />)}
         </div>
       ) : filtered.length === 0 ? (
-        <div className="py-16 text-center text-gray-400 text-sm rounded-2xl border border-gray-200 bg-white">
+        <div className="py-16 text-center text-gray-400 dark:text-slate-500 text-sm rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-slate-800/30">
           No {filter === 'all' ? '' : filter} verifications found
         </div>
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {filtered.map(bondhu => (
-            <div key={bondhu.id} className="rounded-2xl border border-gray-200 bg-white p-5 flex flex-col gap-4 hover:border-[#641ACC] transition-colors shadow-sm">
+            <div key={bondhu.id} className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-slate-800/50 p-5 flex flex-col gap-4 hover:border-[#641ACC] transition-colors shadow-sm">
               {/* Header */}
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
@@ -124,8 +124,8 @@ export default function AdminVerifications() {
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <p className="text-gray-900 font-semibold text-sm">{bondhu.full_name ?? bondhu.username}</p>
-                    <p className="text-gray-500 text-xs">{bondhu.college ?? bondhu.college_name ?? '—'}</p>
+                    <p className="text-gray-900 dark:text-white font-semibold text-sm">{bondhu.full_name ?? bondhu.username}</p>
+                    <p className="text-gray-500 dark:text-slate-400 text-xs">{bondhu.college ?? bondhu.college_name ?? '—'}</p>
                   </div>
                 </div>
                 <div className={`flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border ${statusColor[bondhu.verification_status]}`}>
@@ -136,17 +136,17 @@ export default function AdminVerifications() {
 
               {/* Info */}
               <div className="space-y-1.5 text-xs">
-                <div className="flex justify-between text-gray-500">
+                <div className="flex justify-between text-gray-500 dark:text-slate-400">
                   <span>Campus</span>
-                  <span className="text-gray-700 truncate ml-2 max-w-[150px]">{bondhu.campus_location ?? '—'}</span>
+                  <span className="text-gray-700 dark:text-slate-300 truncate ml-2 max-w-[150px]">{bondhu.campus_location ?? '—'}</span>
                 </div>
-                <div className="flex justify-between text-gray-500">
+                <div className="flex justify-between text-gray-500 dark:text-slate-400">
                   <span>Phone</span>
-                  <span className="text-gray-700">{bondhu.contact_no ?? bondhu.phone ?? '—'}</span>
+                  <span className="text-gray-700 dark:text-slate-300">{bondhu.contact_no ?? bondhu.phone ?? '—'}</span>
                 </div>
-                <div className="flex justify-between text-gray-500">
+                <div className="flex justify-between text-gray-500 dark:text-slate-400">
                   <span>Joined</span>
-                  <span className="text-gray-700">
+                  <span className="text-gray-700 dark:text-slate-300">
                     {bondhu.created_at ? format(new Date(bondhu.created_at), 'dd MMM yyyy') : '—'}
                   </span>
                 </div>
