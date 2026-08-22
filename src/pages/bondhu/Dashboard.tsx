@@ -461,10 +461,10 @@ export default function BondhuDashboard() {
             {/* LIVE Campus Badge */}
             {isCampusMode && selectedCampus && (
               <div className="mb-6 flex items-center">
-                <span className="flex items-center gap-2 text-xs font-bold bg-[#2fbe6b]/10 text-[#2fbe6b] px-3 py-1.5 rounded-full border border-[#2fbe6b]/20">
+                <span className="flex items-center gap-2 text-xs font-bold bg-[#ef4444]/10 text-[#ef4444] px-3 py-1.5 rounded-full border border-[#ef4444]/20">
                   <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#2fbe6b] opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-[#2fbe6b]"></span>
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#ef4444] opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-[#ef4444]"></span>
                   </span>
                   LIVE @ {selectedCampus}
                 </span>
