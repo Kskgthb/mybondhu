@@ -25,7 +25,7 @@ import { getClearedTasks, clearTask } from '@/lib/clearStorage';
 
 export default function BondhuDashboard() {
   const { user, profile, refreshProfile } = useAuth();
-  const { currentRole } = useRole();
+  const { currentRole, switchRole } = useRole();
   const navigate = useNavigate();
   const [nearbyTasks, setNearbyTasks] = useState<TaskWithDistance[]>([]);
   const [myAssignments, setMyAssignments] = useState<TaskWithAssignment[]>([]);
