@@ -51,7 +51,7 @@ export default function BottomNav() {
   ];
 
   // Theme-aware colors
-  const pillBg     = isDark ? 'rgba(18, 18, 28, 0.92)' : '#F1F5F9';
+  const pillBg     = isDark ? '#1E1B4B' : '#F1F5F9';
   const pillBorder = isDark ? 'rgba(255,255,255,0.10)'  : '#e2e8f0';
   const pillShadow = isDark
     ? '0 8px 32px rgba(0,0,0,0.50), 0 2px 8px rgba(0,0,0,0.30)'
