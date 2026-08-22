@@ -47,23 +47,43 @@ export default function BottomNav() {
   ];
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border/50 pb-safe md:hidden shadow-[0_-5px_15px_-10px_rgba(0,0,0,0.1)]">
-      <div className="flex items-center justify-around h-16 px-2">
+    <div className="fixed bottom-4 left-0 right-0 z-50 flex justify-center pointer-events-none md:hidden">
+      <div
+        className="pointer-events-auto flex items-center justify-around gap-1 px-3 py-2 rounded-full shadow-2xl"
+        style={{
+          background: 'rgba(18, 18, 28, 0.88)',
+          backdropFilter: 'blur(16px)',
+          WebkitBackdropFilter: 'blur(16px)',
+          border: '1px solid rgba(255,255,255,0.10)',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.40), 0 2px 8px rgba(0,0,0,0.30)',
+          minWidth: '320px',
+          maxWidth: '92vw',
+        }}
+      >
         {navItems.map((item) => {
           const isActive = location.pathname === item.href;
-          
+
           if (item.isAction) {
             return (
               <button
                 key={item.label}
                 onClick={item.action}
-                className="flex flex-col items-center justify-center w-14 h-full relative group"
+                className="flex flex-col items-center justify-center w-14 relative group"
                 aria-label={item.label}
+                style={{ minHeight: '52px' }}
               >
-                <div className="absolute -top-5 bg-primary text-primary-foreground rounded-full p-3 shadow-lg group-hover:scale-105 transition-transform">
-                  <item.icon className="h-6 w-6" strokeWidth={2.5} />
+                <div
+                  className="flex items-center justify-center rounded-full p-3 group-hover:scale-105 transition-transform shadow-lg"
+                  style={{
+                    background: 'hsl(var(--primary))',
+                    color: 'hsl(var(--primary-foreground))',
+                    marginTop: '-18px',
+                    boxShadow: '0 4px 16px rgba(120,60,220,0.5)',
+                  }}
+                >
+                  <item.icon className="h-5 w-5" strokeWidth={2.5} />
                 </div>
-                <span className="text-[10px] font-medium mt-6 text-muted-foreground">{item.label}</span>
+                <span className="text-[9px] font-medium mt-1" style={{ color: 'rgba(255,255,255,0.55)' }}>{item.label}</span>
               </button>
             );
           }
@@ -72,20 +92,27 @@ export default function BottomNav() {
             <Link
               key={item.label}
               to={item.href || '#'}
-              className={cn(
-                "flex flex-col items-center justify-center w-14 h-full relative transition-colors",
-                isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
-              )}
+              className="flex flex-col items-center justify-center w-14 relative transition-colors"
+              style={{ minHeight: '52px' }}
             >
-              <div className="relative">
-                <item.icon className={cn("h-5 w-5 mb-1 transition-transform", isActive && "scale-110")} strokeWidth={isActive ? 2.5 : 2} />
+              <div className="relative flex items-center justify-center">
+                <item.icon
+                  className={cn('h-5 w-5 transition-transform', isActive && 'scale-110')}
+                  strokeWidth={isActive ? 2.5 : 2}
+                  style={{ color: isActive ? 'hsl(var(--primary))' : 'rgba(255,255,255,0.55)' }}
+                />
                 {item.badge ? (
                   <span className="absolute -top-1 -right-2 bg-destructive text-destructive-foreground flex items-center justify-center rounded-full text-[9px] font-bold h-4 min-w-4 px-1 shadow-sm">
                     {item.badge > 9 ? '9+' : item.badge}
                   </span>
                 ) : null}
               </div>
-              <span className={cn("text-[10px] font-medium", isActive ? "font-semibold" : "")}>{item.label}</span>
+              <span
+                className={cn('text-[9px] mt-1', isActive ? 'font-semibold' : 'font-medium')}
+                style={{ color: isActive ? 'hsl(var(--primary))' : 'rgba(255,255,255,0.55)' }}
+              >
+                {item.label}
+              </span>
             </Link>
           );
         })}
