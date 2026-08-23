@@ -187,10 +187,9 @@ export default function NotificationsPage() {
           notifications.map(notification => (
             <Card
               key={notification.id}
-              className={`cursor-pointer transition-all hover:shadow-hover ${
+              className={`${
                 !notification.read ? 'border-primary/50 bg-primary/5' : ''
               }`}
-              onClick={() => handleNotificationClick(notification)}
             >
               <CardContent className="p-4">
                 <div className="flex items-start gap-4">
