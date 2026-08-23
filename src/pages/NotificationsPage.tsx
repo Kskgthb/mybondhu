@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { notificationsApi, realtimeApi } from '@/db/api';
+import { notificationsApi, realtimeApi, tasksApi } from '@/db/api';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -86,12 +86,36 @@ export default function NotificationsPage() {
     setNotifications(prev => prev.filter(n => n.id !== notificationId));
   };
 
-  const handleNotificationClick = (notification: Notification) => {
+  const handleNotificationClick = async (notification: Notification) => {
     if (!notification.read) {
       handleMarkAsRead(notification.id);
     }
     if (notification.task_id) {
-      navigate(`/task/${notification.task_id}`);
+      if (notification.type === 'chat_message') {
+        try {
+          const taskData = await tasksApi.getTaskWithAssignment(notification.task_id);
+          if (!taskData) {
+            toast.error('Task not found');
+            return;
+          }
+          
+          const isParticipant = 
+            taskData.poster_id === user?.id || 
+            taskData.assignment?.bondhu_id === user?.id;
+            
+          if (!isParticipant) {
+            toast.error('Chat available only to task participants');
+            return;
+          }
+          
+          navigate(`/task/${notification.task_id}`);
+        } catch (error) {
+          console.error('Error verifying access:', error);
+          toast.error('Failed to verify access');
+        }
+      } else {
+        navigate(`/task/${notification.task_id}`);
+      }
     }
   };
 
