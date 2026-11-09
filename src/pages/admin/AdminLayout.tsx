@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { NavLink, useNavigate, Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { isAdminEmail } from '@/config/adminConfig';
+import { supabase } from '@/db/supabase';
 import {
   LayoutDashboard, Users, ClipboardList, ShieldCheck,
   BarChart3, Menu, X, LogOut, ArrowLeft, ChevronRight, Globe
@@ -25,6 +26,19 @@ export default function AdminLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const userEmail = user?.email ?? profile?.email ?? '';
+
+  // Auto-sync admin role to profiles table in Supabase so RLS policies allow admin operations
+  useEffect(() => {
+    if (user?.id && profile && profile.role !== 'admin' && isAdminEmail(userEmail)) {
+      supabase
+        .from('profiles')
+        .update({ role: 'admin' })
+        .eq('id', user.id)
+        .then(() => {
+          console.log('✅ Admin role synchronized to profiles table');
+        });
+    }
+  }, [user?.id, profile?.role, userEmail]);
 
   if (loading) {
     return (

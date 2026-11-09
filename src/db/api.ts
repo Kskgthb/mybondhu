@@ -111,6 +111,85 @@ export const profilesApi = {
     return Array.isArray(data) ? data : [];
   },
 
+  async adminGetWithdrawals(userId: string): Promise<any[]> {
+    // 1. Try RPC first (SECURITY DEFINER)
+    try {
+      const { data, error } = await supabase.rpc('admin_get_user_withdrawals', { p_user_id: userId });
+      if (!error && Array.isArray(data)) return data;
+    } catch {
+      // Fallback if RPC not installed
+    }
+
+    // 2. Direct table fallback
+    const { data, error } = await supabase
+      .from('withdrawal_requests')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      if (error.code === '42P01' || error.message?.includes('does not exist') || error.message?.includes('relation')) {
+        return [];
+      }
+      throw error;
+    }
+    return Array.isArray(data) ? data : [];
+  },
+
+  async adminGetPendingWithdrawals(): Promise<any[]> {
+    try {
+      const { data, error } = await supabase
+        .from('withdrawal_requests')
+        .select('*')
+        .eq('status', 'pending')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        if (error.code === '42P01' || error.message?.includes('does not exist') || error.message?.includes('relation')) {
+          return [];
+        }
+        return [];
+      }
+      return Array.isArray(data) ? data : [];
+    } catch {
+      return [];
+    }
+  },
+
+  async adminUpdateWithdrawalStatus(
+    withdrawalId: string,
+    status: 'approved' | 'completed' | 'rejected',
+    note?: string
+  ): Promise<void> {
+    // 1. Try RPC first (SECURITY DEFINER)
+    try {
+      const { data, error } = await supabase.rpc('admin_update_withdrawal_status', {
+        p_withdrawal_id: withdrawalId,
+        p_status: status,
+        p_note: note || null,
+      });
+      if (!error && data?.success) return;
+    } catch {
+      // Fallback if RPC not installed
+    }
+
+    // 2. Direct update fallback
+    const { data: { user } } = await supabase.auth.getUser();
+    const payload: any = {
+      status,
+      processed_by: user?.id || null,
+      processed_at: new Date().toISOString(),
+    };
+    if (note) payload.note = note;
+
+    const { error } = await supabase
+      .from('withdrawal_requests')
+      .update(payload)
+      .eq('id', withdrawalId);
+
+    if (error) throw error;
+  },
+
   async getUserPreferences(userId: string) {
     const { data, error } = await supabase
       .from('user_preferences')

@@ -3,13 +3,15 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { profilesApi } from '@/db/api';
 import { supabase } from '@/db/supabase';
 import { LiveSyncBadge } from '@/components/admin/LiveSyncBadge';
+import { isAdminEmail } from '@/config/adminConfig';
 import { toast } from 'sonner';
 import type { Profile } from '@/types/types';
 import {
   ArrowLeft, Star, CheckCircle, Clock, XCircle,
   Coins, CreditCard, TrendingUp, User, Wallet, AlertCircle,
   RefreshCw, ThumbsDown, Send, Ban, Briefcase, IndianRupee,
-  ExternalLink, Info
+  ExternalLink, Info, Copy, Check, CheckCheck, CheckCircle2,
+  AlertTriangle, QrCode
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { format } from 'date-fns';
@@ -79,12 +81,38 @@ export default function AdminUserProfile() {
   const [refreshing, setRefreshing]   = useState(false);
   const [activeTab, setActiveTab]     = useState<'overview' | 'tasks' | 'financials'>('overview');
 
+  // Payment & verification modal states
+  const [paymentModalItem, setPaymentModalItem] = useState<any | null>(null);
+  const [rejectModalItem, setRejectModalItem]   = useState<any | null>(null);
+  const [transactionRef, setTransactionRef]     = useState('');
+  const [adminNote, setAdminNote]               = useState('');
+  const [isSubmittingAction, setIsSubmittingAction] = useState(false);
+  const [copiedId, setCopiedId]                 = useState<string | null>(null);
+
+  const copyToClipboard = (text: string, label: string) => {
+    if (!text) return;
+    navigator.clipboard.writeText(text);
+    toast.success(`${label} copied to clipboard!`);
+    setCopiedId(text);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
   const loadData = useCallback(async (showRefresh = false) => {
     if (!userId) return;
     if (showRefresh) setRefreshing(true);
     else setLoading(true);
 
     try {
+      /* ── 0. Ensure Admin session role in DB so RLS allows reading all records ── */
+      try {
+        const { data: { user: currentUser } } = await supabase.auth.getUser();
+        if (currentUser?.id && currentUser?.email && isAdminEmail(currentUser.email)) {
+          await supabase.from('profiles').update({ role: 'admin' }).eq('id', currentUser.id);
+        }
+      } catch (authErr) {
+        console.warn('Admin role verification notice:', authErr);
+      }
+
       /* ── 1. Profile ── */
       const prof = await profilesApi.getProfile(userId);
       setProfile(prof);
@@ -110,25 +138,19 @@ export default function AdminUserProfile() {
       if (assignErr) console.warn('Assignments query error:', assignErr.message);
       setAssignedTasks(Array.isArray(assigned) ? assigned : []);
 
-      /* ── 4. Withdrawal requests ── */
-      const { data: wds, error: wdErr } = await supabase
-        .from('withdrawal_requests')
-        .select('id, amount, upi_id, status, note, created_at, processed_at')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false });
-
-      if (wdErr) {
-        // Table may not exist yet — show a notice instead of crashing
+      /* ── 4. Withdrawal requests (RPC or direct fallback) ── */
+      try {
+        const wds = await profilesApi.adminGetWithdrawals(userId);
+        setWdTableExists(true);
+        setWithdrawals(Array.isArray(wds) ? wds : []);
+      } catch (wdErr: any) {
         if (wdErr.code === '42P01' || wdErr.message?.includes('does not exist') || wdErr.message?.includes('relation')) {
           setWdTableExists(false);
           setWithdrawals([]);
         } else {
-          console.warn('Withdrawal query error:', wdErr.message);
+          console.warn('Withdrawal query notice:', wdErr.message);
           setWithdrawals([]);
         }
-      } else {
-        setWdTableExists(true);
-        setWithdrawals(Array.isArray(wds) ? wds : []);
       }
 
       if (showRefresh) toast.success('Profile refreshed');
@@ -184,7 +206,12 @@ export default function AdminUserProfile() {
     };
   }, [userId, loadData]);
 
-  const handleUpdateStatus = async (id: string, newStatus: 'approved' | 'rejected') => {
+  const handleUpdateStatus = async (
+    id: string,
+    newStatus: 'approved' | 'completed' | 'rejected',
+    noteText?: string
+  ) => {
+    setIsSubmittingAction(true);
     try {
       const { data: { user: adminUser } } = await supabase.auth.getUser();
       if (!adminUser) {
@@ -192,22 +219,28 @@ export default function AdminUserProfile() {
         return;
       }
 
-      const { error } = await supabase
-        .from('withdrawal_requests')
-        .update({
-          status: newStatus,
-          processed_by: adminUser.id,
-          processed_at: new Date().toISOString()
-        })
-        .eq('id', id);
+      // Ensure admin role for this session
+      if (adminUser.email && isAdminEmail(adminUser.email)) {
+        await supabase.from('profiles').update({ role: 'admin' }).eq('id', adminUser.id);
+      }
 
-      if (error) throw error;
+      await profilesApi.adminUpdateWithdrawalStatus(id, newStatus, noteText);
 
-      toast.success(`Withdrawal request marked as ${newStatus}`);
+      toast.success(
+        newStatus === 'approved' || newStatus === 'completed'
+          ? '✓ Payment successfully confirmed & marked as Done!'
+          : 'Withdrawal request rejected'
+      );
+      setPaymentModalItem(null);
+      setRejectModalItem(null);
+      setTransactionRef('');
+      setAdminNote('');
       loadData();
     } catch (err: any) {
       console.error(err);
       toast.error(`Failed to update withdrawal: ${err.message}`);
+    } finally {
+      setIsSubmittingAction(false);
     }
   };
 
@@ -588,12 +621,85 @@ export default function AdminUserProfile() {
       {activeTab === 'financials' && (
         <div className="space-y-6">
 
+          {/* ── ACTION REQUIRED: PENDING PAYOUT BANNER (Prominently shows how much to pay) ── */}
+          {wdPending > 0 && (
+            <div className="relative overflow-hidden rounded-2xl border-2 border-emerald-500/50 bg-gradient-to-br from-emerald-950/60 via-slate-900 to-slate-900 p-6 shadow-xl shadow-emerald-950/50">
+              <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5">
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="flex h-3 w-3 relative">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                      <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500" />
+                    </span>
+                    <span className="text-emerald-400 text-xs font-bold uppercase tracking-wider bg-emerald-500/10 border border-emerald-500/30 px-2.5 py-0.5 rounded-full">
+                      Action Required • Pending Withdrawal Payout
+                    </span>
+                  </div>
+
+                  <div className="flex flex-wrap items-baseline gap-3 mt-1">
+                    <span className="text-slate-300 text-sm font-semibold">How Much to Pay (Net Payout):</span>
+                    <span className="text-3xl sm:text-4xl font-extrabold text-emerald-400 tracking-tight">
+                      ₹{wdPendingNet.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </span>
+                  </div>
+
+                  <div className="text-slate-400 text-xs mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
+                    <span>Gross Requested: <strong className="text-white">₹{wdPending.toLocaleString('en-IN')}</strong></span>
+                    <span>•</span>
+                    <span>Platform Fee (15%): <strong className="text-amber-400">₹{(wdPending * 0.15).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong></span>
+                    <span>•</span>
+                    <span>Net Transfer: <strong className="text-emerald-400 font-bold">₹{wdPendingNet.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong></span>
+                  </div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto">
+                  {/* UPI ID card with Copy */}
+                  {(bn.upiId || withdrawals.find(w => w.status === 'pending')?.upi_id) && (
+                    <div className="flex items-center justify-between gap-2 bg-slate-800/90 border border-emerald-500/30 rounded-xl px-3.5 py-2.5">
+                      <CreditCard className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-[10px] text-slate-400 leading-none">Pay to UPI</p>
+                        <p className="font-mono text-xs font-bold text-emerald-300 truncate">
+                          {withdrawals.find(w => w.status === 'pending')?.upi_id || bn.upiId}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => copyToClipboard(withdrawals.find(w => w.status === 'pending')?.upi_id || bn.upiId!, 'UPI ID')}
+                        title="Copy UPI ID"
+                        className="p-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 transition-colors ml-1"
+                      >
+                        {copiedId === (withdrawals.find(w => w.status === 'pending')?.upi_id || bn.upiId) ? (
+                          <Check className="w-3.5 h-3.5 text-emerald-300" />
+                        ) : (
+                          <Copy className="w-3.5 h-3.5" />
+                        )}
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Payment Done Button */}
+                  {withdrawals.find(w => w.status === 'pending') && (
+                    <button
+                      type="button"
+                      onClick={() => setPaymentModalItem(withdrawals.find(w => w.status === 'pending'))}
+                      className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-sm shadow-lg shadow-emerald-900/40 transition-all"
+                    >
+                      <CheckCircle className="w-4 h-4" />
+                      Payment Done
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* ── Earnings + wallet summary ── */}
           <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             <StatCard icon={IndianRupee} label="Total Earnings"     value={`₹${bn.totalEarnings.toLocaleString('en-IN')}`} sub="from completed tasks" accent="bg-emerald-500" />
             <StatCard icon={Coins}       label="BondhuCoins"        value={bn.coins}                                         sub="reward points"        accent="bg-yellow-500" />
-            <StatCard icon={Send}        label="Pending Withdrawal"  value={`₹${wdPending.toLocaleString('en-IN')}`}         sub={`Est. Payout: ₹${wdPendingNet.toLocaleString('en-IN')} (15% fee)`}   accent="bg-blue-500" />
-            <StatCard icon={CheckCircle} label="Total Paid Out"     value={`₹${wdApprovedNet.toLocaleString('en-IN')}`}        sub={`Net paid after 15% platform fee`} accent="bg-violet-500" />
+            <StatCard icon={Send}        label="Pending Withdrawal"  value={`₹${wdPending.toLocaleString('en-IN')}`}         sub={`Est. Net: ₹${wdPendingNet.toLocaleString('en-IN', { minimumFractionDigits: 2 })} (15% fee)`}   accent="bg-blue-500" />
+            <StatCard icon={CheckCircle} label="Total Paid Out"     value={`₹${wdApprovedNet.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`}        sub={`Net paid after 15% fee`} accent="bg-violet-500" />
           </div>
 
           {/* Available balance highlight */}
@@ -603,29 +709,44 @@ export default function AdminUserProfile() {
             </div>
             <div>
               <p className="text-slate-400 text-xs uppercase tracking-wider font-medium">Available Balance</p>
-              <p className="text-cyan-300 text-2xl font-bold">₹ {wdAvailable.toLocaleString('en-IN')}</p>
+              <p className="text-cyan-300 text-2xl font-bold">₹ {wdAvailable.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
               <p className="text-slate-500 text-xs">Total Earnings − Pending − Paid Out</p>
             </div>
           </div>
 
           {/* UPI ID card */}
           <div className="rounded-2xl border border-white/10 bg-slate-800/50 backdrop-blur p-5">
-            <div className="flex items-center gap-2 mb-4">
-              <CreditCard className="w-4 h-4 text-emerald-400" />
-              <h2 className="text-white font-semibold">Bondhu UPI ID</h2>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <CreditCard className="w-4 h-4 text-emerald-400" />
+                <h2 className="text-white font-semibold">Bondhu UPI ID</h2>
+              </div>
+              {bn.upiId && (
+                <button
+                  type="button"
+                  onClick={() => copyToClipboard(bn.upiId!, 'UPI ID')}
+                  className="flex items-center gap-1.5 text-xs text-emerald-400 hover:text-emerald-300 transition-colors bg-emerald-500/10 px-2.5 py-1 rounded-lg border border-emerald-500/20"
+                >
+                  <Copy className="w-3.5 h-3.5" /> Copy UPI ID
+                </button>
+              )}
             </div>
             {bn.upiId ? (
-              <div className="flex items-center gap-3 bg-slate-700/60 border border-emerald-500/20 rounded-xl px-4 py-3">
-                <div className="w-9 h-9 rounded-lg bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
-                  <CreditCard className="w-4 h-4 text-emerald-400" />
+              <div className="flex items-center justify-between gap-3 bg-slate-700/60 border border-emerald-500/20 rounded-xl px-4 py-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
+                    <CreditCard className="w-4 h-4 text-emerald-400" />
+                  </div>
+                  <div>
+                    <p className="text-slate-400 text-xs mb-0.5">Registered UPI</p>
+                    <p className="font-mono text-emerald-300 text-sm font-semibold">{bn.upiId}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-slate-400 text-xs mb-0.5">Registered UPI</p>
-                  <p className="font-mono text-emerald-300 text-sm font-semibold">{bn.upiId}</p>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full font-semibold border border-emerald-500/20">
+                    ACTIVE
+                  </span>
                 </div>
-                <span className="ml-auto text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full font-semibold border border-emerald-500/20">
-                  ACTIVE
-                </span>
               </div>
             ) : (
               <div className="flex items-center gap-3 bg-slate-700/40 border border-dashed border-slate-600 rounded-xl px-4 py-3">
@@ -656,7 +777,7 @@ export default function AdminUserProfile() {
                 </div>
                 <p className="text-white font-medium">Withdrawal table not set up yet</p>
                 <p className="text-slate-500 text-sm max-w-xs">
-                  Run <code className="bg-slate-700 px-1 rounded text-amber-300">withdrawal_system_setup.sql</code> in your Supabase SQL Editor to enable withdrawal tracking.
+                  Run <code className="bg-slate-700 px-1 rounded text-amber-300">fix_withdrawal_admin_rls.sql</code> in your Supabase SQL Editor to enable withdrawal tracking and admin permissions.
                 </p>
                 <a
                   href="https://supabase.com/dashboard"
@@ -668,80 +789,275 @@ export default function AdminUserProfile() {
                 </a>
               </div>
             ) : withdrawals.length === 0 ? (
-              <p className="text-center py-10 text-slate-500 text-sm">No withdrawal requests yet</p>
+              <div className="text-center py-12 px-4">
+                <Wallet className="w-10 h-10 text-slate-600 mx-auto mb-2" />
+                <p className="text-white font-medium text-sm">No withdrawal requests found for this user</p>
+                <p className="text-slate-500 text-xs mt-1 max-w-sm mx-auto">
+                  When this Bondhu requests a withdrawal from their wallet, it will appear here for payout verification.
+                </p>
+              </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="text-slate-400 text-xs uppercase tracking-wider border-b border-white/5">
+                    <tr className="text-slate-400 text-xs uppercase tracking-wider border-b border-white/5 bg-slate-900/30">
                       <th className="px-5 py-3 text-left">Requested (Gross)</th>
                       <th className="px-4 py-3 text-left">Fee (15%)</th>
-                      <th className="px-4 py-3 text-left">Payout (Net)</th>
+                      <th className="px-4 py-3 text-left">How Much to Pay (Net)</th>
                       <th className="px-4 py-3 text-left">UPI ID</th>
                       <th className="px-4 py-3 text-left">Status</th>
                       <th className="px-4 py-3 text-left hidden md:table-cell">Requested Date</th>
-                      <th className="px-4 py-3 text-left hidden lg:table-cell">Processed Date</th>
+                      <th className="px-4 py-3 text-left hidden lg:table-cell">Notes / Ref</th>
                       <th className="px-4 py-3 text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/5">
-                    {withdrawals.map(w => (
-                      <tr key={w.id} className="hover:bg-white/5 transition-colors">
-                        <td className="px-5 py-3 text-slate-300 font-bold text-sm">
-                          ₹{Number(w.amount ?? 0).toLocaleString('en-IN')}
-                        </td>
-                        <td className="px-4 py-3 text-amber-500/80 text-sm">
-                          ₹{Number((w.amount ?? 0) * 0.15).toLocaleString('en-IN')}
-                        </td>
-                        <td className="px-4 py-3 text-emerald-400 font-bold text-base">
-                          ₹{Number((w.amount ?? 0) * 0.85).toLocaleString('en-IN')}
-                        </td>
-                        <td className="px-4 py-3 text-slate-300 font-mono text-xs">{w.upi_id ?? '—'}</td>
-                        <td className="px-4 py-3">
-                          <span className={`text-[10px] font-semibold px-2.5 py-0.5 rounded-full ${statusColor(w.status ?? 'pending')}`}>
-                            {w.status === 'approved' ? 'Approved & Paid' : (w.status ?? 'pending')}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-slate-500 text-xs hidden md:table-cell">
-                          {w.created_at ? format(new Date(w.created_at), 'dd MMM yyyy, hh:mm a') : '—'}
-                        </td>
-                        <td className="px-4 py-3 text-slate-500 text-xs hidden lg:table-cell">
-                          {w.processed_at ? format(new Date(w.processed_at), 'dd MMM yyyy, hh:mm a') : '—'}
-                        </td>
-                        <td className="px-4 py-3 text-right">
-                          {w.status === 'pending' ? (
-                            <div className="flex items-center justify-end gap-1.5">
-                              <button
-                                onClick={() => handleUpdateStatus(w.id, 'approved')}
-                                className="text-xs bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 border border-emerald-500/30 px-2 py-1 rounded transition-colors"
-                              >
-                                Approve Payment
-                              </button>
-                              <button
-                                onClick={() => handleUpdateStatus(w.id, 'rejected')}
-                                className="text-xs bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/30 px-2 py-1 rounded transition-colors"
-                              >
-                                Reject
-                              </button>
+                    {withdrawals.map(w => {
+                      const gross = Number(w.amount ?? 0);
+                      const fee = gross * 0.15;
+                      const net = gross * 0.85;
+                      const isPending = w.status === 'pending';
+
+                      return (
+                        <tr key={w.id} className="hover:bg-white/5 transition-colors">
+                          <td className="px-5 py-3 text-slate-300 font-bold text-sm">
+                            ₹{gross.toLocaleString('en-IN')}
+                          </td>
+                          <td className="px-4 py-3 text-amber-400/80 text-xs">
+                            ₹{fee.toFixed(2)}
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className="inline-flex items-center gap-1 bg-emerald-500/10 text-emerald-400 font-bold text-sm px-2.5 py-1 rounded-lg border border-emerald-500/20">
+                              ₹{net.toFixed(2)}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-mono text-slate-300 text-xs">{w.upi_id ?? '—'}</span>
+                              {w.upi_id && (
+                                <button
+                                  type="button"
+                                  onClick={() => copyToClipboard(w.upi_id, 'UPI ID')}
+                                  title="Copy UPI"
+                                  className="p-1 rounded hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
+                                >
+                                  {copiedId === w.upi_id ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                                </button>
+                              )}
                             </div>
-                          ) : (
-                            <span className="text-slate-600 text-xs">—</span>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className={`text-[10px] font-semibold px-2.5 py-0.5 rounded-full border ${statusColor(w.status ?? 'pending')}`}>
+                              {w.status === 'approved' || w.status === 'completed' ? '✓ Paid Out' : (w.status ?? 'pending')}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-slate-400 text-xs hidden md:table-cell">
+                            {w.created_at ? format(new Date(w.created_at), 'dd MMM yyyy, hh:mm a') : '—'}
+                          </td>
+                          <td className="px-4 py-3 text-slate-400 text-xs hidden lg:table-cell max-w-[160px] truncate" title={w.note || ''}>
+                            {w.note || (w.processed_at ? `Paid on ${format(new Date(w.processed_at), 'dd MMM yyyy')}` : '—')}
+                          </td>
+                          <td className="px-4 py-3 text-right">
+                            {isPending ? (
+                              <div className="flex items-center justify-end gap-1.5 flex-wrap">
+                                <button
+                                  type="button"
+                                  disabled={isSubmittingAction}
+                                  onClick={() => setPaymentModalItem(w)}
+                                  className="flex items-center gap-1 text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-3 py-1.5 rounded-lg shadow transition-colors disabled:opacity-50"
+                                >
+                                  <CheckCircle2 className="w-3.5 h-3.5" />
+                                  Payment Done
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={isSubmittingAction}
+                                  onClick={() => setRejectModalItem(w)}
+                                  className="text-xs bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/30 px-2.5 py-1.5 rounded-lg transition-colors disabled:opacity-50"
+                                >
+                                  Reject
+                                </button>
+                              </div>
+                            ) : (
+                              <div className="text-right">
+                                {w.status === 'approved' || w.status === 'completed' ? (
+                                  <span className="text-emerald-400 text-xs font-semibold flex items-center justify-end gap-1">
+                                    <CheckCircle2 className="w-3.5 h-3.5" /> Done
+                                  </span>
+                                ) : (
+                                  <span className="text-red-400 text-xs font-semibold">Rejected</span>
+                                )}
+                              </div>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
 
                 {/* Summary footer */}
-                <div className="px-5 py-3 border-t border-white/5 flex items-center justify-between bg-slate-900/40 text-xs text-slate-400">
-                  <span>Pending (Gross): <strong className="text-amber-400">₹{wdPending.toLocaleString('en-IN')}</strong> <span className="opacity-60">(Net Payout: ₹{wdPendingNet.toLocaleString('en-IN')})</span></span>
-                  <span>Paid Out (Net): <strong className="text-violet-400">₹{wdApprovedNet.toLocaleString('en-IN')}</strong> <span className="opacity-60">(Gross: ₹{wdApproved.toLocaleString('en-IN')})</span></span>
-                  <span>Available Balance: <strong className="text-cyan-400">₹{wdAvailable.toLocaleString('en-IN')}</strong></span>
+                <div className="px-5 py-3 border-t border-white/5 flex flex-wrap items-center justify-between bg-slate-900/60 text-xs text-slate-400 gap-2">
+                  <span>Pending Gross: <strong className="text-amber-400">₹{wdPending.toLocaleString('en-IN')}</strong> <span className="opacity-70">(How Much to Pay Net: <strong className="text-emerald-400">₹{wdPendingNet.toFixed(2)}</strong>)</span></span>
+                  <span>Paid Out (Net): <strong className="text-violet-400">₹{wdApprovedNet.toFixed(2)}</strong> <span className="opacity-70">(Gross: ₹{wdApproved.toLocaleString('en-IN')})</span></span>
+                  <span>Available Balance: <strong className="text-cyan-400">₹{wdAvailable.toFixed(2)}</strong></span>
                 </div>
               </div>
             )}
           </section>
+        </div>
+      )}
+
+      {/* ═══════════════════════════════════════════════════════
+          MODAL: PAYMENT DONE CONFIRMATION
+      ═══════════════════════════════════════════════════════ */}
+      {paymentModalItem && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={() => !isSubmittingAction && setPaymentModalItem(null)}>
+          <div className="bg-slate-900 border border-white/10 rounded-2xl p-6 w-full max-w-md shadow-2xl space-y-5" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-400 flex-shrink-0">
+                <CheckCircle2 className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-white text-lg font-bold">Confirm Payment Done</h3>
+                <p className="text-slate-400 text-xs">Verify transfer to Bondhu account</p>
+              </div>
+            </div>
+
+            {/* Payout calculation card */}
+            <div className="bg-slate-800/80 border border-emerald-500/30 rounded-xl p-4 space-y-3">
+              <div className="flex items-baseline justify-between border-b border-white/5 pb-2">
+                <span className="text-slate-400 text-xs uppercase tracking-wider font-semibold">Net Payout to Transfer:</span>
+                <span className="text-2xl font-extrabold text-emerald-400">
+                  ₹{(Number(paymentModalItem.amount ?? 0) * 0.85).toFixed(2)}
+                </span>
+              </div>
+
+              <div className="space-y-1 text-xs">
+                <div className="flex justify-between text-slate-400">
+                  <span>Gross Requested:</span>
+                  <span className="text-white font-medium">₹{Number(paymentModalItem.amount ?? 0).toLocaleString('en-IN')}</span>
+                </div>
+                <div className="flex justify-between text-slate-400">
+                  <span>Platform Fee (15%):</span>
+                  <span className="text-amber-400 font-medium">- ₹{(Number(paymentModalItem.amount ?? 0) * 0.15).toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between items-center text-slate-400 pt-1 border-t border-white/5">
+                  <span>Transfer to UPI ID:</span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-mono text-emerald-300 font-bold">{paymentModalItem.upi_id || bn.upiId}</span>
+                    <button
+                      type="button"
+                      onClick={() => copyToClipboard(paymentModalItem.upi_id || bn.upiId, 'UPI ID')}
+                      className="p-1 rounded hover:bg-white/10 text-slate-400 hover:text-white"
+                      title="Copy UPI"
+                    >
+                      <Copy className="w-3 h-3" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Optional UTR / Reference */}
+            <div className="space-y-3 text-xs">
+              <div>
+                <label className="text-slate-400 block mb-1 font-medium">Transaction / UTR Reference (Optional):</label>
+                <input
+                  type="text"
+                  value={transactionRef}
+                  onChange={e => setTransactionRef(e.target.value)}
+                  placeholder="e.g. UPI/409823412 or GPay ID"
+                  className="w-full bg-slate-800 border border-white/10 rounded-xl px-3 py-2 text-white placeholder:text-slate-500 focus:outline-none focus:border-emerald-500 font-mono"
+                />
+              </div>
+
+              <div>
+                <label className="text-slate-400 block mb-1 font-medium">Admin Note (Optional):</label>
+                <input
+                  type="text"
+                  value={adminNote}
+                  onChange={e => setAdminNote(e.target.value)}
+                  placeholder="e.g. Paid via Google Pay to Bondhu"
+                  className="w-full bg-slate-800 border border-white/10 rounded-xl px-3 py-2 text-white placeholder:text-slate-500 focus:outline-none focus:border-emerald-500"
+                />
+              </div>
+            </div>
+
+            {/* Modal actions */}
+            <div className="flex gap-2 pt-2">
+              <button
+                type="button"
+                disabled={isSubmittingAction}
+                onClick={() => setPaymentModalItem(null)}
+                className="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isSubmittingAction}
+                onClick={() => {
+                  const combinedNote = [transactionRef ? `UTR: ${transactionRef}` : '', adminNote].filter(Boolean).join(' • ');
+                  handleUpdateStatus(paymentModalItem.id, 'approved', combinedNote);
+                }}
+                className="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-lg shadow-emerald-900/40 flex items-center justify-center gap-1.5 disabled:opacity-50"
+              >
+                <Check className={`w-4 h-4 ${isSubmittingAction ? 'animate-spin' : ''}`} />
+                {isSubmittingAction ? 'Saving...' : `Confirm Payment Done (₹${(Number(paymentModalItem.amount ?? 0) * 0.85).toFixed(2)})`}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══════════════════════════════════════════════════════
+          MODAL: REJECT CONFIRMATION
+      ═══════════════════════════════════════════════════════ */}
+      {rejectModalItem && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={() => !isSubmittingAction && setRejectModalItem(null)}>
+          <div className="bg-slate-900 border border-white/10 rounded-2xl p-6 w-full max-w-sm shadow-2xl space-y-4" onClick={e => e.stopPropagation()}>
+            <div className="w-11 h-11 rounded-full bg-red-500/20 flex items-center justify-center mx-auto text-red-400">
+              <AlertTriangle className="w-6 h-6" />
+            </div>
+
+            <div className="text-center">
+              <h3 className="text-white font-bold text-base">Reject Withdrawal Request?</h3>
+              <p className="text-slate-400 text-xs mt-1">
+                Amount requested: <strong className="text-white">₹{Number(rejectModalItem.amount ?? 0).toLocaleString('en-IN')}</strong>
+              </p>
+            </div>
+
+            <div className="text-xs">
+              <label className="text-slate-400 block mb-1 font-medium">Rejection Reason:</label>
+              <textarea
+                value={adminNote}
+                onChange={e => setAdminNote(e.target.value)}
+                placeholder="e.g. Invalid UPI ID, please update in profile and request again."
+                rows={3}
+                className="w-full bg-slate-800 border border-white/10 rounded-xl p-2.5 text-white placeholder:text-slate-500 focus:outline-none focus:border-red-500"
+              />
+            </div>
+
+            <div className="flex gap-2 pt-1">
+              <button
+                type="button"
+                disabled={isSubmittingAction}
+                onClick={() => setRejectModalItem(null)}
+                className="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isSubmittingAction}
+                onClick={() => handleUpdateStatus(rejectModalItem.id, 'rejected', adminNote)}
+                className="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-bold transition-all shadow-lg shadow-red-900/40 disabled:opacity-50"
+              >
+                {isSubmittingAction ? 'Rejecting...' : 'Confirm Reject'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

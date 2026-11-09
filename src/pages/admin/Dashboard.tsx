@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { profilesApi, tasksApi } from '@/db/api';
 import { supabase } from '@/db/supabase';
 import { LiveSyncBadge } from '@/components/admin/LiveSyncBadge';
-import { Users, ClipboardList, CheckCircle, Star, TrendingUp, RefreshCw, Clock, XCircle } from 'lucide-react';
+import { Users, ClipboardList, CheckCircle, Star, TrendingUp, RefreshCw, Clock, XCircle, IndianRupee } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Profile, Task } from '@/types/types';
 import {
@@ -38,20 +39,24 @@ function StatCard({
 }
 
 export default function AdminDashboard() {
+  const navigate = useNavigate();
   const [users, setUsers] = useState<Profile[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [pendingWithdrawals, setPendingWithdrawals] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
   const loadData = async (showRefresh = false) => {
     if (showRefresh) setRefreshing(true);
     try {
-      const [usersData, tasksData] = await Promise.all([
+      const [usersData, tasksData, withdrawalsData] = await Promise.all([
         profilesApi.getAllProfiles(0, 100),
         tasksApi.getAllTasks(0, 100),
+        profilesApi.adminGetPendingWithdrawals(),
       ]);
       setUsers(usersData);
       setTasks(tasksData);
+      setPendingWithdrawals(withdrawalsData);
       if (showRefresh) toast.success('Dashboard refreshed');
     } catch {
       toast.error('Failed to load dashboard data');
@@ -63,7 +68,7 @@ export default function AdminDashboard() {
 
   useEffect(() => { loadData(); }, []);
 
-  // Real-time synchronization for users and tasks
+  // Real-time synchronization for users, tasks and withdrawals
   useEffect(() => {
     const channel = supabase
       .channel(`admin-dashboard-${Date.now()}`)
@@ -101,6 +106,13 @@ export default function AdminDashboard() {
           }
         }
       )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'withdrawal_requests' },
+        () => {
+          profilesApi.adminGetPendingWithdrawals().then(data => setPendingWithdrawals(data));
+        }
+      )
       .subscribe();
 
     return () => {
@@ -122,6 +134,9 @@ export default function AdminDashboard() {
       return rated.length > 0 ? rated.reduce((a, u) => a + u.rating_avg, 0) / rated.length : 0;
     })(),
   };
+
+  const totalPendingGross = pendingWithdrawals.reduce((s, w) => s + Number(w.amount || 0), 0);
+  const totalPendingNet = totalPendingGross * 0.85;
 
   // Build last 7 days task chart data
   const chartData = Array.from({ length: 7 }, (_, i) => {
@@ -174,6 +189,44 @@ export default function AdminDashboard() {
           </button>
         </div>
       </div>
+
+      {/* Pending Payout Action Banner */}
+      {pendingWithdrawals.length > 0 && (
+        <div className="relative overflow-hidden rounded-2xl border-2 border-emerald-500/50 bg-gradient-to-r from-emerald-950/60 via-slate-900 to-slate-900 p-5 shadow-lg shadow-emerald-950/40">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3.5">
+              <div className="w-11 h-11 rounded-xl bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
+                <IndianRupee className="w-6 h-6 text-emerald-400" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-emerald-400 font-bold text-sm">Action Required • Pending Bondhu Payouts</span>
+                  <span className="bg-emerald-500 text-slate-950 text-xs font-extrabold px-2 py-0.5 rounded-full">
+                    {pendingWithdrawals.length} {pendingWithdrawals.length === 1 ? 'request' : 'requests'}
+                  </span>
+                </div>
+                <p className="text-slate-300 text-xs mt-1">
+                  How Much to Pay (Net): <strong className="text-emerald-400 font-bold text-sm">₹{totalPendingNet.toFixed(2)}</strong>
+                  <span className="text-slate-400 ml-2">(Gross: ₹{totalPendingGross.toFixed(2)} • 15% Fee: ₹{(totalPendingGross * 0.15).toFixed(2)})</span>
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                if (pendingWithdrawals.length === 1 && pendingWithdrawals[0].user_id) {
+                  navigate(`/admin/users/${pendingWithdrawals[0].user_id}`);
+                } else {
+                  navigate('/admin/users');
+                }
+              }}
+              className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-md shadow-emerald-900/40 transition-all flex items-center gap-1.5 flex-shrink-0"
+            >
+              Review & Pay Out →
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Stat Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

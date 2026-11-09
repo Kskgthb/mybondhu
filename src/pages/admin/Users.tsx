@@ -39,15 +39,34 @@ export default function AdminUsers() {
   const [page, setPage] = useState(0);
   const [selectedUser, setSelectedUser] = useState<Profile | null>(null);
   const [updatingRole, setUpdatingRole] = useState<string | null>(null);
+  const [pendingWdMap, setPendingWdMap] = useState<Record<string, number>>({});
   const navigate = useNavigate();
 
   const PAGE_SIZE = 10;
+
+  const loadPendingWds = async () => {
+    try {
+      const pendingWds = await profilesApi.adminGetPendingWithdrawals();
+      const map: Record<string, number> = {};
+      for (const w of pendingWds) {
+        if (w.user_id) {
+          map[w.user_id] = (map[w.user_id] || 0) + Number(w.amount || 0);
+        }
+      }
+      setPendingWdMap(map);
+    } catch {
+      // ignore
+    }
+  };
 
   const loadUsers = async (showRefresh = false) => {
     if (showRefresh) setRefreshing(true);
     else setLoading(true);
     try {
-      const data = await profilesApi.getAllProfiles(0, 200);
+      const [data] = await Promise.all([
+        profilesApi.getAllProfiles(0, 200),
+        loadPendingWds(),
+      ]);
       setUsers(data);
       if (showRefresh) toast.success('Users refreshed');
     } catch {
@@ -83,6 +102,13 @@ export default function AdminUsers() {
             setUsers(prev => prev.filter(u => u.id !== deletedId));
             setSelectedUser(prev => prev?.id === deletedId ? null : prev);
           }
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'withdrawal_requests' },
+        () => {
+          loadPendingWds();
         }
       )
       .subscribe();
@@ -207,7 +233,23 @@ export default function AdminUsers() {
                               {user.username?.substring(0, 2).toUpperCase()}
                             </AvatarFallback>
                           </Avatar>
-                          <span className="text-gray-900 dark:text-white text-sm font-medium">{user.username}</span>
+                          <div className="flex flex-col">
+                            <div className="flex items-center gap-2">
+                              <span className="text-gray-900 dark:text-white text-sm font-medium">{user.username}</span>
+                              {pendingWdMap[user.id] > 0 && (
+                                <span
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    navigate(`/admin/users/${user.id}`);
+                                  }}
+                                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 animate-pulse hover:bg-emerald-500/30 cursor-pointer shadow-sm"
+                                  title="Click to view & approve payout"
+                                >
+                                  💰 Pay ₹{(pendingWdMap[user.id] * 0.85).toFixed(2)}
+                                </span>
+                              )}
+                            </div>
+                          </div>
                         </div>
                       </td>
                       <td className="px-4 py-3 hidden md:table-cell">
@@ -303,6 +345,28 @@ export default function AdminUsers() {
                 <p className="text-gray-500 dark:text-slate-400 text-sm">{selectedUser.email ?? 'No email'}</p>
               </div>
             </div>
+
+            {pendingWdMap[selectedUser.id] > 0 && (
+              <div className="mb-4 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3.5 flex items-center justify-between">
+                <div>
+                  <p className="text-emerald-600 dark:text-emerald-400 text-xs font-bold uppercase tracking-wider">Pending Payout Request</p>
+                  <p className="text-gray-900 dark:text-white text-sm font-bold mt-0.5">
+                    Net to Pay: ₹{(pendingWdMap[selectedUser.id] * 0.85).toFixed(2)}
+                    <span className="text-gray-500 dark:text-slate-400 text-xs font-normal ml-1.5">(Gross: ₹{pendingWdMap[selectedUser.id]})</span>
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedUser(null);
+                    navigate(`/admin/users/${selectedUser.id}`);
+                  }}
+                  className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow"
+                >
+                  Pay Now →
+                </button>
+              </div>
+            )}
             <div className="grid grid-cols-2 gap-3 text-sm">
               {[
                 ['Role',         roleLabel[selectedUser.role]],
