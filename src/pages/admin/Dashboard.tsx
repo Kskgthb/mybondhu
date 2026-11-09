@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { profilesApi, tasksApi } from '@/db/api';
+import { supabase } from '@/db/supabase';
+import { LiveSyncBadge } from '@/components/admin/LiveSyncBadge';
 import { Users, ClipboardList, CheckCircle, Star, TrendingUp, RefreshCw, Clock, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Profile, Task } from '@/types/types';
@@ -61,6 +63,51 @@ export default function AdminDashboard() {
 
   useEffect(() => { loadData(); }, []);
 
+  // Real-time synchronization for users and tasks
+  useEffect(() => {
+    const channel = supabase
+      .channel(`admin-dashboard-${Date.now()}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'profiles' },
+        (payload) => {
+          if (payload.eventType === 'INSERT') {
+            const newProfile = payload.new as Profile;
+            setUsers(prev => [newProfile, ...prev.filter(u => u.id !== newProfile.id)]);
+            toast.info(`New user registered: ${newProfile.username || 'User'}`);
+          } else if (payload.eventType === 'UPDATE') {
+            const updatedProfile = payload.new as Profile;
+            setUsers(prev => prev.map(u => u.id === updatedProfile.id ? { ...u, ...updatedProfile } : u));
+          } else if (payload.eventType === 'DELETE') {
+            const deletedId = (payload.old as { id: string }).id;
+            setUsers(prev => prev.filter(u => u.id !== deletedId));
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'tasks' },
+        (payload) => {
+          if (payload.eventType === 'INSERT') {
+            const newTask = payload.new as Task;
+            setTasks(prev => [newTask, ...prev.filter(t => t.id !== newTask.id)]);
+            toast.info(`New task posted: "${newTask.title}"`);
+          } else if (payload.eventType === 'UPDATE') {
+            const updatedTask = payload.new as Task;
+            setTasks(prev => prev.map(t => t.id === updatedTask.id ? { ...t, ...updatedTask } : t));
+          } else if (payload.eventType === 'DELETE') {
+            const deletedId = (payload.old as { id: string }).id;
+            setTasks(prev => prev.filter(t => t.id !== deletedId));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
   const stats = {
     totalUsers: users.length,
     totalBondhus: users.filter(u => u.role === 'bondhu').length,
@@ -115,14 +162,17 @@ export default function AdminDashboard() {
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Overview</h1>
           <p className="text-gray-500 dark:text-slate-400 text-sm mt-1">Welcome back, here's what's happening</p>
         </div>
-        <button
-          onClick={() => loadData(true)}
-          disabled={refreshing}
-          className="flex items-center gap-2 text-sm text-gray-600 dark:text-slate-300 hover:text-[#641ACC] bg-white dark:bg-white/5 hover:bg-[#641ACC]/5 border border-gray-200 dark:border-white/10 hover:border-[#641ACC] px-3 py-2 rounded-xl transition-all"
-        >
-          <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
-          Refresh
-        </button>
+        <div className="flex items-center gap-2">
+          <LiveSyncBadge />
+          <button
+            onClick={() => loadData(true)}
+            disabled={refreshing}
+            className="flex items-center gap-2 text-sm text-gray-600 dark:text-slate-300 hover:text-[#641ACC] bg-white dark:bg-white/5 hover:bg-[#641ACC]/5 border border-gray-200 dark:border-white/10 hover:border-[#641ACC] px-3 py-2 rounded-xl transition-all"
+          >
+            <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+            Refresh
+          </button>
+        </div>
       </div>
 
       {/* Stat Cards */}

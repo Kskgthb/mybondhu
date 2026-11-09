@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { NavLink, useNavigate, Outlet } from 'react-router-dom';
+import { NavLink, useNavigate, Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { isAdminEmail } from '@/config/adminConfig';
 import {
@@ -20,14 +20,25 @@ const navItems = [
 ];
 
 export default function AdminLayout() {
-  const { profile, user, signOut } = useAuth();
+  const { profile, user, loading, signOut } = useAuth();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const userEmail = user?.email ?? profile?.email ?? '';
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-[#F1F5F9] dark:bg-slate-950">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-10 h-10 border-4 border-[#641ACC] border-t-transparent rounded-full animate-spin" />
+          <p className="text-sm text-gray-500 dark:text-slate-400">Verifying admin access...</p>
+        </div>
+      </div>
+    );
+  }
+
   if (!isAdminEmail(userEmail)) {
-    navigate('/');
-    return null;
+    return <Navigate to="/" replace />;
   }
 
   const handleSignOut = async () => {

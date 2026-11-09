@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { profilesApi, tasksApi } from '@/db/api';
+import { supabase } from '@/db/supabase';
+import { LiveSyncBadge } from '@/components/admin/LiveSyncBadge';
 import { toast } from 'sonner';
 import type { Profile, Task } from '@/types/types';
 import {
@@ -15,23 +17,70 @@ export default function AdminAnalytics() {
   const [users, setUsers] = useState<Profile[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const loadData = async () => {
-    setLoading(true);
+  const loadData = async (showRefresh = false) => {
+    if (showRefresh) setRefreshing(true);
+    else setLoading(true);
     try {
       const [u, t] = await Promise.all([
         profilesApi.getAllProfiles(0, 200),
         tasksApi.getAllTasks(0, 200),
       ]);
       setUsers(u); setTasks(t);
+      if (showRefresh) toast.success('Analytics refreshed');
     } catch {
       toast.error('Failed to load analytics');
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   };
 
   useEffect(() => { loadData(); }, []);
+
+  // Real-time synchronization
+  useEffect(() => {
+    const channel = supabase
+      .channel(`admin-analytics-${Date.now()}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'profiles' },
+        (payload) => {
+          if (payload.eventType === 'INSERT') {
+            const newProfile = payload.new as Profile;
+            setUsers(prev => [newProfile, ...prev.filter(u => u.id !== newProfile.id)]);
+          } else if (payload.eventType === 'UPDATE') {
+            const updated = payload.new as Profile;
+            setUsers(prev => prev.map(u => u.id === updated.id ? { ...u, ...updated } : u));
+          } else if (payload.eventType === 'DELETE') {
+            const deletedId = (payload.old as { id: string }).id;
+            setUsers(prev => prev.filter(u => u.id !== deletedId));
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'tasks' },
+        (payload) => {
+          if (payload.eventType === 'INSERT') {
+            const newTask = payload.new as Task;
+            setTasks(prev => [newTask, ...prev.filter(t => t.id !== newTask.id)]);
+          } else if (payload.eventType === 'UPDATE') {
+            const updated = payload.new as Task;
+            setTasks(prev => prev.map(t => t.id === updated.id ? { ...t, ...updated } : t));
+          } else if (payload.eventType === 'DELETE') {
+            const deletedId = (payload.old as { id: string }).id;
+            setTasks(prev => prev.filter(t => t.id !== deletedId));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   // --- chart data ---
 
@@ -82,11 +131,11 @@ export default function AdminAnalytics() {
     cursor: { stroke: '#8b5cf6', strokeWidth: 1 },
   };
 
-  if (loading) {
+  if (loading && !refreshing) {
     return (
       <div className="space-y-6">
         <div className="grid grid-cols-2 gap-4">
-          {[1,2,3,4].map(i => <div key={i} className="h-64 rounded-2xl bg-slate-800/60 animate-pulse" />)}
+          {[1,2,3,4].map(i => <div key={i} className="h-64 rounded-2xl bg-gray-200 dark:bg-slate-800/60 animate-pulse" />)}
         </div>
       </div>
     );
@@ -96,37 +145,41 @@ export default function AdminAnalytics() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">Analytics</h1>
-          <p className="text-slate-400 text-sm mt-1">Platform trends and insights</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Analytics</h1>
+          <p className="text-gray-500 dark:text-slate-400 text-sm mt-1">Platform trends and insights</p>
         </div>
-        <button onClick={loadData}
-          className="flex items-center gap-2 text-sm text-slate-300 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 px-3 py-2 rounded-xl transition-all">
-          <RefreshCw className="w-4 h-4" /> Refresh
-        </button>
+        <div className="flex items-center gap-2">
+          <LiveSyncBadge />
+          <button onClick={() => loadData(true)}
+            disabled={refreshing}
+            className="flex items-center gap-2 text-sm text-gray-600 dark:text-slate-300 hover:text-[#641ACC] bg-white dark:bg-white/5 hover:bg-[#641ACC]/5 border border-gray-200 dark:border-white/10 hover:border-[#641ACC] px-3 py-2 rounded-xl transition-all">
+            <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} /> Refresh
+          </button>
+        </div>
       </div>
 
       {/* Summary pills */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: 'Total Users',   value: users.length,  icon: Users,         color: 'text-violet-400' },
-          { label: 'Total Tasks',   value: tasks.length,  icon: ClipboardList, color: 'text-cyan-400' },
-          { label: 'Bondhus',       value: users.filter(u => u.role === 'bondhu').length, icon: Star, color: 'text-amber-400' },
-          { label: 'Completed',     value: tasks.filter(t => t.status === 'completed').length, icon: TrendingUp, color: 'text-emerald-400' },
+          { label: 'Total Users',   value: users.length,  icon: Users,         color: 'text-violet-500 dark:text-violet-400' },
+          { label: 'Total Tasks',   value: tasks.length,  icon: ClipboardList, color: 'text-cyan-500 dark:text-cyan-400' },
+          { label: 'Bondhus',       value: users.filter(u => u.role === 'bondhu').length, icon: Star, color: 'text-amber-500 dark:text-amber-400' },
+          { label: 'Completed',     value: tasks.filter(t => t.status === 'completed').length, icon: TrendingUp, color: 'text-emerald-500 dark:text-emerald-400' },
         ].map(({ label, value, icon: Icon, color }) => (
-          <div key={label} className="rounded-xl border border-white/10 bg-slate-800/50 p-4 flex items-center gap-3">
+          <div key={label} className="rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-slate-800/50 p-4 flex items-center gap-3 shadow-sm">
             <Icon className={`w-5 h-5 ${color} flex-shrink-0`} />
             <div>
-              <p className="text-2xl font-bold text-white">{value}</p>
-              <p className="text-slate-400 text-xs">{label}</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">{value}</p>
+              <p className="text-gray-500 dark:text-slate-400 text-xs">{label}</p>
             </div>
           </div>
         ))}
       </div>
 
       {/* Tasks over time */}
-      <div className="rounded-2xl border border-white/10 bg-slate-800/50 backdrop-blur p-5">
-        <h2 className="text-white font-semibold mb-1">Tasks Posted — Last 14 Days</h2>
-        <p className="text-slate-400 text-xs mb-4">Daily task creation volume</p>
+      <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-slate-800/50 backdrop-blur p-5 shadow-sm">
+        <h2 className="text-gray-900 dark:text-white font-semibold mb-1">Tasks Posted — Last 14 Days</h2>
+        <p className="text-gray-500 dark:text-slate-400 text-xs mb-4">Daily task creation volume</p>
         <ResponsiveContainer width="100%" height={220}>
           <AreaChart data={tasksByDay}>
             <defs>
@@ -135,7 +188,7 @@ export default function AdminAnalytics() {
                 <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" />
+            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
             <XAxis dataKey="date" tick={{ fill: '#94a3b8', fontSize: 10 }} axisLine={false} tickLine={false} />
             <YAxis tick={{ fill: '#94a3b8', fontSize: 10 }} axisLine={false} tickLine={false} />
             <Tooltip {...tooltipStyle} />
@@ -146,12 +199,12 @@ export default function AdminAnalytics() {
 
       {/* Row: User Growth + Status Pie */}
       <div className="grid lg:grid-cols-5 gap-6">
-        <div className="lg:col-span-3 rounded-2xl border border-white/10 bg-slate-800/50 backdrop-blur p-5">
-          <h2 className="text-white font-semibold mb-1">User Registrations — Last 14 Days</h2>
-          <p className="text-slate-400 text-xs mb-4">New users per day</p>
+        <div className="lg:col-span-3 rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-slate-800/50 backdrop-blur p-5 shadow-sm">
+          <h2 className="text-gray-900 dark:text-white font-semibold mb-1">User Registrations — Last 14 Days</h2>
+          <p className="text-gray-500 dark:text-slate-400 text-xs mb-4">New users per day</p>
           <ResponsiveContainer width="100%" height={200}>
             <LineChart data={usersByDay}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
               <XAxis dataKey="date" tick={{ fill: '#94a3b8', fontSize: 10 }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fill: '#94a3b8', fontSize: 10 }} axisLine={false} tickLine={false} />
               <Tooltip {...tooltipStyle} />
@@ -160,9 +213,9 @@ export default function AdminAnalytics() {
           </ResponsiveContainer>
         </div>
 
-        <div className="lg:col-span-2 rounded-2xl border border-white/10 bg-slate-800/50 backdrop-blur p-5">
-          <h2 className="text-white font-semibold mb-1">Task Status Distribution</h2>
-          <p className="text-slate-400 text-xs mb-2">Current snapshot</p>
+        <div className="lg:col-span-2 rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-slate-800/50 backdrop-blur p-5 shadow-sm">
+          <h2 className="text-gray-900 dark:text-white font-semibold mb-1">Task Status Distribution</h2>
+          <p className="text-gray-500 dark:text-slate-400 text-xs mb-2">Current snapshot</p>
           {statusPie.length > 0 ? (
             <ResponsiveContainer width="100%" height={200}>
               <PieChart>
@@ -174,20 +227,20 @@ export default function AdminAnalytics() {
               </PieChart>
             </ResponsiveContainer>
           ) : (
-            <div className="h-48 flex items-center justify-center text-slate-500 text-sm">No data</div>
+            <div className="h-48 flex items-center justify-center text-gray-400 dark:text-slate-500 text-sm">No data</div>
           )}
         </div>
       </div>
 
       {/* Row: Top Bondhus + Categories */}
       <div className="grid lg:grid-cols-2 gap-6">
-        <div className="rounded-2xl border border-white/10 bg-slate-800/50 backdrop-blur p-5">
-          <h2 className="text-white font-semibold mb-1">Top Earning Bondhus</h2>
-          <p className="text-slate-400 text-xs mb-4">Highest total earnings</p>
+        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-slate-800/50 backdrop-blur p-5 shadow-sm">
+          <h2 className="text-gray-900 dark:text-white font-semibold mb-1">Top Earning Bondhus</h2>
+          <p className="text-gray-500 dark:text-slate-400 text-xs mb-4">Highest total earnings</p>
           {topBondhus.length > 0 ? (
             <ResponsiveContainer width="100%" height={220}>
               <BarChart data={topBondhus} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" horizontal={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" horizontal={false} />
                 <XAxis type="number" tick={{ fill: '#94a3b8', fontSize: 10 }} axisLine={false} tickLine={false} />
                 <YAxis dataKey="name" type="category" tick={{ fill: '#94a3b8', fontSize: 10 }} axisLine={false} tickLine={false} width={80} />
                 <Tooltip {...tooltipStyle} />
@@ -195,17 +248,17 @@ export default function AdminAnalytics() {
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            <div className="h-48 flex items-center justify-center text-slate-500 text-sm">No earnings data yet</div>
+            <div className="h-48 flex items-center justify-center text-gray-400 dark:text-slate-500 text-sm">No earnings data yet</div>
           )}
         </div>
 
-        <div className="rounded-2xl border border-white/10 bg-slate-800/50 backdrop-blur p-5">
-          <h2 className="text-white font-semibold mb-1">Top Task Categories</h2>
-          <p className="text-slate-400 text-xs mb-4">Most popular task types</p>
+        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-slate-800/50 backdrop-blur p-5 shadow-sm">
+          <h2 className="text-gray-900 dark:text-white font-semibold mb-1">Top Task Categories</h2>
+          <p className="text-gray-500 dark:text-slate-400 text-xs mb-4">Most popular task types</p>
           {categoryData.length > 0 ? (
             <ResponsiveContainer width="100%" height={220}>
               <BarChart data={categoryData} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" horizontal={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" horizontal={false} />
                 <XAxis type="number" tick={{ fill: '#94a3b8', fontSize: 10 }} axisLine={false} tickLine={false} />
                 <YAxis dataKey="name" type="category" tick={{ fill: '#94a3b8', fontSize: 10 }} axisLine={false} tickLine={false} width={80} />
                 <Tooltip {...tooltipStyle} />
@@ -213,7 +266,7 @@ export default function AdminAnalytics() {
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            <div className="h-48 flex items-center justify-center text-slate-500 text-sm">No category data yet</div>
+            <div className="h-48 flex items-center justify-center text-gray-400 dark:text-slate-500 text-sm">No category data yet</div>
           )}
         </div>
       </div>

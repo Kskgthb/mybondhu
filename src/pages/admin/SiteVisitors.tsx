@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/db/supabase';
+import { LiveSyncBadge } from '@/components/admin/LiveSyncBadge';
 import { toast } from 'sonner';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid,
@@ -178,25 +179,31 @@ export default function SiteVisitors() {
   // ── Realtime Subscription ────────────────────────────────────────────────
   useEffect(() => {
     const channel = supabase
-      .channel('site_visitors_changes')
+      .channel(`admin-site-visitors-${Date.now()}`)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'site_visitors' },
         (payload) => {
           if (payload.eventType === 'INSERT') {
             const newRow = payload.new as VisitorRow;
-            // Only add if it falls within the current span (to be safe, we just append it
-            // since real-time events are happening 'now' which is always in any span)
-            setRows((current) => [...current, newRow]);
+            // Only add if it falls within the current span
+            const { from, to } = spanToDates(span);
+            const rowDate = new Date(newRow.created_at);
+            if (rowDate >= from && rowDate <= to) {
+              setRows((current) => [...current, newRow]);
+            }
             toast.success('New visitor detected!', {
               description: `${newRow.country || 'Unknown Location'} • ${guessDevice(newRow.user_agent)}`,
-              duration: 2000,
+              duration: 2500,
             });
           } else if (payload.eventType === 'UPDATE') {
             const updatedRow = payload.new as VisitorRow;
             setRows((current) =>
               current.map((row) => (row.id === updatedRow.id ? updatedRow : row))
             );
+          } else if (payload.eventType === 'DELETE') {
+            const deletedId = (payload.old as { id: string }).id;
+            setRows((current) => current.filter((row) => row.id !== deletedId));
           }
         }
       )
@@ -205,7 +212,7 @@ export default function SiteVisitors() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [span]);
 
   // ── Derived stats ────────────────────────────────────────────────────────
 
@@ -338,6 +345,7 @@ export default function SiteVisitors() {
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
+          <LiveSyncBadge />
           {/* Span pills */}
           <div className="flex items-center gap-1 bg-slate-800/60 border border-white/10 rounded-xl p-1">
             {SPANS.map(s => (
@@ -358,7 +366,7 @@ export default function SiteVisitors() {
           <button
             onClick={() => loadVisitors(true)}
             disabled={refreshing}
-            className="flex items-center gap-2 text-sm text-slate-300 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 px-3 py-2 rounded-xl transition-all"
+            className="flex items-center gap-2 text-sm text-gray-600 dark:text-slate-300 hover:text-[#641ACC] bg-white dark:bg-white/5 hover:bg-[#641ACC]/5 border border-gray-200 dark:border-white/10 hover:border-[#641ACC] px-3 py-2 rounded-xl transition-all"
           >
             <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
             Refresh

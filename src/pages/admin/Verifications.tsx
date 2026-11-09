@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/db/supabase';
 import { profilesApi } from '@/db/api';
+import { LiveSyncBadge } from '@/components/admin/LiveSyncBadge';
 import { toast } from 'sonner';
 import type { Profile } from '@/types/types';
 import { CheckCircle, XCircle, Clock, ExternalLink, RefreshCw } from 'lucide-react';
@@ -24,14 +25,14 @@ const StatusIcon = ({ status }: { status: string }) => {
 export default function AdminVerifications() {
   const [bondhus, setBondhus] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [filter, setFilter] = useState<FilterStatus>('pending');
   const [updating, setUpdating] = useState<string | null>(null);
   const [selected, setSelected] = useState<Profile | null>(null);
 
-  useEffect(() => { loadBondhus(); }, []);
-
-  const loadBondhus = async () => {
-    setLoading(true);
+  const loadBondhus = async (showRefresh = false) => {
+    if (showRefresh) setRefreshing(true);
+    else setLoading(true);
     try {
       const { data, error } = await supabase
         .from('profiles')
@@ -40,12 +41,62 @@ export default function AdminVerifications() {
         .order('created_at', { ascending: false });
       if (error) throw error;
       setBondhus(data ?? []);
+      if (showRefresh) toast.success('Verification queue refreshed');
     } catch {
       toast.error('Failed to load verification queue');
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   };
+
+  useEffect(() => { loadBondhus(); }, []);
+
+  // Real-time synchronization for bondhu profiles & verification requests
+  useEffect(() => {
+    const channel = supabase
+      .channel(`admin-verifications-${Date.now()}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'profiles' },
+        (payload) => {
+          if (payload.eventType === 'INSERT') {
+            const newProfile = payload.new as Profile;
+            if (newProfile.role === 'bondhu') {
+              setBondhus(prev => [newProfile, ...prev.filter(b => b.id !== newProfile.id)]);
+              toast.info(`New Bondhu verification request: ${newProfile.username || 'Bondhu'}`);
+            }
+          } else if (payload.eventType === 'UPDATE') {
+            const updated = payload.new as Profile;
+            if (updated.role === 'bondhu') {
+              setBondhus(prev => {
+                const exists = prev.some(b => b.id === updated.id);
+                if (exists) {
+                  return prev.map(b => b.id === updated.id ? { ...b, ...updated } : b);
+                } else {
+                  return [updated, ...prev];
+                }
+              });
+            } else {
+              // Role changed away from bondhu
+              setBondhus(prev => prev.filter(b => b.id !== updated.id));
+            }
+            if (selected?.id === updated.id) {
+              setSelected(prev => prev ? { ...prev, ...updated } : prev);
+            }
+          } else if (payload.eventType === 'DELETE') {
+            const deletedId = (payload.old as { id: string }).id;
+            setBondhus(prev => prev.filter(b => b.id !== deletedId));
+            if (selected?.id === deletedId) setSelected(null);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [selected?.id]);
 
   const updateVerificationStatus = async (userId: string, status: 'verified' | 'rejected') => {
     setUpdating(userId);
@@ -77,10 +128,14 @@ export default function AdminVerifications() {
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Verifications</h1>
           <p className="text-gray-500 dark:text-slate-400 text-sm mt-1">Review Bondhu identity documents</p>
         </div>
-        <button onClick={loadBondhus}
-          className="flex items-center gap-2 text-sm text-gray-600 dark:text-slate-300 hover:text-[#641ACC] bg-white dark:bg-white/5 hover:bg-[#641ACC]/5 border border-gray-200 dark:border-white/10 hover:border-[#641ACC] px-3 py-2 rounded-xl transition-all">
-          <RefreshCw className="w-4 h-4" /> Refresh
-        </button>
+        <div className="flex items-center gap-2">
+          <LiveSyncBadge />
+          <button onClick={() => loadBondhus(true)}
+            disabled={refreshing}
+            className="flex items-center gap-2 text-sm text-gray-600 dark:text-slate-300 hover:text-[#641ACC] bg-white dark:bg-white/5 hover:bg-[#641ACC]/5 border border-gray-200 dark:border-white/10 hover:border-[#641ACC] px-3 py-2 rounded-xl transition-all">
+            <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} /> Refresh
+          </button>
+        </div>
       </div>
 
       {/* Filter Tabs */}

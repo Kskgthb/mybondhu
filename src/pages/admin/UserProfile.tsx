@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { profilesApi } from '@/db/api';
 import { supabase } from '@/db/supabase';
+import { LiveSyncBadge } from '@/components/admin/LiveSyncBadge';
 import { toast } from 'sonner';
 import type { Profile } from '@/types/types';
 import {
@@ -142,6 +143,47 @@ export default function AdminUserProfile() {
 
   useEffect(() => { loadData(); }, [loadData]);
 
+  // Real-time synchronization for this user profile and related entities
+  useEffect(() => {
+    if (!userId) return;
+
+    const channel = supabase
+      .channel(`admin-user-profile-${userId}-${Date.now()}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'profiles', filter: `id=eq.${userId}` },
+        () => {
+          loadData();
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'tasks', filter: `poster_id=eq.${userId}` },
+        () => {
+          loadData();
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'task_assignments', filter: `bondhu_id=eq.${userId}` },
+        () => {
+          loadData();
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'withdrawal_requests', filter: `user_id=eq.${userId}` },
+        () => {
+          loadData();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [userId, loadData]);
+
   const handleUpdateStatus = async (id: string, newStatus: 'approved' | 'rejected') => {
     try {
       const { data: { user: adminUser } } = await supabase.auth.getUser();
@@ -251,14 +293,17 @@ export default function AdminUserProfile() {
         >
           <ArrowLeft className="w-4 h-4" /> Back to Users
         </button>
-        <button
-          onClick={() => loadData(true)}
-          disabled={refreshing}
-          className="flex items-center gap-2 text-sm text-slate-300 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 px-3 py-2 rounded-xl transition-all"
-        >
-          <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
-          Refresh
-        </button>
+        <div className="flex items-center gap-2">
+          <LiveSyncBadge />
+          <button
+            onClick={() => loadData(true)}
+            disabled={refreshing}
+            className="flex items-center gap-2 text-sm text-slate-300 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 px-3 py-2 rounded-xl transition-all"
+          >
+            <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+            Refresh
+          </button>
+        </div>
       </div>
 
       {/* ── Profile hero card ── */}
