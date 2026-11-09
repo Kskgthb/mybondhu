@@ -27,19 +27,6 @@ export default function TaskPostDialog({ open, onOpenChange, onSuccess }: TaskPo
   const [loading, setLoading] = useState(false);
   const [fetchingLocation, setFetchingLocation] = useState(false);
   const [locationFromGPS, setLocationFromGPS] = useState(false);
-  const CATEGORY_DEFAULT_AMOUNTS: Record<string, string> = {
-    academic_help: '150',
-    personal_task: '100',
-    event_planning: '250',
-    moving_logistics: '200',
-    companionship: '100',
-    technical_support: '200',
-    creative_services: '250',
-    sports_fitness: '150',
-    food_cooking: '100',
-    travel_companion: '200',
-  };
-
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -48,7 +35,7 @@ export default function TaskPostDialog({ open, onOpenChange, onSuccess }: TaskPo
     location_lat: 0,
     location_lng: 0,
     urgency: 'medium' as TaskUrgency,
-    amount: '100', // Automatically add default amount
+    amount: '',
     payment_method: 'online' as 'cash' | 'online', // Only online payment allowed
   });
 
@@ -87,10 +74,15 @@ export default function TaskPostDialog({ open, onOpenChange, onSuccess }: TaskPo
 
     setLoading(true);
     try {
-      // Generate payment URL pointing to razorpay.me/@bondhuapp
+      // Generate UPI QR data for online payments
       const amount = Number.parseFloat(formData.amount);
-      const paymentQRData = formData.payment_method === 'online'
-        ? 'https://razorpay.me/@bondhuapp'
+      const paymentQRData = formData.payment_method === 'online' 
+        ? generateUPIQRData(
+            amount,
+            'bondhuapp@upi', // Default UPI ID - can be configured
+            'Bondhu App',
+            `Payment for: ${formData.title}`
+          )
         : null;
 
       const taskData = {
@@ -276,13 +268,7 @@ export default function TaskPostDialog({ open, onOpenChange, onSuccess }: TaskPo
               <Label htmlFor="category">Category *</Label>
               <Select
                 value={formData.category}
-                onValueChange={(value) => setFormData(prev => ({
-                  ...prev,
-                  category: value,
-                  amount: (!prev.amount || prev.amount === '100' || CATEGORY_DEFAULT_AMOUNTS[prev.category] === prev.amount)
-                    ? (CATEGORY_DEFAULT_AMOUNTS[value] || '100')
-                    : prev.amount
-                }))}
+                onValueChange={(value) => setFormData({ ...formData, category: value })}
                 disabled={loading}
               >
                 <SelectTrigger id="category">
@@ -412,41 +398,17 @@ export default function TaskPostDialog({ open, onOpenChange, onSuccess }: TaskPo
           </div>
 
           <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="amount">Amount (₹) *</Label>
-              <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold">
-                ✓ Auto-calculated for category
-              </span>
-            </div>
+            <Label htmlFor="amount">Amount (₹) *</Label>
             <Input
               id="amount"
               type="number"
               step="1"
-              min="1"
-              placeholder="e.g., 100"
+              min="0"
+              placeholder="e.g., 500"
               value={formData.amount}
               onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
               disabled={loading}
-              className="text-lg font-bold"
             />
-            {/* Quick 1-click Preset Chips */}
-            <div className="flex flex-wrap items-center gap-1.5 pt-1">
-              <span className="text-[11px] text-muted-foreground mr-1">Quick Select:</span>
-              {['50', '100', '150', '200', '300', '500'].map(amt => (
-                <button
-                  key={amt}
-                  type="button"
-                  onClick={() => setFormData({ ...formData, amount: amt })}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all border ${
-                    formData.amount === amt
-                      ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
-                      : 'bg-muted/60 hover:bg-muted text-foreground border-border/60'
-                  }`}
-                >
-                  ₹{amt}
-                </button>
-              ))}
-            </div>
           </div>
 
           <div className="space-y-2">

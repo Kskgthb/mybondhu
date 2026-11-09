@@ -2,14 +2,12 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { tasksApi, assignmentsApi, ratingsApi, storageApi, profilesApi } from '@/db/api';
-import { supabase } from '@/db/supabase';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { ArrowLeft, MapPin, Clock, IndianRupee, User, Star, Upload, CheckCircle, CheckCircle2, ExternalLink, Navigation, MessageCircle, Phone, Loader2, CreditCard, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, MapPin, Clock, IndianRupee, User, Star, Upload, CheckCircle, CheckCircle2, ExternalLink, Navigation, MessageCircle, Phone, Loader2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
 import type { TaskWithAssignment, Rating } from '@/types/types';
@@ -31,7 +29,6 @@ export default function TaskDetailPage() {
   const [actionLoading, setActionLoading] = useState(false);
   const [showRatingDialog, setShowRatingDialog] = useState(false);
   const [showChatDialog, setShowChatDialog] = useState(false);
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [proofFile, setProofFile] = useState<File | null>(null);
   const [completionCode, setCompletionCode] = useState<string | null>(null);
 
@@ -200,89 +197,46 @@ export default function TaskDetailPage() {
 
   const handleCompleteWithCode = async (code: string) => {
     if (!taskId) return;
-    setActionLoading(true);
+    
     try {
-      console.log('🔑 Verifying completion code and completing task:', taskId);
-      // 1. Verify the code
+      console.log('🔑 Verifying completion code for task:', taskId);
       const result = await tasksApi.completeTaskWithCode(taskId, code);
-      if (!result.success) {
-        throw new Error(result.message || 'Invalid completion code');
-      }
-
-      // 2. Call backend verification RPC
-      try {
-        await tasksApi.verifyPaymentAndComplete(taskId);
-      } catch (err) {
-        console.warn('verifyPaymentAndComplete fallback:', err);
-      }
-
-      // 3. Guarantee database updates for status, payment, and bondhu earnings
-      await supabase.from('tasks').update({
-        status: 'completed',
-        code_verified: true,
-        code_verified_at: new Date().toISOString(),
-        payment_verified: true,
-        payment_verified_at: new Date().toISOString(),
-        payment_status: 'completed',
-        completion_step: 'completed',
-        updated_at: new Date().toISOString(),
-      }).eq('id', taskId);
-
-      const bondhuId = task?.assignment?.bondhu_id || user?.id;
-      if (bondhuId) {
-        await supabase.from('task_assignments').update({
-          status: 'completed',
-          completed_at: new Date().toISOString(),
-        }).eq('task_id', taskId);
-
-        // Update bondhu earnings and task count
-        if (task?.amount) {
-          const { data: bProfile } = await supabase
-            .from('profiles')
-            .select('total_tasks, total_earnings')
-            .eq('id', bondhuId)
-            .maybeSingle();
-
-          if (bProfile) {
-            await supabase.from('profiles').update({
-              total_tasks: (bProfile.total_tasks || 0) + 1,
-              total_earnings: (Number(bProfile.total_earnings) || 0) + Number(task.amount),
-            }).eq('id', bondhuId);
-          }
+      
+      if (result.success) {
+        console.log('✅ Code verified successfully');
+        console.log('📊 Result:', result);
+        toast.success(result.message || 'Code verified successfully!');
+        
+        // Wait a moment for database to commit
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // Reload task details to get updated status
+        console.log('🔄 Reloading task details...');
+        await loadTaskDetails();
+        
+        // Force fetch updated task
+        const updatedTask = await tasksApi.getTaskWithAssignment(taskId);
+        console.log('📊 Updated task status:', updatedTask?.status);
+        console.log('📊 Updated task code_verified:', updatedTask?.code_verified);
+        console.log('📊 Updated task payment_verified:', updatedTask?.payment_verified);
+        
+        if (updatedTask) {
+          setTask(updatedTask);
         }
+        
+        // If task is now completed (auto-completed for cash), show rating dialog for task poster
+        if (result.auto_completed && updatedTask?.status === 'completed' && updatedTask?.poster_id === user?.id) {
+          setTimeout(() => {
+            console.log('⭐ Opening rating dialog (auto-completed)');
+            setShowRatingDialog(true);
+          }, 1000);
+        }
+      } else {
+        throw new Error(result.message);
       }
-
-      toast.success('🎉 Payment confirmed & Task completed successfully!');
-
-      // Reload task details to get completed state
-      await loadTaskDetails();
     } catch (error: any) {
       console.error('❌ Error completing task:', error);
-      throw error;
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  const handlePosterPaymentDone = async () => {
-    if (!task) return;
-    setActionLoading(true);
-    try {
-      await supabase.from('tasks').update({
-        payment_verified: true,
-        payment_verified_at: new Date().toISOString(),
-        payment_status: 'completed',
-        updated_at: new Date().toISOString(),
-      }).eq('id', task.id);
-
-      toast.success('✓ Payment confirmed! Your Task Completion Code is available below.');
-      setShowPaymentModal(false);
-      await loadTaskDetails();
-    } catch (err: any) {
-      console.error(err);
-      toast.error('Failed to update payment status: ' + err.message);
-    } finally {
-      setActionLoading(false);
+      throw error; // Re-throw to let the component handle it
     }
   };
 
@@ -526,7 +480,6 @@ export default function TaskDetailPage() {
             </>
           )}
 
-          {/* ── BONDHU (HELPER) SIDE CONTROLS ── */}
           {isBondhu && (
             <>
               <Separator />
@@ -535,7 +488,7 @@ export default function TaskDetailPage() {
                   <Button
                     onClick={handleStartTask}
                     disabled={actionLoading}
-                    className="w-full min-h-[48px] text-base font-bold bg-[#641ACC] hover:bg-[#5214ab]"
+                    className="w-full min-h-[44px]"
                   >
                     {actionLoading ? 'Starting...' : 'Start Task'}
                   </Button>
@@ -578,7 +531,7 @@ export default function TaskDetailPage() {
                           ✓ Task verified with completion code
                         </p>
                         <p className="text-xs text-green-600 dark:text-green-400">
-                          ✓ Earnings credited to your Bondhu wallet
+                          ✓ Payment will be processed as per the agreed method
                         </p>
                       </div>
                     </CardContent>
@@ -588,59 +541,16 @@ export default function TaskDetailPage() {
             </>
           )}
 
-          {/* ── TASK POSTER SIDE CONTROLS ── */}
-          {isPoster && (task.status === 'accepted' || task.status === 'in_progress') && (
+          {/* Show payment QR code to Bondhu when payment method is online */}
+          {isBondhu && task.payment_method === 'online' && (task.status === 'accepted' || task.status === 'in_progress') && (
             <>
               <Separator />
-              <div className="space-y-4">
-                {/* 1. Green "Task Payment" button if not yet paid */}
-                {!task.payment_verified && task.payment_status !== 'completed' ? (
-                  <Card className="border-2 border-emerald-500/50 bg-gradient-to-br from-emerald-950/40 via-slate-900 to-slate-900 p-5 shadow-xl">
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                      <div>
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="flex h-3 w-3 relative">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                            <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500" />
-                          </span>
-                          <span className="text-emerald-400 font-extrabold text-xs uppercase tracking-wider">
-                            Payment Required
-                          </span>
-                        </div>
-                        <p className="text-white text-base font-bold">
-                          Pay ₹{task.amount} to unlock Completion Code
-                        </p>
-                        <p className="text-slate-400 text-xs mt-0.5">
-                          Tap Task Payment below to scan or pay via razorpay.me/@bondhuapp
-                        </p>
-                      </div>
-
-                      <Button
-                        type="button"
-                        onClick={() => setShowPaymentModal(true)}
-                        className="w-full sm:w-auto px-6 py-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-base shadow-xl shadow-emerald-950/60 transition-all flex items-center justify-center gap-2"
-                      >
-                        <CreditCard className="w-5 h-5 text-white" />
-                        Task Payment (₹{task.amount})
-                      </Button>
-                    </div>
-                  </Card>
-                ) : (
-                  /* 2. When payment is done: Task Completion Code appears! That's all on poster side! */
-                  completionCode && (
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold">
-                        <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-                        <span>Payment Verified ✓ • Share this 6-digit code with your Bondhu once the task is finished to complete the task.</span>
-                      </div>
-                      <CompletionCodeDisplay
-                        code={completionCode}
-                        taskTitle={task.title}
-                      />
-                    </div>
-                  )
-                )}
-              </div>
+              <PaymentQRCode
+                taskId={task.id}
+                amount={task.amount}
+                paymentStatus={task.payment_status}
+                qrData={task.payment_qr_data || ''}
+              />
             </>
           )}
 
@@ -668,6 +578,55 @@ export default function TaskDetailPage() {
                 <Navigation className="mr-2 h-4 w-4" />
                 Track Bondhu Live
               </Button>
+            </>
+          )}
+
+          {/* Show completion code to task poster when task is accepted or in progress */}
+          {isPoster && completionCode && (task.status === 'accepted' || task.status === 'in_progress') && (
+            <>
+              <Separator />
+              <CompletionCodeDisplay
+                code={completionCode}
+                taskTitle={task.title}
+              />
+            </>
+          )}
+
+          {/* Show payment confirmation button when code is verified */}
+          {canConfirmPayment && (
+            <>
+              <Separator />
+              <Card className="border-primary/50 bg-primary/5">
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <CheckCircle className="h-5 w-5 text-primary" />
+                    Code Verified - Confirm Payment
+                  </CardTitle>
+                  <CardDescription>
+                    The Bondhu has verified the completion code. Please confirm that you have completed the online payment to finish this task.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button
+                    onClick={handleConfirmPayment}
+                    disabled={actionLoading}
+                    className="w-full min-h-[44px]"
+                    size="lg"
+                  >
+                    {actionLoading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Confirming Payment...
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle className="mr-2 h-4 w-4" />
+                        Confirm Payment & Complete Task
+                      </>
+                    )}
+                  </Button>
+                </CardContent>
+              </Card>
             </>
           )}
 
@@ -803,32 +762,6 @@ export default function TaskDetailPage() {
             otherUserName={getChatUserName()}
           />
         </>
-      )}
-
-      {/* Task Payment Modal for Poster */}
-      {task && (
-        <Dialog open={showPaymentModal} onOpenChange={setShowPaymentModal}>
-          <DialogContent className="max-w-md p-0 overflow-hidden bg-slate-900 border border-emerald-500/30">
-            <DialogHeader className="p-4 pb-0">
-              <DialogTitle className="text-lg font-bold text-white flex items-center gap-2">
-                <CreditCard className="w-5 h-5 text-emerald-400" />
-                Task Payment
-              </DialogTitle>
-              <DialogDescription className="text-xs text-slate-400">
-                Complete payment for "{task.title}" to unlock the completion code
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="p-4 pt-2">
-              <PaymentQRCode
-                amount={task.amount || 0}
-                taskTitle={task.title}
-                onPaymentDone={handlePosterPaymentDone}
-                isSubmitting={actionLoading}
-              />
-            </div>
-          </DialogContent>
-        </Dialog>
       )}
     </div>
   );
