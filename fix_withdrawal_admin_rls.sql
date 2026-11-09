@@ -126,3 +126,4 @@ $$;
 
 GRANT EXECUTE ON FUNCTION admin_get_user_withdrawals(UUID) TO authenticated;
 GRANT EXECUTE ON FUNCTION admin_update_withdrawal_status(UUID, TEXT, TEXT) TO authenticated;
+

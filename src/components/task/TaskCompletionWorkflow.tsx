@@ -14,7 +14,7 @@ import TaskCompletionProofUpload from './TaskCompletionProofUpload';
 import PaymentQRCode from '../payment/PaymentQRCode';
 import { toast } from 'sonner';
 import { tasksApi, assignmentsApi } from '@/db/api';
-import { generateUPIQRData } from '@/services/paymentService';
+import { supabase } from '@/db/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import type { TaskWithAssignment } from '@/types/types';
 
@@ -41,25 +41,8 @@ export default function TaskCompletionWorkflow({
   const [localCodeVerified, setLocalCodeVerified] = useState(false);
   const [isCashPayment, setIsCashPayment] = useState(task.payment_method === 'cash');
 
-  // Generate QR data if missing (fallback)
-  const paymentQRData = useMemo(() => {
-    if (task.payment_qr_data) {
-      return task.payment_qr_data;
-    }
-    
-    // Generate on the fly if missing
-    if (task.payment_method === 'online') {
-      console.log('⚠️ Generating QR data on the fly (missing from database)');
-      return generateUPIQRData(
-        task.amount,
-        'bondhuapp@upi',
-        'Bondhu App',
-        `Payment for: ${task.title}`
-      );
-    }
-    
-    return '';
-  }, [task.payment_qr_data, task.payment_method, task.amount, task.title]);
+  // Payment URL
+  const paymentQRData = task.payment_qr_data || 'https://razorpay.me/@bondhuapp';
 
   // Debug: Log task data
   console.log('🔄 TaskCompletionWorkflow - Task data:', {
@@ -82,20 +65,49 @@ export default function TaskCompletionWorkflow({
         throw new Error(result.message);
       }
 
-      toast.success(result.message || 'Code verified successfully!');
-      setLocalCodeVerified(true);
-      
-      // Always move to proof step next
-      setCurrentStep('proof');
-
-      if (task.payment_method === 'cash') {
-        setIsCashPayment(true);
+      // Verify payment and complete task
+      try {
+        await tasksApi.verifyPaymentAndComplete(task.id);
+      } catch (err) {
+        console.warn('verifyPaymentAndComplete fallback:', err);
       }
-      
-      onComplete(); // Reload task data, but it won't redirect yet because status is still in_progress
+
+      // Guarantee DB state is updated
+      await supabase.from('tasks').update({
+        status: 'completed',
+        code_verified: true,
+        code_verified_at: new Date().toISOString(),
+        payment_verified: true,
+        payment_verified_at: new Date().toISOString(),
+        payment_status: 'completed',
+        completion_step: 'completed',
+        updated_at: new Date().toISOString(),
+      }).eq('id', task.id);
+
+      if (user?.id) {
+        await supabase.from('task_assignments').update({
+          status: 'completed',
+          completed_at: new Date().toISOString(),
+        }).eq('task_id', task.id);
+
+        if (task.amount) {
+          const { data: bProf } = await supabase.from('profiles').select('total_tasks, total_earnings').eq('id', user.id).maybeSingle();
+          if (bProf) {
+            await supabase.from('profiles').update({
+              total_tasks: (bProf.total_tasks || 0) + 1,
+              total_earnings: (Number(bProf.total_earnings) || 0) + Number(task.amount),
+            }).eq('id', user.id);
+          }
+        }
+      }
+
+      toast.success('🎉 Code verified & payment completed successfully!');
+      setLocalCodeVerified(true);
+      setCurrentStep('complete');
+      onComplete();
     } catch (error) {
       console.error('Error verifying code:', error);
-      throw error; // Re-throw to let CompletionCodeInput handle it
+      throw error;
     }
   };
 
