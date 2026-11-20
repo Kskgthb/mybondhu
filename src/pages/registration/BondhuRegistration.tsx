@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -15,6 +15,7 @@ import { updateBondhuProfile, uploadDocument } from '@/db/api';
 import { supabase } from '@/db/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import Logo from '@/components/common/Logo';
+import { canSolveTasks } from '@/config/adminConfig';
 
 const TASK_CATEGORIES = [
   'Delivery & Pickup',
@@ -74,9 +75,16 @@ const BONDHU_TERMS = [
 
 export default function BondhuOnboarding() {
   const navigate = useNavigate();
-  const { user, refreshProfile } = useAuth();
+  const { user, profile, refreshProfile } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (user && !canSolveTasks(user.email, profile?.role)) {
+      toast.info('Bondhu solver registration is temporarily paused. Only Task Posting is currently available.');
+      navigate('/need-bondhu/dashboard', { replace: true });
+    }
+  }, [user, profile, navigate]);
 
   const [formData, setFormData] = useState<BondhuRegistrationData>({
     step1: {

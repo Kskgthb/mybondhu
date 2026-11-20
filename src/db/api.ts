@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { canSolveTasks, IS_TASK_SOLVE_FROZEN } from '@/config/adminConfig';
 import type {
   Profile,
   Task,
@@ -535,6 +536,21 @@ export const tasksApi = {
 
 export const assignmentsApi = {
   async acceptTask(taskId: string, bondhuId: string): Promise<{ success: boolean; message: string }> {
+    if (IS_TASK_SOLVE_FROZEN) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('email, role')
+        .eq('id', bondhuId)
+        .maybeSingle();
+
+      if (!canSolveTasks(profile?.email, profile?.role)) {
+        return { 
+          success: false, 
+          message: 'Task solving is temporarily paused for maintenance. Only task posting is active.' 
+        };
+      }
+    }
+
     const { data, error } = await supabase.rpc('accept_task', {
       p_task_id: taskId,
       p_bondhu_id: bondhuId,

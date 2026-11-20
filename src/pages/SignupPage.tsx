@@ -7,8 +7,9 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { toast } from 'sonner';
-import { Loader2, UserCheck, HandHeart, Mail, Phone, Gift } from 'lucide-react';
+import { Loader2, UserCheck, HandHeart, Mail, Phone, Gift, Lock } from 'lucide-react';
 import Logo from '@/components/common/Logo';
+import { IS_TASK_SOLVE_FROZEN } from '@/config/adminConfig';
 
 export default function SignupPage() {
   const [username, setUsername] = useState('');
@@ -24,6 +25,11 @@ export default function SignupPage() {
 
   useEffect(() => {
     if (role === 'bondhu') {
+      if (IS_TASK_SOLVE_FROZEN) {
+        toast.info('Task Solve mode is temporarily paused for maintenance. Only Task Posting is currently active.');
+        setRole('need_bondhu');
+        return;
+      }
       navigate('/signup/bondhu');
     }
   }, [role, navigate]);
@@ -275,7 +281,16 @@ export default function SignupPage() {
 
             <div className="space-y-3">
               <Label>I want to</Label>
-              <RadioGroup value={role} onValueChange={(value) => setRole(value as 'need_bondhu' | 'bondhu')}>
+              <RadioGroup 
+                value={role} 
+                onValueChange={(value) => {
+                  if (value === 'bondhu' && IS_TASK_SOLVE_FROZEN) {
+                    toast.info('Task Solve (Helper) mode is temporarily paused for maintenance. Only Task Posting is currently open.');
+                    return;
+                  }
+                  setRole(value as 'need_bondhu' | 'bondhu');
+                }}
+              >
                 <div className="flex items-center space-x-3 border rounded-lg p-4 cursor-pointer hover:bg-muted/50 transition-colors">
                   <RadioGroupItem value="need_bondhu" id="need_bondhu" />
                   <Label htmlFor="need_bondhu" className="flex items-center gap-3 cursor-pointer flex-1">
@@ -286,16 +301,39 @@ export default function SignupPage() {
                     </div>
                   </Label>
                 </div>
-                <div className="flex items-center space-x-3 border rounded-lg p-4 cursor-pointer hover:bg-muted/50 transition-colors">
-                  <RadioGroupItem value="bondhu" id="bondhu" />
-                  <Label htmlFor="bondhu" className="flex items-center gap-3 cursor-pointer flex-1">
-                    <HandHeart className="h-5 w-5 text-secondary" />
-                    <div>
-                      <div className="font-medium">Become a Helper</div>
-                      <div className="text-xs text-muted-foreground">Accept tasks and earn money</div>
-                    </div>
-                  </Label>
-                </div>
+                {IS_TASK_SOLVE_FROZEN ? (
+                  <div 
+                    onClick={() => {
+                      toast.info('Task Solve (Helper) registration is temporarily paused for maintenance. Only Task Posting is active.');
+                    }}
+                    className="flex items-center space-x-3 border border-dashed rounded-lg p-4 opacity-60 cursor-not-allowed bg-muted/20 select-none"
+                  >
+                    <RadioGroupItem value="bondhu" id="bondhu" disabled />
+                    <Label htmlFor="bondhu" className="flex items-center gap-3 cursor-not-allowed flex-1">
+                      <HandHeart className="h-5 w-5 text-slate-400" />
+                      <div>
+                        <div className="font-medium text-slate-600 flex items-center gap-2">
+                          Become a Helper
+                          <span className="text-[10px] bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                            <Lock className="w-2.5 h-2.5" /> Paused
+                          </span>
+                        </div>
+                        <div className="text-xs text-muted-foreground">Task Solve registration is temporarily paused</div>
+                      </div>
+                    </Label>
+                  </div>
+                ) : (
+                  <div className="flex items-center space-x-3 border rounded-lg p-4 cursor-pointer hover:bg-muted/50 transition-colors">
+                    <RadioGroupItem value="bondhu" id="bondhu" />
+                    <Label htmlFor="bondhu" className="flex items-center gap-3 cursor-pointer flex-1">
+                      <HandHeart className="h-5 w-5 text-secondary" />
+                      <div>
+                        <div className="font-medium">Become a Helper</div>
+                        <div className="text-xs text-muted-foreground">Accept tasks and earn money</div>
+                      </div>
+                    </Label>
+                  </div>
+                )}
               </RadioGroup>
             </div>
             <Button type="submit" className="w-full" disabled={loading}>

@@ -3,45 +3,58 @@ import { useAuth } from './AuthContext';
 import { profilesApi } from '@/db/api';
 import { toast } from 'sonner';
 import type { UserRole } from '@/types/types';
+import { isAdminEmail, canSolveTasks } from '@/config/adminConfig';
 
 interface RoleContextType {
   currentRole: UserRole | null;
   switchRole: () => Promise<void>;
   isSwitching: boolean;
+  isAdmin: boolean;
+  canSolve: boolean;
 }
 
 const RoleContext = createContext<RoleContextType | undefined>(undefined);
 
 export const RoleProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { profile, refreshProfile } = useAuth();
+  const { user, profile, refreshProfile } = useAuth();
   const [currentRole, setCurrentRole] = useState<UserRole | null>(null);
   const [isSwitching, setIsSwitching] = useState(false);
 
-  // Sync current role with profile
+  const userEmail = user?.email ?? profile?.email;
+  const isAdmin = isAdminEmail(userEmail) || profile?.role === 'admin';
+  const canSolve = canSolveTasks(userEmail, profile?.role);
+
+  // Sync current role with profile and enforce freeze rules
   useEffect(() => {
     if (profile) {
-      // Use active_role if available, otherwise fall back to role
-      const activeRole = profile.active_role || profile.role;
-      setCurrentRole(activeRole);
+      if (!canSolve) {
+        // Non-admin users are strictly frozen to Task Post mode (Need Bondhu)
+        setCurrentRole('need_bondhu');
+      } else {
+        // Admin can do both Task Post and Task Solve
+        const activeRole = profile.active_role || (profile.role === 'bondhu' ? 'bondhu' : 'need_bondhu');
+        setCurrentRole(activeRole);
+      }
     } else {
       setCurrentRole(null);
     }
-  }, [profile]);
+  }, [profile, canSolve]);
 
   const switchRole = async () => {
     if (!profile || isSwitching) return;
 
-    // Don't allow admin to switch roles
-    if (profile.role === 'admin') {
-      toast.error('Admin users cannot switch roles');
+    // Strictly enforce: non-admins cannot switch to Task Solve (Bondhu) mode
+    if (!canSolve) {
+      toast.info('Task Solve mode is temporarily paused. Only Task Posting is active right now.');
+      setCurrentRole('need_bondhu');
       return;
     }
 
     setIsSwitching(true);
 
     try {
-      // Determine the new role
-      const currentActiveRole = profile.active_role || profile.role;
+      // Determine the new role for admin
+      const currentActiveRole = currentRole || 'need_bondhu';
       const newRole: UserRole = currentActiveRole === 'need_bondhu' ? 'bondhu' : 'need_bondhu';
 
       // Update the active_role in the database
@@ -56,8 +69,8 @@ export const RoleProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setCurrentRole(newRole);
 
       // Show success message
-      const roleLabel = newRole === 'bondhu' ? 'Bondhu (Helper)' : 'Need Bondhu (Task Poster)';
-      toast.success(`Switched to ${roleLabel} mode`);
+      const roleLabel = newRole === 'bondhu' ? 'Bondhu (Task Solve Mode)' : 'Need Bondhu (Task Post Mode)';
+      toast.success(`Switched to ${roleLabel}`);
 
     } catch (error) {
       console.error('Error switching role:', error);
@@ -68,7 +81,7 @@ export const RoleProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <RoleContext.Provider value={{ currentRole, switchRole, isSwitching }}>
+    <RoleContext.Provider value={{ currentRole, switchRole, isSwitching, isAdmin, canSolve }}>
       {children}
     </RoleContext.Provider>
   );

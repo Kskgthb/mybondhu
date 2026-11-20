@@ -10,12 +10,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Power, MapPin, Loader2, Navigation, ClipboardList, CheckCircle } from 'lucide-react';
+import { Power, MapPin, Loader2, Navigation, ClipboardList, CheckCircle, Shield } from 'lucide-react';
 import TaskCard from '@/components/task/TaskCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import TaskCardSkeleton from '@/components/common/TaskCardSkeleton';
 import CompactBanner from '@/components/common/CompactBanner';
 import CampusToggle from '@/components/common/CampusToggle';
+import { canSolveTasks } from '@/config/adminConfig';
 
 import NotificationDialog from '@/components/common/NotificationDialog';
 import RoleSwitchButton from '@/components/common/RoleSwitchButton';
@@ -81,6 +82,14 @@ export default function BondhuDashboard() {
     // Wait for profile to load before checking role
     if (!profile) {
       console.log('⏳ Waiting for profile to load...');
+      return;
+    }
+
+    // Freeze Check: Strictly only admins can access Task Solve mode
+    const canSolve = canSolveTasks(user?.email || profile?.email, profile?.role);
+    if (!canSolve) {
+      toast.info('Task Solve mode is temporarily paused for maintenance. Redirecting to Task Post dashboard...');
+      navigate('/need-bondhu/dashboard', { replace: true });
       return;
     }
 
@@ -446,6 +455,34 @@ export default function BondhuDashboard() {
     <div className="relative min-h-screen">
 
       <div className="container mx-auto px-4 py-8 max-w-7xl relative z-10">
+        {/* Admin Exclusive Solve Notice */}
+        <div className="mb-5 p-3.5 rounded-2xl bg-emerald-500/10 border-2 border-emerald-500/30 text-emerald-900 dark:text-emerald-300 flex items-center justify-between flex-wrap gap-3 shadow-sm">
+          <div className="flex items-center gap-2.5">
+            <div className="p-1.5 rounded-xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-400">
+              <Shield className="w-4 h-4" />
+            </div>
+            <div>
+              <p className="font-bold text-xs">Admin Mode: Task Solve Enabled</p>
+              <p className="text-[11px] text-muted-foreground">Task Solve mode is temporarily frozen for regular users. You have administrative access to both solve and post tasks.</p>
+            </div>
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={async () => {
+              try {
+                await switchRole();
+              } catch (e) {
+                console.error(e);
+              }
+              navigate('/need-bondhu/dashboard');
+            }}
+            className="text-xs h-8 border-emerald-500/40 hover:bg-emerald-500/10"
+          >
+            Switch to Task Post →
+          </Button>
+        </div>
+
         <div className="mb-6">
           <div className="flex flex-col mb-6">
             <h1 

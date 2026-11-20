@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/db/supabase';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { canSolveTasks } from '@/config/adminConfig';
 
 
 export default function AuthCallbackPage() {
@@ -62,7 +63,8 @@ export default function AuthCallbackPage() {
           }
 
           // Redirect based on role
-          if (existingProfile?.role === 'bondhu') {
+          const userCanSolve = canSolveTasks(existingProfile?.email || session.user.email, existingProfile?.role);
+          if (existingProfile?.role === 'bondhu' && userCanSolve) {
             navigate('/bondhu/dashboard', { replace: true });
           } else {
             navigate('/need-bondhu/dashboard', { replace: true });

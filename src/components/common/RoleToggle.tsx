@@ -3,27 +3,34 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Users, UserCheck } from 'lucide-react';
+import { Users, UserCheck, Lock } from 'lucide-react';
 import { toast } from 'sonner';
+import { canSolveTasks } from '@/config/adminConfig';
 
 interface RoleToggleProps {
   currentMode: 'need_bondhu' | 'bondhu';
 }
 
 export default function RoleToggle({ currentMode }: RoleToggleProps) {
-  const { profile } = useAuth();
+  const { profile, user } = useAuth();
   const navigate = useNavigate();
   const [checking, setChecking] = useState(false);
+
+  const userEmail = user?.email ?? profile?.email;
+  const canSolve = canSolveTasks(userEmail, profile?.role);
 
   const handleToggle = async (newMode: 'need_bondhu' | 'bondhu') => {
     // Don't do anything if clicking the current mode
     if (newMode === currentMode) return;
 
+    if (newMode === 'bondhu' && !canSolve) {
+      toast.info('Task Solve mode is temporarily paused for maintenance. Only Task Posting is currently active!');
+      return;
+    }
+
     setChecking(true);
 
     try {
-      // Allow switching to both modes without forced registration
-      // Registration will be checked on the dashboard itself
       if (newMode === 'bondhu') {
         toast.success('Switching to Bondhu Helper Mode', {
           description: 'Explore helper features and accept tasks.',
@@ -89,13 +96,16 @@ export default function RoleToggle({ currentMode }: RoleToggleProps) {
             size="sm"
             onClick={() => handleToggle('bondhu')}
             disabled={checking}
-            className="gap-2 min-w-[140px]"
+            className={`gap-2 min-w-[140px] ${!canSolve ? 'opacity-60' : ''}`}
+            title={!canSolve ? 'Task Solve mode is temporarily paused' : 'Become Bondhu'}
           >
-            <UserCheck className="h-4 w-4" />
+            {!canSolve ? <Lock className="h-3.5 w-3.5 text-muted-foreground" /> : <UserCheck className="h-4 w-4" />}
             {checking && currentMode === 'need_bondhu' ? (
               <span className="flex items-center gap-1">
                 <span className="animate-pulse">Checking...</span>
               </span>
+            ) : !canSolve ? (
+              'Task Solve (Paused)'
             ) : (
               'Become Bondhu'
             )}

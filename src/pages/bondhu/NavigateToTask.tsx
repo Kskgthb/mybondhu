@@ -16,14 +16,22 @@ import { tasksApi, assignmentsApi, profilesApi } from '@/db/api';
 import { insertBondhuLocation } from '@/db/locationApi';
 import { getCurrentLocation, watchLocation, clearLocationWatch, calculateDistance } from '@/lib/mapUtils';
 import { toast } from 'sonner';
+import { canSolveTasks } from '@/config/adminConfig';
 import type { Task, TaskAssignment, Profile } from '@/types/types';
 import ChatDialog from '@/components/task/ChatDialog';
 import TaskCompletionWorkflow from '@/components/task/TaskCompletionWorkflow';
 
 export default function NavigateToTask() {
   const { taskId } = useParams<{ taskId: string }>();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (user && !canSolveTasks(user.email, profile?.role)) {
+      toast.info('Task Solve mode is temporarily paused for maintenance.');
+      navigate('/need-bondhu/dashboard', { replace: true });
+    }
+  }, [user, profile, navigate]);
 
   const [task, setTask] = useState<Task | null>(null);
   const [assignment, setAssignment] = useState<TaskAssignment | null>(null);

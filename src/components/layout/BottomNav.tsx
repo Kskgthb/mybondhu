@@ -5,6 +5,7 @@ import { Home, ClipboardList, PlusCircle, Bell, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useEffect, useState } from 'react';
 import { notificationsApi } from '@/db/api';
+import { canSolveTasks } from '@/config/adminConfig';
 
 export default function BottomNav() {
   const { user, profile } = useAuth();
@@ -37,8 +38,9 @@ export default function BottomNav() {
 
   const getDashboardLink = () => {
     const activeRole = profile.active_role || profile.role;
+    const canSolve = canSolveTasks(user?.email || profile?.email, profile?.role);
     if (profile.role === 'admin') return '/admin/dashboard';
-    if (activeRole === 'bondhu') return '/bondhu/dashboard';
+    if (activeRole === 'bondhu' && canSolve) return '/bondhu/dashboard';
     return '/need-bondhu/dashboard';
   };
 

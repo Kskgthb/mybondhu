@@ -31,6 +31,7 @@ import { EXPERTISE_DOMAINS } from '@/constants/expertise';
 import { BondhuSignupData, BondhuSignupStep1, BondhuSignupStep2, BondhuSignupStep3 } from '@/types/types';
 import { uploadDocument, formatFileSize, UploadProgress } from '@/utils/fileUpload';
 import { supabase } from '@/db/supabase';
+import { canSolveTasks } from '@/config/adminConfig';
 
 export default function BondhuSignupPage() {
   const [currentStep, setCurrentStep] = useState(1);
@@ -40,8 +41,13 @@ export default function BondhuSignupPage() {
   const { signUp, user } = useAuth();
   const navigate = useNavigate();
 
-  // If user is already logged in, redirect to registration page
+  // Route guard: if task solve mode is frozen and user is not admin, redirect
   useEffect(() => {
+    if (!canSolveTasks(user?.email)) {
+      toast.info('Task Solve mode is temporarily paused for maintenance. Only Task Posting is currently active.');
+      navigate('/signup', { replace: true });
+      return;
+    }
     if (user) {
       toast.info('You are already logged in. Redirecting to complete your profile...');
       navigate('/register/bondhu');

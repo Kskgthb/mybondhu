@@ -21,12 +21,12 @@ export default function RoleSwitchButton({
   size = 'default',
   showLabel = true 
 }: RoleSwitchButtonProps) {
-  const { currentRole, switchRole, isSwitching } = useRole();
+  const { currentRole, switchRole, isSwitching, canSolve } = useRole();
   const { profile } = useAuth();
   const navigate = useNavigate();
 
-  // Don't show for admin users or if profile is not loaded
-  if (!profile || profile.role === 'admin') {
+  // Strictly: only admins can switch between Task Post and Task Solve while frozen for others
+  if (!profile || !canSolve) {
     return null;
   }
 
@@ -45,7 +45,7 @@ export default function RoleSwitchButton({
     }
   };
 
-  const targetRole = currentRole === 'need_bondhu' ? 'Bondhu' : 'Need Bondhu';
+  const targetRole = currentRole === 'need_bondhu' ? 'Task Solve (Bondhu)' : 'Task Post';
   const targetIcon = currentRole === 'need_bondhu' ? <Users className="h-4 w-4" /> : <User className="h-4 w-4" />;
 
   if (size === 'icon') {

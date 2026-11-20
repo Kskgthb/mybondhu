@@ -6,7 +6,7 @@ import { tasksApi, realtimeApi } from '@/db/api';
 import { useCampus } from '@/contexts/CampusContext';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, ClipboardList, CheckCircle } from 'lucide-react';
+import { Plus, ClipboardList, CheckCircle, Lock } from 'lucide-react';
 import TaskCard from '@/components/task/TaskCard';
 import TaskPostDialog from '@/components/task/TaskPostDialog';
 import TaskEditDialog from '@/components/task/TaskEditDialog';
@@ -17,6 +17,7 @@ import TaskCardSkeleton from '@/components/common/TaskCardSkeleton';
 import CompactBanner from '@/components/common/CompactBanner';
 import AnimatedPostTitle from '@/components/common/AnimatedPostTitle';
 import CampusToggle from '@/components/common/CampusToggle';
+import { canSolveTasks } from '@/config/adminConfig';
 
 import NotificationDialog from '@/components/common/NotificationDialog';
 
@@ -32,6 +33,7 @@ export default function NeedBondhuDashboard() {
   const { currentRole, switchRole } = useRole();
   const navigate = useNavigate();
   const { isCampusMode, selectedCampus } = useCampus();
+  const canSolve = canSolveTasks(user?.email || profile?.email, profile?.role);
   const [tasks, setTasks] = useState<TaskWithFullInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('all');
@@ -280,9 +282,13 @@ export default function NeedBondhuDashboard() {
                   <ClipboardList className="h-[18px] w-[18px]" strokeWidth={2.5} />
                   <span className="text-[11px] font-semibold whitespace-nowrap">Task Post</span>
                 </button>
-                {/* Task Solve option — inactive state */}
+                {/* Task Solve option */}
                 <button
                   onClick={async () => {
+                    if (!canSolve) {
+                      toast.info('Task Solve mode is temporarily paused for maintenance. Only Task Posting is currently active!');
+                      return;
+                    }
                     try {
                       await switchRole();
                     } catch (e) {
@@ -290,14 +296,22 @@ export default function NeedBondhuDashboard() {
                     }
                     navigate('/bondhu/dashboard');
                   }}
-                  className="flex flex-col items-center justify-center gap-1 py-1.5 px-6 rounded-full transition-all duration-200"
+                  className={`flex flex-col items-center justify-center gap-1 py-1.5 px-6 rounded-full transition-all duration-200 ${
+                    !canSolve ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-black/5'
+                  }`}
                   style={{
                     background: 'transparent',
                     color: '#2fbe6b',
                   }}
+                  title={!canSolve ? 'Task Solve mode is temporarily paused' : 'Switch to Task Solve'}
                 >
-                  <CheckCircle className="h-[18px] w-[18px]" strokeWidth={2} />
-                  <span className="text-[11px] font-semibold whitespace-nowrap">Task Solve</span>
+                  <div className="flex items-center gap-1">
+                    <CheckCircle className="h-[18px] w-[18px]" strokeWidth={2} />
+                    {!canSolve && <Lock className="h-2.5 w-2.5 text-muted-foreground" />}
+                  </div>
+                  <span className="text-[11px] font-semibold whitespace-nowrap">
+                    Task Solve {!canSolve && '(Paused)'}
+                  </span>
                 </button>
               </div>
               

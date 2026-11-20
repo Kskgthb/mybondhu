@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/db/supabase';
 import Logo from '@/components/common/Logo';
+import { canSolveTasks } from '@/config/adminConfig';
 
 
 export default function LoginPage() {
@@ -24,8 +25,10 @@ export default function LoginPage() {
   // Redirect if already logged in
   useEffect(() => {
     if (user && !authLoading) {
+      const userCanSolve = canSolveTasks(profile?.email, profile?.role);
+      const isBondhu = profile?.role === 'bondhu' && userCanSolve;
       const destination = (from === '/' || from === '/login') 
-        ? (profile?.role === 'bondhu' ? '/bondhu/dashboard' : '/need-bondhu/dashboard') 
+        ? (isBondhu ? '/bondhu/dashboard' : '/need-bondhu/dashboard') 
         : from;
       navigate(destination, { replace: true });
     }
@@ -82,15 +85,18 @@ export default function LoginPage() {
       if (user) {
         const { data: profile } = await supabase
           .from('profiles')
-          .select('role')
+          .select('email, role')
           .eq('id', user.id)
           .maybeSingle();
         
+        const userCanSolve = canSolveTasks(profile?.email, profile?.role);
+        const isBondhu = profile?.role === 'bondhu' && userCanSolve;
+        
         const destination = (from === '/' || from === '/login') 
-          ? (profile?.role === 'bondhu' ? '/bondhu/dashboard' : '/need-bondhu/dashboard') 
+          ? (isBondhu ? '/bondhu/dashboard' : '/need-bondhu/dashboard') 
           : from;
           
-        if (profile?.role === 'bondhu') {
+        if (isBondhu) {
           toast.success('Welcome back, Bondhu!');
           navigate(destination, { replace: true });
         } else {

@@ -12,6 +12,8 @@ import { categoryData } from '@/lib/categoryData';
 import Footer from '@/components/common/Footer';
 import CategoryExplorer from '@/components/common/CategoryExplorer';
 import { HomeBannerCarousel } from '@/components/common/HomeBannerCarousel';
+import { toast } from 'sonner';
+import { canSolveTasks } from '@/config/adminConfig';
 import {
   Accordion,
   AccordionContent,
@@ -56,15 +58,18 @@ export default function LandingPage() {
 
   useEffect(() => {
     if (user && profile) {
-      // Use active_role if available, otherwise fall back to role
+      if (profile.role === 'admin') {
+        navigate('/admin/dashboard');
+        return;
+      }
+      
+      const userCanSolve = canSolveTasks(profile.email, profile.role);
       const activeRole = profile.active_role || profile.role;
       
-      if (activeRole === 'need_bondhu') {
-        navigate('/need-bondhu/dashboard');
-      } else if (activeRole === 'bondhu') {
+      if (activeRole === 'bondhu' && userCanSolve) {
         navigate('/bondhu/dashboard');
-      } else if (profile.role === 'admin') {
-        navigate('/admin/dashboard');
+      } else {
+        navigate('/need-bondhu/dashboard');
       }
     }
   }, [user, profile, navigate]);
@@ -281,7 +286,15 @@ export default function LandingPage() {
                 </div>
 
                 <Button 
-                  onClick={() => navigate('/register/bondhu')}
+                  onClick={() => {
+                    const userCanSolve = canSolveTasks(profile?.email, profile?.role);
+                    if (!userCanSolve) {
+                      toast.info('Task Solve mode is temporarily paused for maintenance. You can sign up to post tasks!');
+                      navigate('/signup');
+                    } else {
+                      navigate('/register/bondhu');
+                    }
+                  }}
                   className="w-full sm:w-auto px-12 h-16 rounded-[24px] text-xl font-black bg-secondary hover:bg-secondary/90 shadow-[0_15px_30px_-10px_rgba(47,190,107,0.4)] transition-all hover:scale-105 group"
                 >
                   Become a Bondhu

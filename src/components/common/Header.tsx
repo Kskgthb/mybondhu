@@ -107,7 +107,7 @@ export default function Header() {
     const activeRole = profile.active_role || profile.role;
     
     if (profile.role === 'admin') return '/admin/dashboard';
-    if (activeRole === 'bondhu') return '/bondhu/dashboard';
+    if (activeRole === 'bondhu' && isAdmin) return '/bondhu/dashboard';
     return '/need-bondhu/dashboard';
   };
 
@@ -128,7 +128,7 @@ export default function Header() {
         <div className="flex items-center gap-4">
           {user && profile ? (
             <>
-              {(profile.role === 'bondhu' || profile.active_role === 'bondhu') && (
+              {isAdmin && (profile.role === 'bondhu' || profile.active_role === 'bondhu') && (
                 <div className="hidden md:flex items-center gap-4 mr-2">
                   <div className="flex items-center gap-2 bg-secondary/10 px-3 py-1.5 rounded-full border border-secondary/20">
                     <MapPin className={`h-4 w-4 ${locationEnabled ? 'text-green-500' : 'text-muted-foreground'}`} />

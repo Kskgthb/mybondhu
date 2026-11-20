@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { useEffect, useState } from 'react';
 import { notificationsApi } from '@/db/api';
 import InstallAppButton from '@/components/common/InstallAppButton';
+import { canSolveTasks } from '@/config/adminConfig';
 
 export default function Sidebar() {
   const { user, profile } = useAuth();
@@ -36,8 +37,9 @@ export default function Sidebar() {
 
   const getDashboardLink = () => {
     const activeRole = profile.active_role || profile.role;
+    const canSolve = canSolveTasks(user?.email || profile?.email, profile?.role);
     if (profile.role === 'admin') return '/admin/dashboard';
-    if (activeRole === 'bondhu') return '/bondhu/dashboard';
+    if (activeRole === 'bondhu' && canSolve) return '/bondhu/dashboard';
     return '/need-bondhu/dashboard';
   };
 
